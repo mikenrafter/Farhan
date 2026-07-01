@@ -103,3 +103,4 @@ lint/tmp/
 /.idea/kotlinc.xml
 /.idea/migrations.xml
 /.idea/
+.niri-workspace.yaml
