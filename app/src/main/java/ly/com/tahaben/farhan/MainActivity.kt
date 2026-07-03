@@ -50,6 +50,7 @@ import ly.com.tahaben.launcher_presentation.wait.DelayedLaunchViewModel
 import ly.com.tahaben.launcher_presentation.wait.DelayedLaunchWhiteListScreen
 import ly.com.tahaben.notification_filter_domain.use_cases.NotificationFilterUseCases
 import ly.com.tahaben.notification_filter_presentation.NotificationFilterScreen
+import ly.com.tahaben.notification_filter_presentation.dashboard.NotificationDashboardScreen
 import ly.com.tahaben.notification_filter_presentation.onboarding.NotificationFilterOnBoardingScreen
 import ly.com.tahaben.notification_filter_presentation.settings.NotificationFilterSettingsScreen
 import ly.com.tahaben.notification_filter_presentation.settings.exceptions.NotificationFilterExceptionsScreen
@@ -306,6 +307,9 @@ class MainActivity : ComponentActivity() {
                                     navigateToNotificationSettings = {
                                         navController.navigate(Routes.NOTIFICATION_FILTER_SETTINGS)
                                     },
+                                    navigateToDashboard = {
+                                        navController.navigate(Routes.NOTIFICATION_DASHBOARD)
+                                    },
                                     onNavigateUp = {
                                         navController.navigateUp()
                                     },
@@ -313,6 +317,19 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
 
+                        }
+                        composable(Routes.NOTIFICATION_DASHBOARD) {
+                            NotificationDashboardScreen(
+                                onNavigateUp = { navController.navigateUp() },
+                                onNavigateToInbox = {
+                                    navController.navigate(Routes.NOTIFICATION_FILTER) {
+                                        popUpTo(Routes.NOTIFICATION_DASHBOARD)
+                                    }
+                                },
+                                onNavigateToSettings = {
+                                    navController.navigate(Routes.NOTIFICATION_FILTER_SETTINGS)
+                                }
+                            )
                         }
                         composable(Routes.NOTIFICATION_FILTER_SETTINGS) {
                             NotificationFilterSettingsScreen(

@@ -67,7 +67,9 @@ class NotificationService : NotificationListenerService() {
                     val applicationName =
                         (if (ai != null) pm.getApplicationLabel(ai) else appPackageName) as String?
                     runBlocking(Dispatchers.IO) {
-                        sbn?.toNotificationItem(applicationName)
+                        val (priority, category) = notificationFilterUseCases
+                            .classifyNotification(notification?.category, appPackageName)
+                        sbn?.toNotificationItem(applicationName, priority, category)
                             ?.let { notificationFilterUseCases.insertNotificationToDB(it) }
                     }
                     if (notificationFilterUseCases.getNotifyMeHour() != -1) {

@@ -54,7 +54,16 @@ object NotificationFilterDomainModule {
             LoadShouldShowOnBoarding(preferences),
             OpenSettings(serviceUtil),
             CanScheduleExactAlarms(serviceUtil),
-            OpenExactAlarmsPermissionScreen(serviceUtil)
+            OpenExactAlarmsPermissionScreen(serviceUtil),
+            ClassifyNotification(preferences),
+            GetNotificationBatches(notificationRepository, preferences),
+            GetNotificationDashboardSummary(notificationRepository, preferences),
+            MarkNotificationRead(notificationRepository),
+            MarkAppNotificationsRead(notificationRepository),
+            SetAppPriorityOverride(preferences),
+            GetAppPriorityOverride(preferences),
+            GetDashboardSettings(preferences),
+            SetDashboardSettings(preferences),
         )
     }
 

@@ -8,27 +8,32 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 fun NotificationItem.toNotificationEntity(): NotificationItemEntity {
-
-
     return NotificationItemEntity(
         id = id,
         appName = appName,
         title = title,
         text = text,
         time = time,
-        creatorPackage = packageName
+        creatorPackage = packageName,
+        timestamp = timestamp,
+        priority = priority.level,
+        category = category.name,
+        isRead = isRead,
     )
 }
 
 fun NotificationItemEntity.toNotificationItem(): NotificationItem {
-
     return NotificationItem(
         id = id,
         appName = appName,
         title = title,
         text = text,
         time = time,
-        packageName = creatorPackage
+        packageName = creatorPackage,
+        timestamp = timestamp,
+        priority = ly.com.tahaben.notification_filter_domain.model.NotificationPriority.fromLevel(priority),
+        category = ly.com.tahaben.notification_filter_domain.model.NotificationCategory.fromName(category),
+        isRead = isRead,
     )
 }
 
@@ -53,7 +58,11 @@ fun Notification.toNotificationEntity(): NotificationItemEntity{
     )
 }*/
 
-fun StatusBarNotification.toNotificationItem(appName: String?): NotificationItem {
+fun StatusBarNotification.toNotificationItem(
+    appName: String?,
+    priority: ly.com.tahaben.notification_filter_domain.model.NotificationPriority = ly.com.tahaben.notification_filter_domain.model.NotificationPriority.MEDIUM,
+    category: ly.com.tahaben.notification_filter_domain.model.NotificationCategory = ly.com.tahaben.notification_filter_domain.model.NotificationCategory.OTHER
+): NotificationItem {
     val notification = notification
     val extras = notification.extras
     val title = extras?.getString(Notification.EXTRA_TITLE)?.toString()
@@ -61,14 +70,16 @@ fun StatusBarNotification.toNotificationItem(appName: String?): NotificationItem
     val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
     val time = sdf.format(postTime)
 
-
-
     return NotificationItem(
         id = key,
         appName = appName,
         title = title,
         text = text,
         time = time,
-        packageName = packageName ?: "Unknown"
+        packageName = packageName ?: "Unknown",
+        timestamp = postTime,
+        priority = priority,
+        category = category,
+        isRead = false,
     )
 }

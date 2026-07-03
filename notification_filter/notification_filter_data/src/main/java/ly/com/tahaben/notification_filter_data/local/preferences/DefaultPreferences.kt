@@ -151,4 +151,48 @@ class DefaultPreferences(
             .putBoolean(Preferences.KEY_NOTIFICATION_FILTER_WARNING, shouldShow)
             .apply()
     }
+
+    override fun getAppPriorityOverride(packageName: String): ly.com.tahaben.notification_filter_domain.model.NotificationPriority? {
+        val stored = sharedPref.getString(
+            Preferences.KEY_APP_PRIORITY_OVERRIDE_PREFIX + packageName, null
+        ) ?: return null
+        return try {
+            ly.com.tahaben.notification_filter_domain.model.NotificationPriority.valueOf(stored)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
+    }
+
+    override fun setAppPriorityOverride(
+        packageName: String,
+        priority: ly.com.tahaben.notification_filter_domain.model.NotificationPriority?
+    ) {
+        val key = Preferences.KEY_APP_PRIORITY_OVERRIDE_PREFIX + packageName
+        if (priority == null) {
+            sharedPref.edit().remove(key).apply()
+        } else {
+            sharedPref.edit().putString(key, priority.name).apply()
+        }
+    }
+
+    override fun getBatchWindowMinutes(): Int =
+        sharedPref.getInt(Preferences.KEY_BATCH_WINDOW_MINUTES, 30)
+
+    override fun setBatchWindowMinutes(minutes: Int) {
+        sharedPref.edit().putInt(Preferences.KEY_BATCH_WINDOW_MINUTES, minutes).apply()
+    }
+
+    override fun getStandingThresholdHours(): Int =
+        sharedPref.getInt(Preferences.KEY_STANDING_THRESHOLD_HOURS, 24)
+
+    override fun setStandingThresholdHours(hours: Int) {
+        sharedPref.edit().putInt(Preferences.KEY_STANDING_THRESHOLD_HOURS, hours).apply()
+    }
+
+    override fun getFloodThreshold(): Int =
+        sharedPref.getInt(Preferences.KEY_FLOOD_THRESHOLD, 10)
+
+    override fun setFloodThreshold(count: Int) {
+        sharedPref.edit().putInt(Preferences.KEY_FLOOD_THRESHOLD, count).apply()
+    }
 }

@@ -32,5 +32,11 @@ class NotificationRepositoryImpl(private val dao: NotificationDao) : Notificatio
             }
     }
 
+    override suspend fun markNotificationRead(id: String) {
+        dao.markNotificationRead(id)
+    }
 
+    override suspend fun markAppNotificationsRead(packageName: String) {
+        dao.markAppNotificationsRead(packageName)
+    }
 }

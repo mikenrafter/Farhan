@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DashboardCustomize
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -76,6 +77,7 @@ import timber.log.Timber
 fun NotificationFilterScreen(
     viewModel: NotificationFilterViewModel = hiltViewModel(),
     navigateToNotificationSettings: () -> Unit,
+    navigateToDashboard: () -> Unit = {},
     onNavigateUp: () -> Unit,
     isUiModeDark: Boolean
 ) {
@@ -129,6 +131,12 @@ fun NotificationFilterScreen(
                 },
                 actions = {
                     if (state.isPermissionGranted) {
+                        IconButton(onClick = navigateToDashboard) {
+                            Icon(
+                                imageVector = Icons.Filled.DashboardCustomize,
+                                contentDescription = "Notification Dashboard"
+                            )
+                        }
                         IconButton(onClick = navigateToNotificationSettings) {
                             Showcase(
                                 index = 1,

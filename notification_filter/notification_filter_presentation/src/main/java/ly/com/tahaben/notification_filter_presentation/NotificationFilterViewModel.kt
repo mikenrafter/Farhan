@@ -81,6 +81,11 @@ class NotificationFilterViewModel @Inject constructor(
                     event.notificationItem.id,
                     event.notificationItem.packageName
                 )
+                viewModelScope.launch {
+                    withContext(Dispatchers.IO) {
+                        notificationFilterUseCases.markNotificationRead(event.notificationItem.id)
+                    }
+                }
                 deleteNotificationData(event.notificationItem)
             }
             is NotificationFilterEvent.OnDismissNotification -> {

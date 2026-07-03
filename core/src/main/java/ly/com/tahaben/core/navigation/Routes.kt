@@ -25,5 +25,6 @@ object Routes {
     const val TimeLimiter_WHITELIST_SETTINGS = "time_limiter_whitelist_settings"
     const val DELAYED_LAUNCH_SETTINGS = "mindful_launch_settings"
     const val DELAYED_LAUNCH_WHITELIST = "mindful_launch_whitelist"
+    const val NOTIFICATION_DASHBOARD = "notification_dashboard"
 
 }

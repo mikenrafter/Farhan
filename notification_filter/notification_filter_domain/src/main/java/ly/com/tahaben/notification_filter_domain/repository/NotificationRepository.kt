@@ -9,5 +9,7 @@ interface NotificationRepository {
     suspend fun deleteNotificationItemEntity(notificationItem: NotificationItem)
     suspend fun deleteAllNotificationsFromDB()
     fun getNotifications(): Flow<List<NotificationItem>>
+    suspend fun markNotificationRead(id: String)
+    suspend fun markAppNotificationsRead(packageName: String)
 
 }

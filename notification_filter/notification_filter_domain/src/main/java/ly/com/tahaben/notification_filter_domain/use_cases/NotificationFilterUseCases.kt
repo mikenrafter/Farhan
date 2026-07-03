@@ -36,5 +36,14 @@ data class NotificationFilterUseCases(
     val loadShouldShowOnBoarding: LoadShouldShowOnBoarding,
     val openAppSettings: OpenSettings,
     val canScheduleExactAlarms: CanScheduleExactAlarms,
-    val openExactAlarmsPermissionScreen: OpenExactAlarmsPermissionScreen
+    val openExactAlarmsPermissionScreen: OpenExactAlarmsPermissionScreen,
+    val classifyNotification: ClassifyNotification,
+    val getNotificationBatches: GetNotificationBatches,
+    val getNotificationDashboardSummary: GetNotificationDashboardSummary,
+    val markNotificationRead: MarkNotificationRead,
+    val markAppNotificationsRead: MarkAppNotificationsRead,
+    val setAppPriorityOverride: SetAppPriorityOverride,
+    val getAppPriorityOverride: GetAppPriorityOverride,
+    val getDashboardSettings: GetDashboardSettings,
+    val setDashboardSettings: SetDashboardSettings,
 )

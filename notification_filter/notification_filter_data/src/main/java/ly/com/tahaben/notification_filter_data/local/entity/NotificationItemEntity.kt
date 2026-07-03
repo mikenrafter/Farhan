@@ -1,5 +1,6 @@
 package ly.com.tahaben.notification_filter_data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -11,5 +12,9 @@ data class NotificationItemEntity(
     val title: String?,
     val text: String?,
     val time: String,
-    val creatorPackage: String
+    val creatorPackage: String,
+    @ColumnInfo(defaultValue = "0") val timestamp: Long = 0L,
+    @ColumnInfo(defaultValue = "3") val priority: Int = 3,
+    @ColumnInfo(defaultValue = "'OTHER'") val category: String = "OTHER",
+    @ColumnInfo(defaultValue = "0") val isRead: Boolean = false,
 )

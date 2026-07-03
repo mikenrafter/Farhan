@@ -20,6 +20,14 @@ interface Preferences {
     fun getSettingsShouldShowWarning(): Boolean
     fun setSettingsShouldShowWarning(shouldShow: Boolean)
 
+    fun getAppPriorityOverride(packageName: String): ly.com.tahaben.notification_filter_domain.model.NotificationPriority?
+    fun setAppPriorityOverride(packageName: String, priority: ly.com.tahaben.notification_filter_domain.model.NotificationPriority?)
+    fun getBatchWindowMinutes(): Int
+    fun setBatchWindowMinutes(minutes: Int)
+    fun getStandingThresholdHours(): Int
+    fun setStandingThresholdHours(hours: Int)
+    fun getFloodThreshold(): Int
+    fun setFloodThreshold(count: Int)
 
     companion object {
         const val KEY_NOTIFICATION_SERVICE_STATS = "notification_service_stats"
@@ -32,5 +40,9 @@ interface Preferences {
         const val KEY_NOTIFICATION_FILTER_SHOULD_SHOWCASE =
             "notification_filter_should_showcase"
         const val KEY_NOTIFICATION_FILTER_WARNING = "notification_filter_settings_warning"
+        const val KEY_APP_PRIORITY_OVERRIDE_PREFIX = "notification_priority_override_"
+        const val KEY_BATCH_WINDOW_MINUTES = "notification_batch_window_minutes"
+        const val KEY_STANDING_THRESHOLD_HOURS = "notification_standing_threshold_hours"
+        const val KEY_FLOOD_THRESHOLD = "notification_flood_threshold"
     }
 }

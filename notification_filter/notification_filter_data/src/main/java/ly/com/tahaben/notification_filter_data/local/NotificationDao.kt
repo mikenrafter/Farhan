@@ -26,5 +26,9 @@ interface NotificationDao {
     @Query("SELECT * FROM notificationitementity")
     suspend fun getNotificationsAsList(): List<NotificationItemEntity>
 
+    @Query("UPDATE notificationitementity SET isRead = 1 WHERE id = :id")
+    suspend fun markNotificationRead(id: String)
 
+    @Query("UPDATE notificationitementity SET isRead = 1 WHERE creatorPackage = :packageName")
+    suspend fun markAppNotificationsRead(packageName: String)
 }

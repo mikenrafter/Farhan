@@ -43,15 +43,18 @@
         # Only the platform we compile against is needed for local builds.
         platformVersions = [ "35" ];
 
-        # Not needed for plain app builds from the command line.
-        includeEmulator    = false;
-        includeNDK         = false;
-        includeSystemImages = false;
-        useGoogleAPIs      = false;
+        # Emulator + x86_64 API 35 system image for local testing.
+        includeEmulator     = true;
+        includeNDK          = false;
+        includeSystemImages = true;
+        systemImageTypes    = [ "default" ];
+        abiVersions         = [ "x86_64" ];
+        useGoogleAPIs       = false;
 
         # Explicitly accept the base SDK license so Gradle doesn't complain.
         extraLicenses = [
           "android-sdk-license"
+          "android-sdk-preview-license"
         ];
       };
 

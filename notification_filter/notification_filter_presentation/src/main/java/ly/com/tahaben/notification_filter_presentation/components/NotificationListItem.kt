@@ -8,10 +8,12 @@ import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -28,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -41,6 +44,7 @@ import ly.com.tahaben.core.model.ThemeColors
 import ly.com.tahaben.core_ui.LocalSpacing
 import ly.com.tahaben.core_ui.theme.FarhanTheme
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
+import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 
 @Composable
 fun NotificationListItem(
@@ -68,11 +72,21 @@ fun NotificationListItem(
     var itemHeight by remember {
         mutableStateOf(0.dp)
     }
+    val priorityBarColor = when (notification.priority) {
+        NotificationPriority.CRITICAL -> Color(0xFFF44336)
+        NotificationPriority.HIGH -> Color(0xFFFF9800)
+        NotificationPriority.MEDIUM -> Color(0xFF2196F3)
+        NotificationPriority.LOW -> Color(0xFF9E9E9E)
+    }
+    val containerColor = if (notification.isRead)
+        MaterialTheme.colorScheme.surfaceVariant
+    else
+        MaterialTheme.colorScheme.primaryContainer
+
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(5.dp))
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .padding(horizontal = spacing.spaceExtraSmall, vertical = spacing.spaceSmall)
+            .background(containerColor)
             .indication(interactionSource, LocalIndication.current)
             .onSizeChanged {
                 itemHeight = with(density) { it.height.toDp() }
@@ -98,9 +112,17 @@ fun NotificationListItem(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
 
-        Spacer(modifier = Modifier.width(spacing.spaceMedium))
+        Box(
+            modifier = Modifier
+                .width(4.dp)
+                .fillMaxHeight()
+                .background(priorityBarColor)
+        )
+        Spacer(modifier = Modifier.width(spacing.spaceSmall))
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .padding(vertical = spacing.spaceSmall),
             verticalArrangement = Arrangement.Top
         ) {
             Row(
@@ -141,7 +163,7 @@ fun NotificationListItem(
 //            Spacer(modifier = Modifier.height(spacing.spaceSmall))
         }
 
-        Spacer(modifier = Modifier.width(spacing.spaceMedium))
+        Spacer(modifier = Modifier.width(spacing.spaceSmall))
     }
     DropdownMenu(
         expanded = isContextMenuExpanded,
