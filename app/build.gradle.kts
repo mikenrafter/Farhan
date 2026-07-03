@@ -14,7 +14,7 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "ly.com.tahaben.farhan"
+        applicationId = "ly.com.tahaben.farhan_alpha"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = libs.versions.app.versionCode.get().toInt()

@@ -50,6 +50,7 @@ import ly.com.tahaben.launcher_presentation.wait.DelayedLaunchViewModel
 import ly.com.tahaben.launcher_presentation.wait.DelayedLaunchWhiteListScreen
 import ly.com.tahaben.notification_filter_domain.use_cases.NotificationFilterUseCases
 import ly.com.tahaben.notification_filter_presentation.NotificationFilterScreen
+import ly.com.tahaben.notification_filter_presentation.apppriority.AppPriorityScreen
 import ly.com.tahaben.notification_filter_presentation.dashboard.NotificationDashboardScreen
 import ly.com.tahaben.notification_filter_presentation.onboarding.NotificationFilterOnBoardingScreen
 import ly.com.tahaben.notification_filter_presentation.settings.NotificationFilterSettingsScreen
@@ -328,7 +329,15 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onNavigateToSettings = {
                                     navController.navigate(Routes.NOTIFICATION_FILTER_SETTINGS)
+                                },
+                                onNavigateToAppPriority = {
+                                    navController.navigate(Routes.APP_PRIORITY)
                                 }
+                            )
+                        }
+                        composable(Routes.APP_PRIORITY) {
+                            AppPriorityScreen(
+                                onNavigateUp = { navController.navigateUp() }
                             )
                         }
                         composable(Routes.NOTIFICATION_FILTER_SETTINGS) {

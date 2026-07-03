@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">فرحان</string>
+    <string name="app_name">فرحان-alpha</string>
     <string name="usage">الاستخدام</string>
     <string name="notifications">الإشعارات</string>
     <string name="grayscale">تجريد الألوان</string>

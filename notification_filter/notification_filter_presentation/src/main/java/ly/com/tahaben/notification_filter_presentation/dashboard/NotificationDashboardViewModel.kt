@@ -39,6 +39,7 @@ class NotificationDashboardViewModel @Inject constructor(
             batchWindowMinutes = useCases.getDashboardSettings.getBatchWindowMinutes(),
             standingThresholdHours = useCases.getDashboardSettings.getStandingThresholdHours(),
             floodThreshold = useCases.getDashboardSettings.getFloodThreshold(),
+            schedule = useCases.getNotificationSchedule(),
         )
     }
 
@@ -92,8 +93,8 @@ class NotificationDashboardViewModel @Inject constructor(
                 }
             }
 
-            is NotificationDashboardEvent.OnExcludeApp -> {
-                useCases.addPackageToNotificationException(event.packageName)
+            is NotificationDashboardEvent.OnSetLowPriority -> {
+                useCases.addPackageToLowPriority(event.packageName)
             }
 
             is NotificationDashboardEvent.OnMarkAppRead -> {
@@ -106,6 +107,23 @@ class NotificationDashboardViewModel @Inject constructor(
 
             is NotificationDashboardEvent.OnSetAppPriority -> {
                 useCases.setAppPriorityOverride(event.packageName, event.priority)
+            }
+
+            is NotificationDashboardEvent.OnSetAppPriorityLocked -> {
+                useCases.setAppPriorityLocked(event.packageName, event.locked)
+            }
+
+            is NotificationDashboardEvent.OnSetCategoryPriority -> {
+                useCases.setCategoryPriorityOverride(event.category, event.priority)
+            }
+
+            is NotificationDashboardEvent.OnSetSchedulePeriod -> {
+                val updatedSchedule = state.schedule.toMutableList()
+                if (event.index in updatedSchedule.indices) {
+                    updatedSchedule[event.index] = event.period
+                    useCases.setNotificationSchedule(updatedSchedule)
+                    state = state.copy(schedule = updatedSchedule)
+                }
             }
 
             is NotificationDashboardEvent.OnSetBatchWindow -> {

@@ -64,6 +64,21 @@ object NotificationFilterDomainModule {
             GetAppPriorityOverride(preferences),
             GetDashboardSettings(preferences),
             SetDashboardSettings(preferences),
+            AddPackageToLowPriority(preferences),
+            IsAppPriorityLocked(preferences),
+            SetAppPriorityLocked(preferences),
+            GetCategoryPriorityOverride(preferences),
+            SetCategoryPriorityOverride(preferences),
+            GetNotificationSchedule(preferences),
+            SetNotificationSchedule(preferences),
+            GetClearedNotifications(notificationRepository),
+            MarkNotificationAsCleared(notificationRepository),
+            MarkNotificationAsDelivered(notificationRepository),
+            GetUndeliveredNotifications(notificationRepository),
+            GetPackageNotificationCountSince(notificationRepository),
+            GetChannelPriorityOverride(preferences),
+            SetChannelPriorityOverride(preferences),
+            GetAppPriorityInfoList(notificationRepository, preferences),
         )
     }
 

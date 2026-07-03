@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
+import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
 import ly.com.tahaben.notification_filter_domain.use_cases.NotificationFilterUseCases
 import ly.com.tahaben.notification_filter_domain.util.ServiceUtil
@@ -35,6 +36,7 @@ class NotificationFilterViewModel @Inject constructor(
     init {
         checkServiceStats()
         getNotifications()
+        getClearedNotifications()
         isFirstTimeOpened()
     }
 
@@ -64,13 +66,31 @@ class NotificationFilterViewModel @Inject constructor(
         getNotificationsJob =
             notificationFilterUseCases.getNotificationsFromDB()
                 .onEach { notifications ->
+                    val effectiveFilter = state.priorityFilter
+                    val nowMillis = System.currentTimeMillis()
+                    val standingCutoff = 3 * 3_600_000L
+
+                    val filtered = if (effectiveFilter == null) notifications
+                    else notifications.filter { item ->
+                        val isStanding = !item.isRead && (nowMillis - item.timestamp) > standingCutoff
+                        val effectivePriority = if (isStanding) item.priority.degraded(1) else item.priority
+                        effectivePriority == effectiveFilter
+                    }
                     state = state.copy(
                         isServiceEnabled = true,
-                        filteredNotifications = notifications
+                        allNotifications = notifications,
+                        filteredNotifications = filtered
                     )
                 }
                 .launchIn(viewModelScope)
+    }
 
+    private fun getClearedNotifications() {
+        notificationFilterUseCases.getClearedNotifications()
+            .onEach { cleared ->
+                state = state.copy(clearedNotifications = cleared)
+            }
+            .launchIn(viewModelScope)
     }
 
     fun onEvent(event: NotificationFilterEvent) {
@@ -103,6 +123,15 @@ class NotificationFilterViewModel @Inject constructor(
 
             is NotificationFilterEvent.OnLaunchAppInfoClick -> {
                 serviceUtil.launchAppInfo(event.appPackageName)
+            }
+
+            is NotificationFilterEvent.OnSetPriorityFilter -> {
+                state = state.copy(priorityFilter = event.priority)
+                getNotifications()
+            }
+
+            NotificationFilterEvent.OnToggleClearedView -> {
+                state = state.copy(showCleared = !state.showCleared)
             }
         }
     }

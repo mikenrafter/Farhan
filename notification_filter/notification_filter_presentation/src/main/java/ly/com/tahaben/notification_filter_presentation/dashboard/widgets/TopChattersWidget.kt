@@ -16,17 +16,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import ly.com.tahaben.core_ui.LocalSpacing
+import ly.com.tahaben.notification_filter_domain.model.TopChatter
 
 @Composable
 fun TopChattersWidget(
-    chatters: List<Pair<String, Int>>,
-    onExcludeApp: (String) -> Unit,
+    chatters: List<TopChatter>,
+    onSetLowPriority: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     if (chatters.isEmpty()) return
 
-    val maxCount = chatters.maxOfOrNull { it.second }?.coerceAtLeast(1) ?: 1
+    val maxCount = chatters.maxOfOrNull { it.count }?.coerceAtLeast(1) ?: 1
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -45,11 +46,11 @@ fun TopChattersWidget(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "Apps sending the most notifications — candidates for the exceptions list",
+                text = "Apps sending the most notifications — tap to set to low priority",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            chatters.forEachIndexed { index, (appName, count) ->
+            chatters.forEachIndexed { index, chatter ->
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -57,25 +58,25 @@ fun TopChattersWidget(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "${index + 1}. $appName",
+                            text = "${index + 1}. ${chatter.appName}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.weight(1f)
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "$count",
+                                text = "${chatter.count}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             TextButton(
-                                onClick = { onExcludeApp(appName) },
+                                onClick = { onSetLowPriority(chatter.packageName) },
                                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
                                     horizontal = 8.dp
                                 )
                             ) {
                                 Text(
-                                    text = "Exclude",
+                                    text = "Low Priority",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -83,7 +84,7 @@ fun TopChattersWidget(
                         }
                     }
                     LinearProgressIndicator(
-                        progress = { count.toFloat() / maxCount },
+                        progress = { chatter.count.toFloat() / maxCount },
                         modifier = Modifier.fillMaxWidth(),
                         color = MaterialTheme.colorScheme.primary,
                         trackColor = MaterialTheme.colorScheme.surfaceVariant

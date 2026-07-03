@@ -46,4 +46,22 @@ data class NotificationFilterUseCases(
     val getAppPriorityOverride: GetAppPriorityOverride,
     val getDashboardSettings: GetDashboardSettings,
     val setDashboardSettings: SetDashboardSettings,
+    // Priority management
+    val addPackageToLowPriority: AddPackageToLowPriority,
+    val isAppPriorityLocked: IsAppPriorityLocked,
+    val setAppPriorityLocked: SetAppPriorityLocked,
+    val getCategoryPriorityOverride: GetCategoryPriorityOverride,
+    val setCategoryPriorityOverride: SetCategoryPriorityOverride,
+    // Schedule
+    val getNotificationSchedule: GetNotificationSchedule,
+    val setNotificationSchedule: SetNotificationSchedule,
+    // Cleared notifications
+    val getClearedNotifications: GetClearedNotifications,
+    val markNotificationAsCleared: MarkNotificationAsCleared,
+    val markNotificationAsDelivered: MarkNotificationAsDelivered,
+    val getUndeliveredNotifications: GetUndeliveredNotifications,
+    val getPackageNotificationCountSince: GetPackageNotificationCountSince,
+    val getChannelPriorityOverride: GetChannelPriorityOverride,
+    val setChannelPriorityOverride: SetChannelPriorityOverride,
+    val getAppPriorityInfoList: GetAppPriorityInfoList,
 )

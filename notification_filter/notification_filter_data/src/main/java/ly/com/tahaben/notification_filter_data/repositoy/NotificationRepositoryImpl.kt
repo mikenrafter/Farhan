@@ -26,10 +26,13 @@ class NotificationRepositoryImpl(private val dao: NotificationDao) : Notificatio
     }
 
     override fun getNotifications(): Flow<List<NotificationItem>> {
-        return dao.getNotifications()
-            .map { entities ->
-                entities.map { it.toNotificationItem() }
-            }
+        return dao.getActiveNotifications()
+            .map { entities -> entities.map { it.toNotificationItem() } }
+    }
+
+    override fun getClearedNotifications(): Flow<List<NotificationItem>> {
+        return dao.getClearedNotifications()
+            .map { entities -> entities.map { it.toNotificationItem() } }
     }
 
     override suspend fun markNotificationRead(id: String) {
@@ -38,5 +41,26 @@ class NotificationRepositoryImpl(private val dao: NotificationDao) : Notificatio
 
     override suspend fun markAppNotificationsRead(packageName: String) {
         dao.markAppNotificationsRead(packageName)
+    }
+
+    override suspend fun markNotificationAsCleared(id: String) {
+        dao.markNotificationAsCleared(id)
+    }
+
+    override suspend fun markNotificationAsDelivered(id: String) {
+        dao.markNotificationAsDelivered(id)
+    }
+
+    override suspend fun getUndeliveredNotificationsUpToPriority(priorityLevel: Int): List<NotificationItem> {
+        return dao.getUndeliveredNotificationsUpToPriority(priorityLevel)
+            .map { it.toNotificationItem() }
+    }
+
+    override suspend fun getPackageNotificationCountSince(packageName: String, since: Long): Int {
+        return dao.getPackageNotificationCountSince(packageName, since)
+    }
+
+    override suspend fun getAllNotifications(): List<NotificationItem> {
+        return dao.getNotificationsAsList().map { it.toNotificationItem() }
     }
 }

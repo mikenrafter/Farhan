@@ -7,6 +7,6 @@ data class NotificationDashboardSummary(
     val isFlooding: Boolean = false,
     val priorityBreakdown: Map<NotificationPriority, Int> = emptyMap(),
     val categoryBreakdown: Map<NotificationCategory, Int> = emptyMap(),
-    val topChatters: List<Pair<String, Int>> = emptyList(),
+    val topChatters: List<TopChatter> = emptyList(),
     val healthScore: Int = 100
 )

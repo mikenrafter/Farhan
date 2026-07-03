@@ -61,7 +61,7 @@
     <string name="developer">Twórca:</string>
     <string name="taha_name_dev">Taha Ben Ashur (Tahaak67)</string>
     <string name="source_code">Kod źródłowy:</string>
-    <string name="app_name">Farhan</string>
+    <string name="app_name">Farhan-alpha</string>
     <string name="secure_settings_permission_msg">Uprawnienie wrażliwych ustawień nie zostało przyznane :(</string>
     <string name="secure_settings_permission_sub_msg">Farhan potrzebuje Uprawnienia wrażliwych ustawień by ustawić tryb szarości na Twoim ekranie</string>
     <string name="device_root_detected_msg">Wygląda na to, że Twoje urządzenie nie zostało zrootowane!, użyj przycisku poniżej jeśli chcesz przyznać uprawnienie z rootem</string>

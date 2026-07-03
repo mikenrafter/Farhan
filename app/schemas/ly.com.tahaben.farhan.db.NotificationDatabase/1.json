@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "6c2f2d99823a9b0a4c53c508650c3a6a",
+    "identityHash": "ad7b6a6e018490fff28e5612a8b00892",
     "entities": [
       {
         "tableName": "NotificationItemEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `appName` TEXT, `title` TEXT, `text` TEXT, `time` TEXT NOT NULL, `creatorPackage` TEXT NOT NULL, `timestamp` INTEGER NOT NULL DEFAULT 0, `priority` INTEGER NOT NULL DEFAULT 3, `category` TEXT NOT NULL DEFAULT 'OTHER', `isRead` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `appName` TEXT, `title` TEXT, `text` TEXT, `time` TEXT NOT NULL, `creatorPackage` TEXT NOT NULL, `timestamp` INTEGER NOT NULL DEFAULT 0, `priority` INTEGER NOT NULL DEFAULT 3, `category` TEXT NOT NULL DEFAULT 'OTHER', `isRead` INTEGER NOT NULL DEFAULT 0, `channelId` TEXT DEFAULT NULL, `isCleared` INTEGER NOT NULL DEFAULT 0, `isDelivered` INTEGER NOT NULL DEFAULT 0, `priorityReason` TEXT DEFAULT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -71,6 +71,34 @@
             "affinity": "INTEGER",
             "notNull": true,
             "defaultValue": "0"
+          },
+          {
+            "fieldPath": "channelId",
+            "columnName": "channelId",
+            "affinity": "TEXT",
+            "notNull": false,
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "isCleared",
+            "columnName": "isCleared",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "isDelivered",
+            "columnName": "isDelivered",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "priorityReason",
+            "columnName": "priorityReason",
+            "affinity": "TEXT",
+            "notNull": false,
+            "defaultValue": "NULL"
           }
         ],
         "primaryKey": {
@@ -86,7 +114,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6c2f2d99823a9b0a4c53c508650c3a6a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ad7b6a6e018490fff28e5612a8b00892')"
     ]
   }
 }

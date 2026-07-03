@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.map
 import ly.com.tahaben.notification_filter_domain.model.NotificationCategory
 import ly.com.tahaben.notification_filter_domain.model.NotificationDashboardSummary
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
+import ly.com.tahaben.notification_filter_domain.model.TopChatter
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
 import ly.com.tahaben.notification_filter_domain.repository.NotificationRepository
 import java.util.Calendar
@@ -24,7 +25,7 @@ class GetNotificationDashboardSummary(
                 set(Calendar.MILLISECOND, 0)
             }.timeInMillis
             val floodWindowStart = nowMillis - 10 * 60 * 1000L
-            val standingCutoff = nowMillis - preferences.getStandingThresholdHours() * 3600 * 1000L
+            val standingCutoff = nowMillis - preferences.getStandingThresholdHours() * 3600_000L
 
             val todayNotifications = notifications.filter { it.timestamp >= dayStart }
             val unread = notifications.filter { !it.isRead }
@@ -40,10 +41,14 @@ class GetNotificationDashboardSummary(
             }
             val topChatters = notifications
                 .groupBy { it.packageName }
-                .map { (_, items) ->
-                    Pair(items.first().appName ?: items.first().packageName, items.size)
+                .map { (packageName, items) ->
+                    TopChatter(
+                        appName = items.first().appName ?: packageName,
+                        packageName = packageName,
+                        count = items.size
+                    )
                 }
-                .sortedByDescending { it.second }
+                .sortedByDescending { it.count }
                 .take(5)
 
             val healthScore = computeHealthScore(

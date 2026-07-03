@@ -11,4 +11,8 @@ data class NotificationItem(
     val priority: NotificationPriority = NotificationPriority.MEDIUM,
     val category: NotificationCategory = NotificationCategory.OTHER,
     val isRead: Boolean = false,
+    val channelId: String? = null,
+    val isCleared: Boolean = false,
+    val isDelivered: Boolean = false,
+    val priorityReason: String? = null,
 )

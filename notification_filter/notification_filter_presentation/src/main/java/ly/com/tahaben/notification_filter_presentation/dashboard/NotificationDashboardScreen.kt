@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -29,6 +30,7 @@ import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.CategoryBreakdownWidget
 import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.FloodStatusWidget
 import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.NotificationHealthWidget
+import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.NotificationScheduleWidget
 import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.PriorityDistributionWidget
 import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.RecentBatchesWidget
 import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.StandingAlarmsWidget
@@ -41,6 +43,7 @@ fun NotificationDashboardScreen(
     onNavigateUp: () -> Unit,
     onNavigateToInbox: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToAppPriority: () -> Unit = {},
 ) {
     val spacing = LocalSpacing.current
     val state = viewModel.state
@@ -84,6 +87,12 @@ fun NotificationDashboardScreen(
                         }
                     },
                     actions = {
+                        IconButton(onClick = onNavigateToAppPriority) {
+                            Icon(
+                                imageVector = Icons.Filled.Tune,
+                                contentDescription = "App Priorities"
+                            )
+                        }
                         IconButton(onClick = onNavigateToInbox) {
                             Icon(
                                 imageVector = Icons.Filled.List,
@@ -142,18 +151,24 @@ fun NotificationDashboardScreen(
                         item {
                             TopChattersWidget(
                                 chatters = summary.topChatters,
-                                onExcludeApp = { appName ->
-                                    val batch = state.batches.firstOrNull {
-                                        it.appName == appName
-                                    }
-                                    if (batch != null) {
-                                        viewModel.onEvent(
-                                            NotificationDashboardEvent.OnExcludeApp(batch.packageName)
-                                        )
-                                    }
+                                onSetLowPriority = { packageName ->
+                                    viewModel.onEvent(
+                                        NotificationDashboardEvent.OnSetLowPriority(packageName)
+                                    )
                                 }
                             )
                         }
+                    }
+
+                    item {
+                        NotificationScheduleWidget(
+                            schedule = state.schedule,
+                            onPeriodChanged = { index, period ->
+                                viewModel.onEvent(
+                                    NotificationDashboardEvent.OnSetSchedulePeriod(index, period)
+                                )
+                            }
+                        )
                     }
 
                     item {

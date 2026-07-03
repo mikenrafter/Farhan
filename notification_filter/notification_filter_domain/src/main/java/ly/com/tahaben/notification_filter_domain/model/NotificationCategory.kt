@@ -10,6 +10,18 @@ enum class NotificationCategory {
     SYSTEM,
     OTHER;
 
+    val defaultPriority: NotificationPriority
+        get() = when (this) {
+            COMMUNICATION -> NotificationPriority.HIGH
+            SOCIAL -> NotificationPriority.LOW
+            PRODUCTIVITY -> NotificationPriority.MEDIUM
+            FINANCE -> NotificationPriority.MEDIUM
+            HEALTH -> NotificationPriority.MEDIUM
+            ENTERTAINMENT -> NotificationPriority.LOW
+            SYSTEM -> NotificationPriority.MEDIUM
+            OTHER -> NotificationPriority.MEDIUM
+        }
+
     companion object {
         fun fromName(name: String): NotificationCategory =
             entries.firstOrNull { it.name == name } ?: OTHER

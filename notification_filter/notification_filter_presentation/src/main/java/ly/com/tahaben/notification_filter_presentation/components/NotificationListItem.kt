@@ -17,10 +17,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -160,7 +162,56 @@ fun NotificationListItem(
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Normal,
             )
-//            Spacer(modifier = Modifier.height(spacing.spaceSmall))
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.wrapContentWidth()
+            ) {
+                val priorityLabel = notification.priority.name.lowercase()
+                    .replaceFirstChar { it.uppercase() }
+                Surface(
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+                    color = priorityBarColor.copy(alpha = 0.15f),
+                    tonalElevation = 0.dp
+                ) {
+                    Text(
+                        text = priorityLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = priorityBarColor,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+                val categoryLabel = notification.category.name.lowercase()
+                    .replaceFirstChar { it.uppercase() }
+                Surface(
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    tonalElevation = 0.dp
+                ) {
+                    Text(
+                        text = categoryLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+                if (!notification.channelId.isNullOrBlank()) {
+                    Surface(
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        tonalElevation = 0.dp
+                    ) {
+                        Text(
+                            text = notification.channelId.orEmpty(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
         }
 
         Spacer(modifier = Modifier.width(spacing.spaceSmall))

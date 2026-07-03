@@ -19,6 +19,10 @@ fun NotificationItem.toNotificationEntity(): NotificationItemEntity {
         priority = priority.level,
         category = category.name,
         isRead = isRead,
+        channelId = channelId,
+        isCleared = isCleared,
+        isDelivered = isDelivered,
+        priorityReason = priorityReason,
     )
 }
 
@@ -34,6 +38,10 @@ fun NotificationItemEntity.toNotificationItem(): NotificationItem {
         priority = ly.com.tahaben.notification_filter_domain.model.NotificationPriority.fromLevel(priority),
         category = ly.com.tahaben.notification_filter_domain.model.NotificationCategory.fromName(category),
         isRead = isRead,
+        channelId = channelId,
+        isCleared = isCleared,
+        isDelivered = isDelivered,
+        priorityReason = priorityReason,
     )
 }
 
@@ -61,7 +69,9 @@ fun Notification.toNotificationEntity(): NotificationItemEntity{
 fun StatusBarNotification.toNotificationItem(
     appName: String?,
     priority: ly.com.tahaben.notification_filter_domain.model.NotificationPriority = ly.com.tahaben.notification_filter_domain.model.NotificationPriority.MEDIUM,
-    category: ly.com.tahaben.notification_filter_domain.model.NotificationCategory = ly.com.tahaben.notification_filter_domain.model.NotificationCategory.OTHER
+    category: ly.com.tahaben.notification_filter_domain.model.NotificationCategory = ly.com.tahaben.notification_filter_domain.model.NotificationCategory.OTHER,
+    channelId: String? = null,
+    priorityReason: String? = null,
 ): NotificationItem {
     val notification = notification
     val extras = notification.extras
@@ -81,5 +91,9 @@ fun StatusBarNotification.toNotificationItem(
         priority = priority,
         category = category,
         isRead = false,
+        channelId = channelId,
+        isCleared = false,
+        isDelivered = false,
+        priorityReason = priorityReason,
     )
 }

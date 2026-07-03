@@ -17,4 +17,8 @@ data class NotificationItemEntity(
     @ColumnInfo(defaultValue = "3") val priority: Int = 3,
     @ColumnInfo(defaultValue = "'OTHER'") val category: String = "OTHER",
     @ColumnInfo(defaultValue = "0") val isRead: Boolean = false,
+    @ColumnInfo(defaultValue = "NULL") val channelId: String? = null,
+    @ColumnInfo(defaultValue = "0") val isCleared: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val isDelivered: Boolean = false,
+    @ColumnInfo(defaultValue = "NULL") val priorityReason: String? = null,
 )

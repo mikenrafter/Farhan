@@ -31,4 +31,22 @@ interface NotificationDao {
 
     @Query("UPDATE notificationitementity SET isRead = 1 WHERE creatorPackage = :packageName")
     suspend fun markAppNotificationsRead(packageName: String)
+
+    @Query("SELECT * FROM notificationitementity WHERE isCleared = 0")
+    fun getActiveNotifications(): Flow<List<NotificationItemEntity>>
+
+    @Query("SELECT * FROM notificationitementity WHERE isCleared = 1")
+    fun getClearedNotifications(): Flow<List<NotificationItemEntity>>
+
+    @Query("UPDATE notificationitementity SET isCleared = 1 WHERE id = :id")
+    suspend fun markNotificationAsCleared(id: String)
+
+    @Query("UPDATE notificationitementity SET isDelivered = 1 WHERE id = :id")
+    suspend fun markNotificationAsDelivered(id: String)
+
+    @Query("SELECT * FROM notificationitementity WHERE isDelivered = 0 AND isCleared = 0 AND priority <= :priorityLevel")
+    suspend fun getUndeliveredNotificationsUpToPriority(priorityLevel: Int): List<NotificationItemEntity>
+
+    @Query("SELECT COUNT(*) FROM notificationitementity WHERE creatorPackage = :packageName AND timestamp >= :since AND isCleared = 0")
+    suspend fun getPackageNotificationCountSince(packageName: String, since: Long): Int
 }

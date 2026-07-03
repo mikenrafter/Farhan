@@ -11,10 +11,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -26,6 +29,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -64,6 +68,7 @@ import ly.com.tahaben.core_ui.components.HowDialog
 import ly.com.tahaben.core_ui.components.PermissionNotGrantedContent
 import ly.com.tahaben.core_ui.mirror
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
+import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_presentation.components.MenuOption
 import ly.com.tahaben.notification_filter_presentation.components.NotificationListItem
 import ly.com.tahaben.showcase_layout_compose.model.Arrow
@@ -177,7 +182,38 @@ fun NotificationFilterScreen(
                         Timber.d("shouldshowcase = true")
                         isShowcasing = true
                     }
-                    if (state.filteredNotifications.isEmpty()) {
+                    // Priority filter chips + cleared toggle
+                    val displayList = if (state.showCleared) state.clearedNotifications else state.filteredNotifications
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(horizontal = spacing.spaceMedium, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(spacing.spaceSmall)
+                    ) {
+                        listOf(
+                            NotificationPriority.HIGH to "High",
+                            NotificationPriority.MEDIUM to "Medium",
+                            NotificationPriority.LOW to "Low",
+                            null to "All"
+                        ).forEach { (priority, label) ->
+                            FilterChip(
+                                selected = !state.showCleared && state.priorityFilter == priority,
+                                onClick = {
+                                    if (state.showCleared) viewModel.onEvent(NotificationFilterEvent.OnToggleClearedView)
+                                    viewModel.onEvent(NotificationFilterEvent.OnSetPriorityFilter(priority))
+                                },
+                                label = { Text(label, style = MaterialTheme.typography.labelSmall) }
+                            )
+                        }
+                        FilterChip(
+                            selected = state.showCleared,
+                            onClick = { viewModel.onEvent(NotificationFilterEvent.OnToggleClearedView) },
+                            label = { Text("Cleared", style = MaterialTheme.typography.labelSmall) }
+                        )
+                    }
+
+                    if (displayList.isEmpty()) {
                         Column(
                             modifier = Modifier.fillMaxSize(),
                             horizontalAlignment = Alignment.CenterHorizontally
@@ -206,7 +242,7 @@ fun NotificationFilterScreen(
                                 )
                             ) {
                                 items(
-                                    state.filteredNotifications,
+                                    displayList,
                                     NotificationItem::id
                                 ) { notificationItem ->
                                     val coroutineScope = rememberCoroutineScope()

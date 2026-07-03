@@ -7,7 +7,12 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import ly.com.tahaben.core.util.GlobalKey
+import ly.com.tahaben.notification_filter_domain.model.NotificationCategory
+import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
+import ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
+import org.json.JSONArray
+import org.json.JSONObject
 import timber.log.Timber
 import java.util.Calendar
 
@@ -183,7 +188,7 @@ class DefaultPreferences(
     }
 
     override fun getStandingThresholdHours(): Int =
-        sharedPref.getInt(Preferences.KEY_STANDING_THRESHOLD_HOURS, 24)
+        sharedPref.getInt(Preferences.KEY_STANDING_THRESHOLD_HOURS, 3)
 
     override fun setStandingThresholdHours(hours: Int) {
         sharedPref.edit().putInt(Preferences.KEY_STANDING_THRESHOLD_HOURS, hours).apply()
@@ -194,5 +199,104 @@ class DefaultPreferences(
 
     override fun setFloodThreshold(count: Int) {
         sharedPref.edit().putInt(Preferences.KEY_FLOOD_THRESHOLD, count).apply()
+    }
+
+    override fun isAppPriorityLocked(packageName: String): Boolean =
+        sharedPref.getBoolean(Preferences.KEY_APP_PRIORITY_LOCKED_PREFIX + packageName, false)
+
+    override fun setAppPriorityLocked(packageName: String, locked: Boolean) {
+        sharedPref.edit().putBoolean(Preferences.KEY_APP_PRIORITY_LOCKED_PREFIX + packageName, locked).apply()
+    }
+
+    override fun getCategoryPriorityOverride(category: NotificationCategory): NotificationPriority? {
+        val stored = sharedPref.getString(Preferences.KEY_CATEGORY_PRIORITY_PREFIX + category.name, null) ?: return null
+        return try { NotificationPriority.valueOf(stored) } catch (e: IllegalArgumentException) { null }
+    }
+
+    override fun setCategoryPriorityOverride(category: NotificationCategory, priority: NotificationPriority?) {
+        val key = Preferences.KEY_CATEGORY_PRIORITY_PREFIX + category.name
+        if (priority == null) sharedPref.edit().remove(key).apply()
+        else sharedPref.edit().putString(key, priority.name).apply()
+    }
+
+    override fun getNotificationSchedule(): List<NotificationSchedulePeriod> {
+        val json = sharedPref.getString(Preferences.KEY_NOTIFICATION_SCHEDULE, null)
+            ?: return NotificationSchedulePeriod.DEFAULT_SCHEDULE
+        return try {
+            val arr = JSONArray(json)
+            (0 until arr.length()).map { i ->
+                val obj = arr.getJSONObject(i)
+                NotificationSchedulePeriod(
+                    startHour = obj.getInt("sh"),
+                    startMinute = obj.getInt("sm"),
+                    endHour = obj.getInt("eh"),
+                    endMinute = obj.getInt("em"),
+                    budgetPoints = obj.getInt("b"),
+                )
+            }
+        } catch (e: Exception) {
+            NotificationSchedulePeriod.DEFAULT_SCHEDULE
+        }
+    }
+
+    override fun setNotificationSchedule(schedule: List<NotificationSchedulePeriod>) {
+        val arr = JSONArray()
+        schedule.forEach { period ->
+            arr.put(JSONObject().apply {
+                put("sh", period.startHour)
+                put("sm", period.startMinute)
+                put("eh", period.endHour)
+                put("em", period.endMinute)
+                put("b", period.budgetPoints)
+            })
+        }
+        sharedPref.edit().putString(Preferences.KEY_NOTIFICATION_SCHEDULE, arr.toString()).apply()
+    }
+
+    override fun getBudgetSpentCurrentPeriod(): Int =
+        sharedPref.getInt(Preferences.KEY_BUDGET_SPENT, 0)
+
+    override fun setBudgetSpentCurrentPeriod(points: Int) {
+        sharedPref.edit().putInt(Preferences.KEY_BUDGET_SPENT, points).apply()
+    }
+
+    override fun getCurrentBudgetPeriodStartMinute(): Int =
+        sharedPref.getInt(Preferences.KEY_BUDGET_PERIOD_START_MINUTE, -1)
+
+    override fun setCurrentBudgetPeriodStartMinute(minuteOfDay: Int) {
+        sharedPref.edit().putInt(Preferences.KEY_BUDGET_PERIOD_START_MINUTE, minuteOfDay).apply()
+    }
+
+    override fun getHourlyPassthroughCount(): Int =
+        sharedPref.getInt(Preferences.KEY_HOURLY_PASSTHROUGH_COUNT, 0)
+
+    override fun setHourlyPassthroughCount(count: Int) {
+        sharedPref.edit().putInt(Preferences.KEY_HOURLY_PASSTHROUGH_COUNT, count).apply()
+    }
+
+    override fun getPassthroughWindowHour(): Int =
+        sharedPref.getInt(Preferences.KEY_PASSTHROUGH_WINDOW_HOUR, -1)
+
+    override fun setPassthroughWindowHour(hour: Int) {
+        sharedPref.edit().putInt(Preferences.KEY_PASSTHROUGH_WINDOW_HOUR, hour).apply()
+    }
+
+    override fun getChannelPriorityOverride(packageName: String, channelId: String): ly.com.tahaben.notification_filter_domain.model.NotificationPriority? {
+        val key = Preferences.KEY_CHANNEL_PRIORITY_PREFIX + packageName + "_" + channelId
+        val stored = sharedPref.getString(key, null) ?: return null
+        return try {
+            ly.com.tahaben.notification_filter_domain.model.NotificationPriority.valueOf(stored)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
+    }
+
+    override fun setChannelPriorityOverride(packageName: String, channelId: String, priority: ly.com.tahaben.notification_filter_domain.model.NotificationPriority?) {
+        val key = Preferences.KEY_CHANNEL_PRIORITY_PREFIX + packageName + "_" + channelId
+        if (priority == null) {
+            sharedPref.edit().remove(key).apply()
+        } else {
+            sharedPref.edit().putString(key, priority.name).apply()
+        }
     }
 }
