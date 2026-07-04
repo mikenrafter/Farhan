@@ -28,6 +28,19 @@ object NotificationFilterDomainModule {
         preferences: Preferences,
         installedAppsRepo: InstalledAppsRepository
     ): NotificationFilterUseCases {
+        val setAppPriorityOverride = SetAppPriorityOverride(preferences)
+        val registerKnownNotificationSources = RegisterKnownNotificationSources(preferences)
+        val scanVisibleNotificationSources = ScanVisibleNotificationSources(
+            serviceUtil,
+            registerKnownNotificationSources,
+        )
+        val scanInstalledNotificationSources = ScanInstalledNotificationSources(
+            GetInstalledAppsList(installedAppsRepo),
+            serviceUtil,
+            registerKnownNotificationSources,
+        )
+        val classifyNotification = ClassifyNotification(preferences)
+
         return NotificationFilterUseCases(
             CheckIfNotificationServiceIsEnabled(serviceUtil),
             CheckIfNotificationAccessIsGranted(serviceUtil),
@@ -41,7 +54,7 @@ object NotificationFilterDomainModule {
             OpenNotification(serviceUtil, context),
             IsPackageInNotificationException(preferences),
             GetInstalledAppsList(installedAppsRepo),
-            AddPackageToNotificationException(preferences),
+            AddPackageToNotificationException(preferences, setAppPriorityOverride),
             RemovePackageFromNotificationException(preferences),
             GetNotifyMeHour(preferences),
             GetNotifyMeMinute(preferences),
@@ -55,12 +68,12 @@ object NotificationFilterDomainModule {
             OpenSettings(serviceUtil),
             CanScheduleExactAlarms(serviceUtil),
             OpenExactAlarmsPermissionScreen(serviceUtil),
-            ClassifyNotification(preferences),
+            classifyNotification,
             GetNotificationBatches(notificationRepository, preferences),
             GetNotificationDashboardSummary(notificationRepository, preferences),
             MarkNotificationRead(notificationRepository),
             MarkAppNotificationsRead(notificationRepository),
-            SetAppPriorityOverride(preferences),
+            setAppPriorityOverride,
             GetAppPriorityOverride(preferences),
             GetDashboardSettings(preferences),
             SetDashboardSettings(preferences),
@@ -71,6 +84,8 @@ object NotificationFilterDomainModule {
             SetCategoryPriorityOverride(preferences),
             GetNotificationSchedule(preferences),
             SetNotificationSchedule(preferences),
+            GetCurrentBudgetStatus(preferences),
+            ClearBudgetSpend(preferences),
             GetClearedNotifications(notificationRepository),
             MarkNotificationAsCleared(notificationRepository),
             MarkNotificationAsDelivered(notificationRepository),
@@ -78,7 +93,19 @@ object NotificationFilterDomainModule {
             GetPackageNotificationCountSince(notificationRepository),
             GetChannelPriorityOverride(preferences),
             SetChannelPriorityOverride(preferences),
-            GetAppPriorityInfoList(notificationRepository, preferences),
+            GetAppPriorityInfoList(
+                preferences,
+                classifyNotification,
+                scanInstalledNotificationSources,
+                scanVisibleNotificationSources,
+            ),
+            GetPriorityDeliverySettings(preferences),
+            SetPriorityDeliverySetting(preferences),
+            IsDeliveryTestingMode(preferences),
+            SetDeliveryTestingMode(preferences),
+            registerKnownNotificationSources,
+            scanVisibleNotificationSources,
+            scanInstalledNotificationSources,
         )
     }
 

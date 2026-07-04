@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ly.com.tahaben.notification_filter_domain.use_cases.NotificationFilterUseCases
+import ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod
 import ly.com.tahaben.notification_filter_domain.util.ServiceUtil
 import javax.inject.Inject
 
@@ -40,7 +41,14 @@ class NotificationDashboardViewModel @Inject constructor(
             standingThresholdHours = useCases.getDashboardSettings.getStandingThresholdHours(),
             floodThreshold = useCases.getDashboardSettings.getFloodThreshold(),
             schedule = useCases.getNotificationSchedule(),
+            budgetStatus = useCases.getCurrentBudgetStatus(),
+            priorityDeliverySettings = useCases.getPriorityDeliverySettings(),
+            deliveryTestingMode = useCases.isDeliveryTestingMode(),
         )
+    }
+
+    fun reloadSettings() {
+        loadSettings()
     }
 
     private fun observeSummary() {
@@ -122,8 +130,36 @@ class NotificationDashboardViewModel @Inject constructor(
                 if (event.index in updatedSchedule.indices) {
                     updatedSchedule[event.index] = event.period
                     useCases.setNotificationSchedule(updatedSchedule)
-                    state = state.copy(schedule = updatedSchedule)
+                    state = state.copy(
+                        schedule = updatedSchedule,
+                        budgetStatus = useCases.getCurrentBudgetStatus(),
+                    )
                 }
+            }
+
+            is NotificationDashboardEvent.OnAdjustScheduleBoundary -> {
+                val updatedSchedule = NotificationSchedulePeriod.adjustBoundary(
+                    schedule = state.schedule,
+                    boundaryIndex = event.boundaryIndex,
+                    newHour = event.hour,
+                    newMinute = event.minute,
+                )
+                if (updatedSchedule != null) {
+                    useCases.setNotificationSchedule(updatedSchedule)
+                    state = state.copy(
+                        schedule = updatedSchedule,
+                        budgetStatus = useCases.getCurrentBudgetStatus(),
+                    )
+                }
+            }
+
+            is NotificationDashboardEvent.OnSetPriorityDeliverySetting -> {
+                useCases.setPriorityDeliverySetting(event.priority, event.setting)
+                state = state.copy(
+                    priorityDeliverySettings = state.priorityDeliverySettings.toMutableMap().apply {
+                        put(event.priority, event.setting)
+                    },
+                )
             }
 
             is NotificationDashboardEvent.OnSetBatchWindow -> {

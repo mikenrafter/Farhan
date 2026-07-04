@@ -1,6 +1,12 @@
 package ly.com.tahaben.notification_filter_presentation
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -65,7 +71,9 @@ import ly.com.tahaben.core.R
 import ly.com.tahaben.core_ui.LocalSpacing
 import ly.com.tahaben.core_ui.OnLifecycleEvent
 import ly.com.tahaben.core_ui.components.HowDialog
+import ly.com.tahaben.core_ui.components.PermissionDialog
 import ly.com.tahaben.core_ui.components.PermissionNotGrantedContent
+import ly.com.tahaben.core_ui.components.PostNotificationPermissionTextProvider
 import ly.com.tahaben.core_ui.mirror
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
@@ -84,7 +92,8 @@ fun NotificationFilterScreen(
     navigateToNotificationSettings: () -> Unit,
     navigateToDashboard: () -> Unit = {},
     onNavigateUp: () -> Unit,
-    isUiModeDark: Boolean
+    isUiModeDark: Boolean,
+    shouldShowRational: (String) -> Boolean,
 ) {
     val spacing = LocalSpacing.current
     val state = viewModel.state
@@ -92,11 +101,36 @@ fun NotificationFilterScreen(
     val density = LocalDensity.current
     val context = LocalContext.current
     val localLayoutDirection = LocalLayoutDirection.current
+    var showPostNotificationDialog by remember { mutableStateOf(false) }
+    var isPostNotificationPermanentlyDeclined by remember { mutableStateOf(false) }
+
+    val postNotificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !isGranted) {
+                isPostNotificationPermanentlyDeclined = !shouldShowRational(Manifest.permission.POST_NOTIFICATIONS)
+                showPostNotificationDialog = true
+            }
+        }
+    )
+
+    fun requestPostNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (!state.isPermissionGranted) return
+        val granted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS,
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!granted) {
+            postNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     OnLifecycleEvent { _, event ->
         when (event) {
             Lifecycle.Event.ON_RESUME -> {
                 viewModel.checkServiceStats()
+                requestPostNotificationPermissionIfNeeded()
             }
 
             else -> Unit
@@ -192,6 +226,7 @@ fun NotificationFilterScreen(
                         horizontalArrangement = Arrangement.spacedBy(spacing.spaceSmall)
                     ) {
                         listOf(
+                            NotificationPriority.CRITICAL to "Critical",
                             NotificationPriority.HIGH to "High",
                             NotificationPriority.MEDIUM to "Medium",
                             NotificationPriority.LOW to "Low",
@@ -320,6 +355,8 @@ fun NotificationFilterScreen(
                                                         NotificationListItem(
                                                             modifier = Modifier,
                                                             notification = notificationItem,
+                                                            displayPriority = state.displayPriorities[notificationItem.id]
+                                                                ?: notificationItem.priority,
                                                             onClick = {
                                                                 Timber.d("notification click composable")
                                                                 viewModel.onEvent(
@@ -330,7 +367,7 @@ fun NotificationFilterScreen(
                                                             },
                                                             menuOptions = listOf(
                                                                 MenuOption(
-                                                                    text = stringResource(id = R.string.exclude_this_app),
+                                                                    text = "Always allow (Critical)",
                                                                     onClick = {
                                                                         viewModel.onEvent(
                                                                             NotificationFilterEvent.OnExcludeAppClick(
@@ -339,7 +376,7 @@ fun NotificationFilterScreen(
                                                                         )
                                                                         Toast.makeText(
                                                                             context,
-                                                                            R.string.app_excluded,
+                                                                            "${notificationItem.appName} will always pass through",
                                                                             Toast.LENGTH_SHORT
                                                                         ).show()
                                                                     }),
@@ -352,7 +389,16 @@ fun NotificationFilterScreen(
                                                                             )
                                                                         )
                                                                     }),
-                                                            )
+                                                            ),
+                                                            actions = state.notificationActions[notificationItem.id] ?: emptyList(),
+                                                            onActionClick = { actionIndex ->
+                                                                viewModel.onEvent(
+                                                                    NotificationFilterEvent.OnFireNotificationAction(
+                                                                        notificationId = notificationItem.id,
+                                                                        actionIndex = actionIndex
+                                                                    )
+                                                                )
+                                                            }
                                                         )
                                                     }
                                                 }
@@ -390,6 +436,23 @@ fun NotificationFilterScreen(
             gifId = R.drawable.notification_permission_howto,
             gifDescription = stringResource(R.string.how_to_enable_permission),
             onDismiss = { openDialog.value = false }
+        )
+    }
+    if (showPostNotificationDialog) {
+        PermissionDialog(
+            permissionTextProvider = PostNotificationPermissionTextProvider(),
+            isPermanentlyDeclined = isPostNotificationPermanentlyDeclined,
+            onDismiss = { showPostNotificationDialog = false },
+            onOkClick = {
+                showPostNotificationDialog = false
+                if (!isPostNotificationPermanentlyDeclined) {
+                    postNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            },
+            onGoToAppSettingsClick = {
+                showPostNotificationDialog = false
+                viewModel.openAppSettings()
+            },
         )
     }
 }

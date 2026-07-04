@@ -10,4 +10,6 @@ sealed class NotificationSettingsEvent {
     data class DeclinedPermission(val permission: String) : NotificationSettingsEvent()
     data class DismissWarningDialog(val doNotShowAgain: Boolean) : NotificationSettingsEvent()
     data class OnShouldShowcase(val showcase: Boolean): NotificationSettingsEvent()
+    data class OnSetDeliveryTestingMode(val enabled: Boolean) : NotificationSettingsEvent()
+    object ClearBudgetSpend : NotificationSettingsEvent()
 }

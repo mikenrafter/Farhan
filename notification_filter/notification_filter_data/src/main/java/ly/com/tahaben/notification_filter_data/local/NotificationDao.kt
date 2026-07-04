@@ -44,7 +44,7 @@ interface NotificationDao {
     @Query("UPDATE notificationitementity SET isDelivered = 1 WHERE id = :id")
     suspend fun markNotificationAsDelivered(id: String)
 
-    @Query("SELECT * FROM notificationitementity WHERE isDelivered = 0 AND isCleared = 0 AND priority <= :priorityLevel")
+    @Query("SELECT * FROM notificationitementity WHERE isDelivered = 0 AND isCleared = 0 AND priority <= :priorityLevel ORDER BY priority ASC, timestamp ASC")
     suspend fun getUndeliveredNotificationsUpToPriority(priorityLevel: Int): List<NotificationItemEntity>
 
     @Query("SELECT COUNT(*) FROM notificationitementity WHERE creatorPackage = :packageName AND timestamp >= :since AND isCleared = 0")

@@ -42,7 +42,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import ly.com.tahaben.core_ui.LocalSpacing
+import ly.com.tahaben.core_ui.OnLifecycleEvent
 import ly.com.tahaben.core_ui.mirror
 import ly.com.tahaben.notification_filter_domain.model.AppPriorityInfo
 import ly.com.tahaben.notification_filter_domain.model.ChannelPriorityInfo
@@ -63,6 +65,12 @@ fun AppPriorityScreen(
 ) {
     val spacing = LocalSpacing.current
     val state = viewModel.state
+
+    OnLifecycleEvent { _, event ->
+        if (event == Lifecycle.Event.ON_RESUME) {
+            viewModel.refresh()
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
@@ -88,10 +96,11 @@ fun AppPriorityScreen(
         } else if (state.apps.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize()) {
                 Text(
-                    text = "No notifications recorded yet.",
-                    modifier = Modifier.align(Alignment.Center),
+                    text = "No apps found.\nInstall apps that send notifications to manage their priorities here.",
+                    modifier = Modifier.align(Alignment.Center).padding(24.dp),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 )
             }
         } else {

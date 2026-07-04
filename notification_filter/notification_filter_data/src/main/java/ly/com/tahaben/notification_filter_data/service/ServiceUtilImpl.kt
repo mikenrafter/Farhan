@@ -16,6 +16,7 @@ import ly.com.tahaben.core.util.BroadcastReceiverNotification
 import ly.com.tahaben.core.util.MESSAGE_EXTRA
 import ly.com.tahaben.core.util.NOTIFICATION_ID
 import ly.com.tahaben.core.util.TITLE_EXTRA
+import ly.com.tahaben.notification_filter_domain.model.VisibleNotificationSource
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
 import ly.com.tahaben.notification_filter_domain.util.ServiceUtil
 import timber.log.Timber
@@ -60,7 +61,30 @@ class ServiceUtilImpl(
 
     override fun deleteNotificationIntent(notificationKey: String) {
         NotificationService.removeIntentFromHashmap(notificationKey)
+        NotificationService.removeActionsForNotification(notificationKey)
     }
+
+    override fun getNotificationActionTitles(notificationId: String): List<String> =
+        NotificationService.getActionsForNotification(notificationId).map { it.title.toString() }
+
+    override fun fireNotificationAction(notificationId: String, actionIndex: Int) {
+        try {
+            NotificationService.getActionsForNotification(notificationId)
+                .getOrNull(actionIndex)
+                ?.actionIntent
+                ?.send()
+        } catch (e: android.app.PendingIntent.CanceledException) {
+            Timber.e("Action intent cancelled for $notificationId[$actionIndex]: ${e.message}")
+        }
+    }
+
+    override fun getVisibleNotificationSources(): List<VisibleNotificationSource> =
+        NotificationService.getVisibleNotificationSources()
+
+    override fun getOwnPackageName(): String = context.packageName
+
+    override fun getNotificationChannelsForPackage(packageName: String): List<String> =
+        NotificationService.getNotificationChannelsForPackage(packageName)
 
     override fun createNotifyMeNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

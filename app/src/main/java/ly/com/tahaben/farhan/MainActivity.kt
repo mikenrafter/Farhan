@@ -54,7 +54,6 @@ import ly.com.tahaben.notification_filter_presentation.apppriority.AppPrioritySc
 import ly.com.tahaben.notification_filter_presentation.dashboard.NotificationDashboardScreen
 import ly.com.tahaben.notification_filter_presentation.onboarding.NotificationFilterOnBoardingScreen
 import ly.com.tahaben.notification_filter_presentation.settings.NotificationFilterSettingsScreen
-import ly.com.tahaben.notification_filter_presentation.settings.exceptions.NotificationFilterExceptionsScreen
 import ly.com.tahaben.onboarding_presentaion.OnBoardingScreen
 import ly.com.tahaben.onboarding_presentaion.SelectAppearanceScreen
 import ly.com.tahaben.onboarding_presentaion.about.AboutScreen
@@ -314,7 +313,8 @@ class MainActivity : ComponentActivity() {
                                     onNavigateUp = {
                                         navController.navigateUp()
                                     },
-                                    isUiModeDark = isDarkMode
+                                    isUiModeDark = isDarkMode,
+                                    shouldShowRational = ::shouldShowRational,
                                 )
                             }
 
@@ -342,7 +342,6 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(Routes.NOTIFICATION_FILTER_SETTINGS) {
                             NotificationFilterSettingsScreen(
-                                onNavigateToExceptions = { navController.navigate(Routes.NOTIFICATION_FILTER_EXCEPTIONS) },
                                 onNavigateUp = { navController.navigateUp() },
                                 shouldShowRational = ::shouldShowRational,
                                 snackbarHostState = snackbarHostState,
@@ -352,12 +351,6 @@ class MainActivity : ComponentActivity() {
                         composable(Routes.INFINITE_SCROLLING_EXCEPTIONS) {
                             InfiniteScrollExceptionsScreen(
                                 scaffoldState = snackbarHostState,
-                                onNavigateUp = { navController.navigateUp() },
-                            )
-                        }
-                        composable(Routes.NOTIFICATION_FILTER_EXCEPTIONS) {
-                            NotificationFilterExceptionsScreen(
-                                snackbarHostState = snackbarHostState,
                                 onNavigateUp = { navController.navigateUp() },
                             )
                         }

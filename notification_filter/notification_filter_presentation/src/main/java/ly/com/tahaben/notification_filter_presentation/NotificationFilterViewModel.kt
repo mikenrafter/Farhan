@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ly.com.tahaben.notification_filter_domain.inbox.NotificationInboxFilter
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
@@ -66,23 +67,37 @@ class NotificationFilterViewModel @Inject constructor(
         getNotificationsJob =
             notificationFilterUseCases.getNotificationsFromDB()
                 .onEach { notifications ->
-                    val effectiveFilter = state.priorityFilter
-                    val nowMillis = System.currentTimeMillis()
-                    val standingCutoff = 3 * 3_600_000L
-
-                    val filtered = if (effectiveFilter == null) notifications
-                    else notifications.filter { item ->
-                        val isStanding = !item.isRead && (nowMillis - item.timestamp) > standingCutoff
-                        val effectivePriority = if (isStanding) item.priority.degraded(1) else item.priority
-                        effectivePriority == effectiveFilter
-                    }
-                    state = state.copy(
-                        isServiceEnabled = true,
-                        allNotifications = notifications,
-                        filteredNotifications = filtered
-                    )
+                    applyNotificationList(notifications)
                 }
                 .launchIn(viewModelScope)
+    }
+
+    private fun applyNotificationList(notifications: List<NotificationItem>) {
+        val nowMillis = System.currentTimeMillis()
+        val standingThresholdHours = sharedPref.getStandingThresholdHours()
+        val filtered = NotificationInboxFilter.filter(
+            notifications = notifications,
+            priorityFilter = state.priorityFilter,
+            standingThresholdHours = standingThresholdHours,
+            nowMillis = nowMillis,
+        )
+        val displayPriorities = notifications.associate { item ->
+            item.id to NotificationInboxFilter.effectivePriority(
+                item = item,
+                standingThresholdHours = standingThresholdHours,
+                nowMillis = nowMillis,
+            )
+        }
+        val actions = notifications.associate { item ->
+            item.id to serviceUtil.getNotificationActionTitles(item.id)
+        }.filterValues { it.isNotEmpty() }
+        state = state.copy(
+            isServiceEnabled = true,
+            allNotifications = notifications,
+            filteredNotifications = filtered,
+            notificationActions = actions,
+            displayPriorities = displayPriorities,
+        )
     }
 
     private fun getClearedNotifications() {
@@ -118,7 +133,10 @@ class NotificationFilterViewModel @Inject constructor(
             }
 
             is NotificationFilterEvent.OnExcludeAppClick -> {
-                notificationFilterUseCases.addPackageToNotificationException(event.appPackageName)
+                notificationFilterUseCases.setAppPriorityOverride(
+                    event.appPackageName,
+                    NotificationPriority.CRITICAL,
+                )
             }
 
             is NotificationFilterEvent.OnLaunchAppInfoClick -> {
@@ -127,11 +145,15 @@ class NotificationFilterViewModel @Inject constructor(
 
             is NotificationFilterEvent.OnSetPriorityFilter -> {
                 state = state.copy(priorityFilter = event.priority)
-                getNotifications()
+                applyNotificationList(state.allNotifications)
             }
 
             NotificationFilterEvent.OnToggleClearedView -> {
                 state = state.copy(showCleared = !state.showCleared)
+            }
+
+            is NotificationFilterEvent.OnFireNotificationAction -> {
+                serviceUtil.fireNotificationAction(event.notificationId, event.actionIndex)
             }
         }
     }
@@ -176,5 +198,9 @@ class NotificationFilterViewModel @Inject constructor(
         state = state.copy(
             isFirstTimeOpened = false
         )
+    }
+
+    fun openAppSettings() {
+        notificationFilterUseCases.openAppSettings()
     }
 }

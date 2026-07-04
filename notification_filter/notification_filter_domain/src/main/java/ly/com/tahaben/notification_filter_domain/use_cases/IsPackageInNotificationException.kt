@@ -6,6 +6,6 @@ class IsPackageInNotificationException(
     private val sharedPref: Preferences
 ) {
     operator fun invoke(packageName: String): Boolean {
-        return sharedPref.isPackageInNotificationExceptions(packageName)
+        return sharedPref.shouldPassThroughNotification(packageName)
     }
 }

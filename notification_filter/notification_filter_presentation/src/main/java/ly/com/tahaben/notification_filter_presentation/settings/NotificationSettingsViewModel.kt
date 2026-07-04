@@ -32,6 +32,7 @@ class NotificationSettingsViewModel @Inject constructor(
         getNotifyMeHour()
         checkServiceStats()
         getNotifyState()
+        loadDeliveryTestingMode()
         performPermissionSilentChecks()
         shouldShowWarningDialog()
     }
@@ -83,6 +84,12 @@ class NotificationSettingsViewModel @Inject constructor(
             it.copy(
                 notifyMeHour = notificationFilterUseCases.getNotifyMeHour()
             )
+        }
+    }
+
+    private fun loadDeliveryTestingMode() {
+        _state.update {
+            it.copy(isDeliveryTestingMode = notificationFilterUseCases.isDeliveryTestingMode())
         }
     }
 
@@ -175,6 +182,17 @@ class NotificationSettingsViewModel @Inject constructor(
                         isShowcaseOn = event.showcase
                     )
                 }
+            }
+
+            is NotificationSettingsEvent.OnSetDeliveryTestingMode -> {
+                notificationFilterUseCases.setDeliveryTestingMode(event.enabled)
+                _state.update {
+                    it.copy(isDeliveryTestingMode = event.enabled)
+                }
+            }
+
+            NotificationSettingsEvent.ClearBudgetSpend -> {
+                notificationFilterUseCases.clearBudgetSpend()
             }
 
         }

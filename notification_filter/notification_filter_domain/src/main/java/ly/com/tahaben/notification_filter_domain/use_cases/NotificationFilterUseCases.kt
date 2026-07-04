@@ -55,6 +55,8 @@ data class NotificationFilterUseCases(
     // Schedule
     val getNotificationSchedule: GetNotificationSchedule,
     val setNotificationSchedule: SetNotificationSchedule,
+    val getCurrentBudgetStatus: GetCurrentBudgetStatus,
+    val clearBudgetSpend: ClearBudgetSpend,
     // Cleared notifications
     val getClearedNotifications: GetClearedNotifications,
     val markNotificationAsCleared: MarkNotificationAsCleared,
@@ -64,4 +66,11 @@ data class NotificationFilterUseCases(
     val getChannelPriorityOverride: GetChannelPriorityOverride,
     val setChannelPriorityOverride: SetChannelPriorityOverride,
     val getAppPriorityInfoList: GetAppPriorityInfoList,
+    val getPriorityDeliverySettings: GetPriorityDeliverySettings,
+    val setPriorityDeliverySetting: SetPriorityDeliverySetting,
+    val isDeliveryTestingMode: IsDeliveryTestingMode,
+    val setDeliveryTestingMode: SetDeliveryTestingMode,
+    val registerKnownNotificationSources: RegisterKnownNotificationSources,
+    val scanVisibleNotificationSources: ScanVisibleNotificationSources,
+    val scanInstalledNotificationSources: ScanInstalledNotificationSources,
 )

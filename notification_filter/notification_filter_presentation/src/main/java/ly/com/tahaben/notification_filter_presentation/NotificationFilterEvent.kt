@@ -15,4 +15,6 @@ sealed class NotificationFilterEvent {
     data class OnLaunchAppInfoClick(val appPackageName: String) : NotificationFilterEvent()
     data class OnSetPriorityFilter(val priority: NotificationPriority?) : NotificationFilterEvent()
     object OnToggleClearedView : NotificationFilterEvent()
+    data class OnFireNotificationAction(val notificationId: String, val actionIndex: Int) :
+        NotificationFilterEvent()
 }

@@ -7,9 +7,14 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import ly.com.tahaben.core.util.GlobalKey
+import ly.com.tahaben.notification_filter_domain.model.BudgetBehavior
+import ly.com.tahaben.notification_filter_domain.model.BudgetSpendEntry
+import ly.com.tahaben.notification_filter_domain.model.DeliveryCadence
+import ly.com.tahaben.notification_filter_domain.model.KnownPackageSource
 import ly.com.tahaben.notification_filter_domain.model.NotificationCategory
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod
+import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
 import org.json.JSONArray
 import org.json.JSONObject
@@ -267,6 +272,78 @@ class DefaultPreferences(
         sharedPref.edit().putInt(Preferences.KEY_BUDGET_PERIOD_START_MINUTE, minuteOfDay).apply()
     }
 
+    override fun getBudgetSpendLedger(periodStartMinute: Int): List<BudgetSpendEntry> {
+        val json = sharedPref.getString(Preferences.KEY_BUDGET_SPEND_LEDGER, null) ?: return emptyList()
+        return try {
+            val arr = JSONArray(json)
+            (0 until arr.length()).mapNotNull { index ->
+                val obj = arr.getJSONObject(index)
+                if (obj.getInt("p") != periodStartMinute) return@mapNotNull null
+                BudgetSpendEntry(
+                    appName = obj.getString("a"),
+                    title = obj.getString("t"),
+                    priority = NotificationPriority.valueOf(obj.getString("pr")),
+                    pointCost = obj.getInt("c"),
+                    timestamp = obj.getLong("ts"),
+                    periodStartMinute = obj.getInt("p"),
+                )
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    override fun addBudgetSpendEntry(entry: BudgetSpendEntry) {
+        val existing = readBudgetSpendLedgerRaw()
+        existing.put(JSONObject().apply {
+            put("a", entry.appName)
+            put("t", entry.title)
+            put("pr", entry.priority.name)
+            put("c", entry.pointCost)
+            put("ts", entry.timestamp)
+            put("p", entry.periodStartMinute)
+        })
+        trimBudgetSpendLedger(existing)
+        sharedPref.edit().putString(Preferences.KEY_BUDGET_SPEND_LEDGER, existing.toString()).apply()
+    }
+
+    override fun clearBudgetSpendLedgerBefore(periodStartMinute: Int) {
+        val existing = readBudgetSpendLedgerRaw()
+        val filtered = JSONArray()
+        for (index in 0 until existing.length()) {
+            val obj = existing.getJSONObject(index)
+            if (obj.getInt("p") >= periodStartMinute) {
+                filtered.put(obj)
+            }
+        }
+        sharedPref.edit().putString(Preferences.KEY_BUDGET_SPEND_LEDGER, filtered.toString()).apply()
+    }
+
+    override fun clearAllBudgetSpend() {
+        sharedPref.edit()
+            .putInt(Preferences.KEY_BUDGET_SPENT, 0)
+            .putInt(Preferences.KEY_BUDGET_PERIOD_START_MINUTE, -1)
+            .putInt(Preferences.KEY_HOURLY_PASSTHROUGH_COUNT, 0)
+            .putInt(Preferences.KEY_PASSTHROUGH_WINDOW_HOUR, -1)
+            .putString(Preferences.KEY_BUDGET_SPEND_LEDGER, "[]")
+            .apply()
+    }
+
+    private fun readBudgetSpendLedgerRaw(): JSONArray {
+        val json = sharedPref.getString(Preferences.KEY_BUDGET_SPEND_LEDGER, null) ?: return JSONArray()
+        return try {
+            JSONArray(json)
+        } catch (e: Exception) {
+            JSONArray()
+        }
+    }
+
+    private fun trimBudgetSpendLedger(ledger: JSONArray) {
+        while (ledger.length() > 100) {
+            ledger.remove(0)
+        }
+    }
+
     override fun getHourlyPassthroughCount(): Int =
         sharedPref.getInt(Preferences.KEY_HOURLY_PASSTHROUGH_COUNT, 0)
 
@@ -297,6 +374,95 @@ class DefaultPreferences(
             sharedPref.edit().remove(key).apply()
         } else {
             sharedPref.edit().putString(key, priority.name).apply()
+        }
+    }
+
+    override fun getPriorityDeliverySettings(): Map<NotificationPriority, PriorityDeliverySetting> {
+        val json = sharedPref.getString(Preferences.KEY_PRIORITY_DELIVERY_SETTINGS, null) ?: return PriorityDeliverySetting.DEFAULTS
+        return try {
+            val obj = JSONObject(json)
+            NotificationPriority.entries.associateWith { priority ->
+                val entry = obj.optJSONObject(priority.name) ?: return@associateWith PriorityDeliverySetting.defaultFor(priority)
+                PriorityDeliverySetting(
+                    cadence = DeliveryCadence.valueOf(entry.getString("cadence")),
+                    budgetBehavior = BudgetBehavior.valueOf(entry.getString("budget")),
+                )
+            }
+        } catch (e: Exception) {
+            PriorityDeliverySetting.DEFAULTS
+        }
+    }
+
+    override fun setPriorityDeliverySetting(priority: NotificationPriority, setting: PriorityDeliverySetting) {
+        val current = getPriorityDeliverySettings().toMutableMap()
+        current[priority] = setting
+        val obj = JSONObject()
+        current.forEach { (p, s) ->
+            obj.put(p.name, JSONObject().apply {
+                put("cadence", s.cadence.name)
+                put("budget", s.budgetBehavior.name)
+            })
+        }
+        sharedPref.edit().putString(Preferences.KEY_PRIORITY_DELIVERY_SETTINGS, obj.toString()).apply()
+    }
+
+    override fun isDeliveryTestingMode(): Boolean =
+        sharedPref.getBoolean(Preferences.KEY_DELIVERY_TESTING_MODE, false)
+
+    override fun setDeliveryTestingMode(enabled: Boolean) {
+        sharedPref.edit().putBoolean(Preferences.KEY_DELIVERY_TESTING_MODE, enabled).apply()
+    }
+
+    override fun getKnownPackageSources(): Map<String, KnownPackageSource> {
+        val json = sharedPref.getString(Preferences.KEY_KNOWN_PACKAGE_SOURCES, null) ?: return emptyMap()
+        return try {
+            val arr = JSONArray(json)
+            buildMap {
+                for (i in 0 until arr.length()) {
+                    val obj = arr.getJSONObject(i)
+                    val packageName = obj.getString("pkg")
+                    val channels = obj.optJSONArray("channels").toStringSet()
+                    val categories = obj.optJSONArray("categories").toStringSet()
+                    put(
+                        packageName,
+                        KnownPackageSource(
+                            packageName = packageName,
+                            appName = obj.optString("name", packageName),
+                            channelIds = channels,
+                            androidCategories = categories,
+                        )
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            emptyMap()
+        }
+    }
+
+    override fun setKnownPackageSources(sources: List<KnownPackageSource>) {
+        val arr = JSONArray()
+        sources.sortedBy { it.appName.lowercase() }.forEach { source ->
+            arr.put(JSONObject().apply {
+                put("pkg", source.packageName)
+                put("name", source.appName)
+                put("channels", JSONArray(source.channelIds.sorted()))
+                put("categories", JSONArray(source.androidCategories.sorted()))
+            })
+        }
+        sharedPref.edit().putString(Preferences.KEY_KNOWN_PACKAGE_SOURCES, arr.toString()).apply()
+    }
+
+    override fun shouldPassThroughNotification(packageName: String): Boolean {
+        if (isPackageInNotificationExceptions(packageName)) return true
+        return getAppPriorityOverride(packageName) == NotificationPriority.CRITICAL
+    }
+
+    private fun JSONArray?.toStringSet(): Set<String> {
+        if (this == null) return emptySet()
+        return buildSet {
+            for (i in 0 until length()) {
+                add(getString(i))
+            }
         }
     }
 }

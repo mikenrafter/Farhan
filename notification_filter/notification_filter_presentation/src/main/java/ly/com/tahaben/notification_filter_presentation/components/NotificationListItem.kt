@@ -4,12 +4,14 @@ import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,10 +20,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,6 +58,9 @@ fun NotificationListItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     menuOptions: List<MenuOption>,
+    displayPriority: NotificationPriority = notification.priority,
+    actions: List<String> = emptyList(),
+    onActionClick: (Int) -> Unit = {},
 ) {
     val spacing = LocalSpacing.current
     val layoutDirection = LocalLayoutDirection.current
@@ -74,7 +81,7 @@ fun NotificationListItem(
     var itemHeight by remember {
         mutableStateOf(0.dp)
     }
-    val priorityBarColor = when (notification.priority) {
+    val priorityBarColor = when (displayPriority) {
         NotificationPriority.CRITICAL -> Color(0xFFF44336)
         NotificationPriority.HIGH -> Color(0xFFFF9800)
         NotificationPriority.MEDIUM -> Color(0xFF2196F3)
@@ -167,7 +174,7 @@ fun NotificationListItem(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier.wrapContentWidth()
             ) {
-                val priorityLabel = notification.priority.name.lowercase()
+                val priorityLabel = displayPriority.name.lowercase()
                     .replaceFirstChar { it.uppercase() }
                 Surface(
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
@@ -209,6 +216,24 @@ fun NotificationListItem(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
+                    }
+                }
+            }
+            if (actions.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                ) {
+                    actions.forEachIndexed { index, title ->
+                        OutlinedButton(
+                            onClick = { onActionClick(index) },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(text = title, style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                 }
             }

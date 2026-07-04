@@ -22,6 +22,10 @@ class AppPriorityViewModel @Inject constructor(
         loadData()
     }
 
+    fun refresh() {
+        loadData()
+    }
+
     fun onEvent(event: AppPriorityEvent) {
         when (event) {
             is AppPriorityEvent.OnToggleExpanded -> {

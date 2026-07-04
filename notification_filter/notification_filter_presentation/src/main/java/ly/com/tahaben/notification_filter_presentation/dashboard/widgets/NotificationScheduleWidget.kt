@@ -4,21 +4,30 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -26,20 +35,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import ly.com.tahaben.core_ui.LocalSpacing
 import ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod
 import kotlin.math.roundToInt
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationScheduleWidget(
     schedule: List<NotificationSchedulePeriod>,
     onPeriodChanged: (index: Int, period: NotificationSchedulePeriod) -> Unit,
+    onBoundaryAdjusted: (boundaryIndex: Int, hour: Int, minute: Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     if (schedule.isEmpty()) return
 
     var expanded by remember { mutableStateOf(false) }
+    var editingBoundaryIndex by remember { mutableIntStateOf(-1) }
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -52,7 +65,6 @@ fun NotificationScheduleWidget(
                 .padding(spacing.spaceMedium),
             verticalArrangement = Arrangement.spacedBy(spacing.spaceSmall)
         ) {
-            // Header row — always visible; tap to expand/collapse
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -85,7 +97,7 @@ fun NotificationScheduleWidget(
 
             if (expanded) {
                 Text(
-                    text = "Point budget per window. Critical=0 pts (always through). High=2 pts, Medium=4 pts, Low=8 pts.",
+                    text = "Tap a boundary time to adjust it. Day always runs 00:00–23:59 with no gaps.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -96,10 +108,71 @@ fun NotificationScheduleWidget(
                     }
                     SchedulePeriodRow(
                         period = period,
+                        periodIndex = index,
+                        isLastPeriod = index == schedule.lastIndex,
+                        onStartBoundaryClick = if (index > 0) {
+                            { editingBoundaryIndex = index - 1 }
+                        } else {
+                            null
+                        },
+                        onEndBoundaryClick = if (index < schedule.lastIndex) {
+                            { editingBoundaryIndex = index }
+                        } else {
+                            null
+                        },
                         onBudgetSettled = { newBudget ->
                             onPeriodChanged(index, period.copy(budgetPoints = newBudget))
                         }
                     )
+                }
+            }
+        }
+    }
+
+    if (editingBoundaryIndex >= 0 && editingBoundaryIndex < schedule.lastIndex) {
+        val boundaryPeriod = schedule[editingBoundaryIndex]
+        val timePickerState = rememberTimePickerState(
+            initialHour = boundaryPeriod.endHour,
+            initialMinute = boundaryPeriod.endMinute,
+            is24Hour = true,
+        )
+        Dialog(onDismissRequest = { editingBoundaryIndex = -1 }) {
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                tonalElevation = AlertDialogDefaults.TonalElevation,
+            ) {
+                Column(modifier = Modifier.padding(spacing.spaceLarge)) {
+                    Text(
+                        text = "Adjust boundary",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = spacing.spaceSmall),
+                    )
+                    Text(
+                        text = "Between ${formatTimeRange(schedule[editingBoundaryIndex])} and ${formatTimeRange(schedule[editingBoundaryIndex + 1])}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = spacing.spaceMedium),
+                    )
+                    TimePicker(state = timePickerState)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        TextButton(onClick = { editingBoundaryIndex = -1 }) {
+                            Text(text = "Cancel")
+                        }
+                        Spacer(modifier = Modifier.width(spacing.spaceSmall))
+                        TextButton(onClick = {
+                            onBoundaryAdjusted(
+                                editingBoundaryIndex,
+                                timePickerState.hour,
+                                timePickerState.minute,
+                            )
+                            editingBoundaryIndex = -1
+                        }) {
+                            Text(text = "OK")
+                        }
+                    }
                 }
             }
         }
@@ -109,6 +182,10 @@ fun NotificationScheduleWidget(
 @Composable
 private fun SchedulePeriodRow(
     period: NotificationSchedulePeriod,
+    periodIndex: Int,
+    isLastPeriod: Boolean,
+    onStartBoundaryClick: (() -> Unit)?,
+    onEndBoundaryClick: (() -> Unit)?,
     onBudgetSettled: (Int) -> Unit,
 ) {
     var sliderValue by remember(period.budgetPoints) { mutableFloatStateOf(period.budgetPoints.toFloat()) }
@@ -117,13 +194,15 @@ private fun SchedulePeriodRow(
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = formatTimeRange(period),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
+            ScheduleTimeRangeText(
+                period = period,
+                isFirstPeriod = periodIndex == 0,
+                isLastPeriod = isLastPeriod,
+                onStartBoundaryClick = onStartBoundaryClick,
+                onEndBoundaryClick = onEndBoundaryClick,
             )
             Text(
                 text = if (currentBudget == 0) "Silent" else "$currentBudget pts",
@@ -147,6 +226,62 @@ private fun SchedulePeriodRow(
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+@Composable
+private fun ScheduleTimeRangeText(
+    period: NotificationSchedulePeriod,
+    isFirstPeriod: Boolean,
+    isLastPeriod: Boolean,
+    onStartBoundaryClick: (() -> Unit)?,
+    onEndBoundaryClick: (() -> Unit)?,
+) {
+    val start = "%02d:%02d".format(period.startHour, period.startMinute)
+    val end = "%02d:%02d".format(period.endHour, period.endMinute)
+    val startIsFixed = isFirstPeriod
+    val endIsFixed = isLastPeriod &&
+        period.endHour == NotificationSchedulePeriod.DAY_END_HOUR &&
+        period.endMinute == NotificationSchedulePeriod.DAY_END_MINUTE
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        if (startIsFixed || onStartBoundaryClick == null) {
+            Text(
+                text = start,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        } else {
+            Text(
+                text = start,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable(onClick = onStartBoundaryClick),
+            )
+        }
+        Text(
+            text = " – ",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        if (endIsFixed || onEndBoundaryClick == null) {
+            Text(
+                text = end,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        } else {
+            Text(
+                text = end,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable(onClick = onEndBoundaryClick),
+            )
+        }
     }
 }
 

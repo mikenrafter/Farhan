@@ -50,12 +50,30 @@ interface Preferences {
     fun setBudgetSpentCurrentPeriod(points: Int)
     fun getCurrentBudgetPeriodStartMinute(): Int
     fun setCurrentBudgetPeriodStartMinute(minuteOfDay: Int)
+    fun getBudgetSpendLedger(periodStartMinute: Int): List<ly.com.tahaben.notification_filter_domain.model.BudgetSpendEntry>
+    fun addBudgetSpendEntry(entry: ly.com.tahaben.notification_filter_domain.model.BudgetSpendEntry)
+    fun clearBudgetSpendLedgerBefore(periodStartMinute: Int)
+    fun clearAllBudgetSpend()
 
     // Hourly passthrough rate limit (max 10 proxy notifications per hour)
     fun getHourlyPassthroughCount(): Int
     fun setHourlyPassthroughCount(count: Int)
     fun getPassthroughWindowHour(): Int
     fun setPassthroughWindowHour(hour: Int)
+
+    fun getPriorityDeliverySettings(): Map<ly.com.tahaben.notification_filter_domain.model.NotificationPriority, ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting>
+    fun setPriorityDeliverySetting(
+        priority: ly.com.tahaben.notification_filter_domain.model.NotificationPriority,
+        setting: ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting,
+    )
+    fun isDeliveryTestingMode(): Boolean
+    fun setDeliveryTestingMode(enabled: Boolean)
+
+    fun getKnownPackageSources(): Map<String, ly.com.tahaben.notification_filter_domain.model.KnownPackageSource>
+    fun setKnownPackageSources(sources: List<ly.com.tahaben.notification_filter_domain.model.KnownPackageSource>)
+
+    /** Legacy exceptions list plus CRITICAL priority override both mean pass-through. */
+    fun shouldPassThroughNotification(packageName: String): Boolean
 
     companion object {
         const val KEY_NOTIFICATION_SERVICE_STATS = "notification_service_stats"
@@ -77,8 +95,12 @@ interface Preferences {
         const val KEY_NOTIFICATION_SCHEDULE = "notification_delivery_schedule"
         const val KEY_BUDGET_SPENT = "notification_budget_spent"
         const val KEY_BUDGET_PERIOD_START_MINUTE = "notification_budget_period_start_minute"
+        const val KEY_BUDGET_SPEND_LEDGER = "notification_budget_spend_ledger"
         const val KEY_HOURLY_PASSTHROUGH_COUNT = "notification_hourly_passthrough_count"
         const val KEY_PASSTHROUGH_WINDOW_HOUR = "notification_passthrough_window_hour"
         const val KEY_CHANNEL_PRIORITY_PREFIX = "notification_channel_priority_"
+        const val KEY_PRIORITY_DELIVERY_SETTINGS = "notification_priority_delivery_settings"
+        const val KEY_DELIVERY_TESTING_MODE = "notification_delivery_testing_mode"
+        const val KEY_KNOWN_PACKAGE_SOURCES = "notification_known_package_sources"
     }
 }

@@ -3,5 +3,17 @@
     package="ly.com.tahaben.notification_filter_data">
 
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application>
+        <receiver
+            android:name=".service.NotificationDeliveryReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="ly.com.tahaben.notification_filter.action.DELIVER_PENDING" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+    </application>
 
 </manifest>

@@ -24,13 +24,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import ly.com.tahaben.core_ui.OnLifecycleEvent
 import ly.com.tahaben.core_ui.LocalSpacing
 import ly.com.tahaben.core_ui.mirror
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
+import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.BudgetSpendWidget
 import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.CategoryBreakdownWidget
 import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.FloodStatusWidget
 import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.NotificationHealthWidget
 import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.NotificationScheduleWidget
+import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.PriorityDeliveryWidget
 import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.PriorityDistributionWidget
 import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.RecentBatchesWidget
 import ly.com.tahaben.notification_filter_presentation.dashboard.widgets.StandingAlarmsWidget
@@ -47,6 +51,13 @@ fun NotificationDashboardScreen(
 ) {
     val spacing = LocalSpacing.current
     val state = viewModel.state
+
+    OnLifecycleEvent { _, event ->
+        if (event == Lifecycle.Event.ON_RESUME) {
+            viewModel.reloadSettings()
+        }
+    }
+
     val summary = state.summary
 
     val standingItems = state.batches
@@ -161,13 +172,40 @@ fun NotificationDashboardScreen(
                     }
 
                     item {
+                        PriorityDeliveryWidget(
+                            settings = state.priorityDeliverySettings,
+                            testingMode = state.deliveryTestingMode,
+                            onSettingChanged = { priority, setting ->
+                                viewModel.onEvent(
+                                    NotificationDashboardEvent.OnSetPriorityDeliverySetting(priority, setting)
+                                )
+                            },
+                        )
+                    }
+
+                    item {
+                        BudgetSpendWidget(
+                            budgetStatus = state.budgetStatus,
+                        )
+                    }
+
+                    item {
                         NotificationScheduleWidget(
                             schedule = state.schedule,
                             onPeriodChanged = { index, period ->
                                 viewModel.onEvent(
                                     NotificationDashboardEvent.OnSetSchedulePeriod(index, period)
                                 )
-                            }
+                            },
+                            onBoundaryAdjusted = { boundaryIndex, hour, minute ->
+                                viewModel.onEvent(
+                                    NotificationDashboardEvent.OnAdjustScheduleBoundary(
+                                        boundaryIndex,
+                                        hour,
+                                        minute,
+                                    )
+                                )
+                            },
                         )
                     }
 

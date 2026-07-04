@@ -4,30 +4,34 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.RemoteInput as PlatformRemoteInput
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Process
+import android.os.UserHandle
 import android.service.notification.NotificationListenerService
 import android.service.notification.NotificationListenerService.RankingMap
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
+import androidx.core.app.RemoteInput as AndroidXRemoteInput
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ly.com.tahaben.core.R
 import ly.com.tahaben.notification_filter_data.mapper.toNotificationItem
+import ly.com.tahaben.notification_filter_domain.model.NotificationCategory
+import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
+import ly.com.tahaben.notification_filter_domain.model.VisibleNotificationSource
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
 import ly.com.tahaben.notification_filter_domain.use_cases.NotificationFilterUseCases
 import timber.log.Timber
-import java.util.Calendar
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -39,25 +43,162 @@ class NotificationService : NotificationListenerService() {
     @Inject
     lateinit var preferences: Preferences
 
+    @Inject
+    lateinit var deliveryEngine: NotificationDeliveryEngine
+
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private var deliveryJob: Job? = null
 
     companion object {
         private val intentHashmap: HashMap<String, PendingIntent> = HashMap()
         private val proxyToOriginalId: HashMap<Int, String> = HashMap()
+        private val actionsHashmap: HashMap<String, List<CapturedAction>> = HashMap()
+
+        @Volatile
+        private var connectedInstance: NotificationService? = null
 
         const val PROXY_CHANNEL_ID = "farhan_proxy_notifications"
         const val CHATTER_HOUR_THRESHOLD = 10
-        const val MAX_HOURLY_PASSTHROUGH = 10
 
         fun getIntentForNotification(key: String): PendingIntent? = intentHashmap[key]
-        fun removeIntentFromHashmap(key: String) { intentHashmap.remove(key) }
+
+        fun removeIntentFromHashmap(key: String) {
+            intentHashmap.remove(key)
+        }
+
+        fun getActionsForNotification(id: String): List<CapturedAction> = actionsHashmap[id] ?: emptyList()
+
+        fun removeActionsForNotification(id: String) {
+            actionsHashmap.remove(id)
+        }
+
+        fun postProxyNotification(
+            context: Context,
+            originalId: String,
+            appName: String?,
+            title: String?,
+            text: String?,
+        ) {
+            val proxyId = originalId.hashCode()
+            val displayTitle = buildString {
+                append("Farhan · ")
+                if (!title.isNullOrBlank()) append(title) else append(appName ?: "Notification")
+            }
+            val builder = NotificationCompat.Builder(context, PROXY_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_farhan_transparent)
+                .setContentTitle(displayTitle)
+                .setContentText(text)
+                .setSubText(appName)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            intentHashmap[originalId]?.let { builder.setContentIntent(it) }
+
+            actionsHashmap[originalId]?.forEach { captured ->
+                val actionBuilder = NotificationCompat.Action.Builder(
+                    0, captured.title, captured.actionIntent
+                )
+                captured.remoteInputs?.forEach { ri ->
+                    actionBuilder.addRemoteInput(
+                        AndroidXRemoteInput.Builder(ri.resultKey)
+                            .setLabel(ri.label)
+                            .setAllowFreeFormInput(ri.allowFreeFormInput)
+                            .build()
+                    )
+                }
+                builder.addAction(actionBuilder.build())
+            }
+
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            nm.notify(proxyId, builder.build())
+            proxyToOriginalId[proxyId] = originalId
+            Timber.i("Farhan delivered proxy notification for $appName: $displayTitle")
+        }
+
+        fun getVisibleNotificationSources(): List<VisibleNotificationSource> {
+            val service = connectedInstance ?: return emptyList()
+            return service.activeNotifications?.mapNotNull { sbn ->
+                val notification = sbn.notification ?: return@mapNotNull null
+                val pm = service.packageManager
+                val appName = try {
+                    val ai = pm.getApplicationInfo(sbn.packageName, 0)
+                    pm.getApplicationLabel(ai).toString()
+                } catch (_: PackageManager.NameNotFoundException) {
+                    sbn.packageName
+                }
+                VisibleNotificationSource(
+                    packageName = sbn.packageName,
+                    appName = appName,
+                    channelId = notification.channelId,
+                    androidCategory = notification.category,
+                )
+            }?.distinctBy { "${it.packageName}:${it.channelId}:${it.androidCategory}" }.orEmpty()
+        }
+
+        fun getNotificationChannelsForPackage(packageName: String): List<String> {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return emptyList()
+            val service = connectedInstance ?: return emptyList()
+            return try {
+                service.getNotificationChannels(packageName, Process.myUserHandle())
+                    .orEmpty()
+                    .mapNotNull { channel -> channel.id.takeIf { it.isNotBlank() } }
+                    .distinct()
+            } catch (e: SecurityException) {
+                Timber.w("Cannot read notification channels for $packageName: ${e.message}")
+                emptyList()
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to read notification channels for $packageName")
+                emptyList()
+            }
+        }
+
+        data class CapturedAction(
+            val title: CharSequence,
+            val actionIntent: PendingIntent,
+            val remoteInputs: Array<PlatformRemoteInput>? = null,
+        )
     }
 
     override fun onListenerConnected() {
         super.onListenerConnected()
+        connectedInstance = this
         createProxyNotificationChannel()
-        startDeliveryScheduler()
+        serviceScope.launch {
+            deliveryEngine.maintainDeliverySchedule(this@NotificationService)
+        }
+    }
+
+    override fun onNotificationChannelModified(
+        pkg: String,
+        user: UserHandle,
+        channel: NotificationChannel,
+        modificationType: Int,
+    ) {
+        if (modificationType == NOTIFICATION_CHANNEL_OR_GROUP_DELETED) return
+        val appName = try {
+            packageManager.getApplicationLabel(
+                packageManager.getApplicationInfo(pkg, 0)
+            ).toString()
+        } catch (_: PackageManager.NameNotFoundException) {
+            pkg
+        }
+        notificationFilterUseCases.registerKnownNotificationSources(
+            listOf(
+                VisibleNotificationSource(
+                    packageName = pkg,
+                    appName = appName,
+                    channelId = channel.id,
+                    androidCategory = null,
+                )
+            )
+        )
+        super.onNotificationChannelModified(pkg, user, channel, modificationType)
+    }
+
+    override fun onListenerDisconnected() {
+        connectedInstance = null
+        super.onListenerDisconnected()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -67,26 +208,17 @@ class NotificationService : NotificationListenerService() {
         val notification = sbn?.notification ?: return
         val appPackageName = sbn.packageName ?: ""
 
-        if (notification.category == Notification.CATEGORY_SERVICE ||
-            notification.category == Notification.CATEGORY_CALL ||
-            notification.category == Notification.CATEGORY_ALARM ||
-            notification.category == Notification.CATEGORY_MISSED_CALL ||
-            notification.category == Notification.CATEGORY_SYSTEM
-        ) {
+        if (isSystemExemptCategory(notification.category)) {
             super.onNotificationPosted(sbn)
             return
         }
 
-        if (notificationFilterUseCases.isPackageInNotificationException(appPackageName) ||
-            appPackageName == this.packageName
-        ) {
+        if (appPackageName == packageName) {
             super.onNotificationPosted(sbn)
             return
         }
 
-        cancelNotification(sbn.key)
-
-        val pm: PackageManager = this.packageManager
+        val pm: PackageManager = packageManager
         val ai: ApplicationInfo? = try {
             pm.getApplicationInfo(appPackageName, 0)
         } catch (e: PackageManager.NameNotFoundException) {
@@ -95,10 +227,22 @@ class NotificationService : NotificationListenerService() {
         val applicationName = (if (ai != null) pm.getApplicationLabel(ai) else appPackageName) as String?
         val channelId = notification.channelId
 
-        runBlocking(Dispatchers.IO) {
+        val passThrough = runBlocking(Dispatchers.IO) {
+            notificationFilterUseCases.registerKnownNotificationSources(
+                listOf(
+                    VisibleNotificationSource(
+                        packageName = appPackageName,
+                        appName = applicationName,
+                        channelId = channelId,
+                        androidCategory = notification.category,
+                    )
+                )
+            )
+
             val (basePriority, category) = notificationFilterUseCases
                 .classifyNotification(notification.category, appPackageName, channelId)
 
+            val isException = notificationFilterUseCases.isPackageInNotificationException(appPackageName)
             val isLocked = notificationFilterUseCases.isAppPriorityLocked(appPackageName)
             val hasChannelOverride = channelId != null &&
                 preferences.getChannelPriorityOverride(appPackageName, channelId) != null
@@ -111,32 +255,30 @@ class NotificationService : NotificationListenerService() {
                 else -> applyDynamicAdjustments(basePriority, appPackageName)
             }
 
-            // Auto-lock CRITICAL apps so they stay critical
-            if (effectivePriority == NotificationPriority.CRITICAL &&
-                preferences.getAppPriorityOverride(appPackageName) == NotificationPriority.CRITICAL
-            ) {
-                preferences.setAppPriorityLocked(appPackageName, true)
-            }
+            val shouldPassThrough = isException || effectivePriority == NotificationPriority.CRITICAL
+            val item = captureNotificationToInbox(
+                sbn = sbn,
+                applicationName = applicationName,
+                effectivePriority = effectivePriority,
+                category = category,
+                channelId = channelId,
+                priorityReason = priorityReason,
+                deliveredToSystemTray = shouldPassThrough,
+            )
 
-            val item = sbn.toNotificationItem(applicationName, effectivePriority, category, channelId, priorityReason)
-            // Bug 2 fix: store intent keyed by item.id (not sbn.key) so postProxyNotification can find it
-            notification.contentIntent?.let { intentHashmap[item.id] = it }
-            notificationFilterUseCases.insertNotificationToDB(item)
-
-            when {
-                effectivePriority == NotificationPriority.CRITICAL -> {
-                    postProxyNotification(item.id, item.appName, item.title, item.text)
-                    notificationFilterUseCases.markNotificationAsDelivered(item.id)
-                }
-                effectivePriority == NotificationPriority.HIGH || effectivePriority == NotificationPriority.MEDIUM -> {
-                    if (canDeliverNow(effectivePriority)) {
-                        postProxyNotification(item.id, item.appName, item.title, item.text)
-                        notificationFilterUseCases.markNotificationAsDelivered(item.id)
-                        recordPassthrough(effectivePriority)
-                    }
-                }
-                // LOW: queued for bi-hourly delivery only
+            if (shouldPassThrough) {
+                true
+            } else {
+                cancelNotification(sbn.key)
+                deliveryEngine.tryImmediateDelivery(this@NotificationService, item, effectivePriority)
+                false
             }
+        }
+
+        if (passThrough) {
+            Timber.d("${sbn.packageName} passed through to system tray and recorded in inbox")
+            super.onNotificationPosted(sbn)
+            return
         }
 
         if (notificationFilterUseCases.getNotifyMeHour() != -1) {
@@ -150,15 +292,58 @@ class NotificationService : NotificationListenerService() {
         Timber.d("${sbn.packageName} intercepted")
     }
 
+    private suspend fun captureNotificationToInbox(
+        sbn: StatusBarNotification,
+        applicationName: String?,
+        effectivePriority: NotificationPriority,
+        category: NotificationCategory,
+        channelId: String?,
+        priorityReason: String,
+        deliveredToSystemTray: Boolean,
+    ): NotificationItem {
+        val notification = sbn.notification
+            ?: return sbn.toNotificationItem(
+                applicationName,
+                effectivePriority,
+                category,
+                channelId,
+                priorityReason,
+                deliveredToSystemTray,
+            )
+
+        val item = sbn.toNotificationItem(
+            applicationName,
+            effectivePriority,
+            category,
+            channelId,
+            priorityReason,
+            deliveredToSystemTray,
+        )
+        notification.contentIntent?.let { intentHashmap[item.id] = it }
+        notification.actions?.let { actions ->
+            val captured = actions.mapNotNull { action ->
+                val intent = action.actionIntent ?: return@mapNotNull null
+                CapturedAction(
+                    title = action.title ?: "",
+                    actionIntent = intent,
+                    remoteInputs = action.getRemoteInputs()?.takeIf { it.isNotEmpty() }
+                )
+            }
+            if (captured.isNotEmpty()) actionsHashmap[item.id] = captured
+        }
+        notificationFilterUseCases.insertNotificationToDB(item)
+        return item
+    }
+
     override fun onNotificationRemoved(
         sbn: StatusBarNotification?,
         rankingMap: RankingMap?,
-        reason: Int
+        reason: Int,
     ) {
         val pkg = sbn?.packageName ?: ""
         val key = sbn?.key ?: ""
 
-        if (pkg == this.packageName) {
+        if (pkg == packageName) {
             val proxyId = sbn?.id ?: 0
             val originalId = proxyToOriginalId.remove(proxyId)
             if (originalId != null && (reason == REASON_CANCEL || reason == REASON_CLICK)) {
@@ -176,15 +361,17 @@ class NotificationService : NotificationListenerService() {
     }
 
     override fun onDestroy() {
+        connectedInstance = null
         serviceScope.cancel()
         intentHashmap.clear()
+        actionsHashmap.clear()
         proxyToOriginalId.clear()
         super.onDestroy()
     }
 
     private suspend fun applyDynamicAdjustments(
         base: NotificationPriority,
-        packageName: String
+        packageName: String,
     ): Pair<NotificationPriority, String> {
         val now = System.currentTimeMillis()
         val floodThreshold = notificationFilterUseCases.getDashboardSettings.getFloodThreshold()
@@ -202,160 +389,23 @@ class NotificationService : NotificationListenerService() {
         return Pair(base, "Category default")
     }
 
-    private fun canDeliverNow(priority: NotificationPriority): Boolean {
-        val cal = Calendar.getInstance()
-        val currentHour = cal.get(Calendar.HOUR_OF_DAY)
-        val minuteOfDay = currentHour * 60 + cal.get(Calendar.MINUTE)
-
-        val windowHour = preferences.getPassthroughWindowHour()
-        val hourlyCount = if (windowHour == currentHour) preferences.getHourlyPassthroughCount()
-        else {
-            preferences.setPassthroughWindowHour(currentHour)
-            preferences.setHourlyPassthroughCount(0)
-            0
-        }
-        if (hourlyCount >= MAX_HOURLY_PASSTHROUGH) return false
-
-        val schedule = preferences.getNotificationSchedule()
-        val period = schedule.firstOrNull { p ->
-            val startMin = p.startHour * 60 + p.startMinute
-            val endMin = p.endHour * 60 + p.endMinute
-            minuteOfDay in startMin until endMin
-        } ?: return false
-
-        if (period.budgetPoints == 0) return false
-
-        val periodStartMinute = period.startHour * 60 + period.startMinute
-        val savedStart = preferences.getCurrentBudgetPeriodStartMinute()
-        val spentPoints = if (savedStart == periodStartMinute) preferences.getBudgetSpentCurrentPeriod()
-        else {
-            preferences.setCurrentBudgetPeriodStartMinute(periodStartMinute)
-            preferences.setBudgetSpentCurrentPeriod(0)
-            0
-        }
-
-        return spentPoints + priority.pointCost <= period.budgetPoints
-    }
-
-    private fun recordPassthrough(priority: NotificationPriority) {
-        val cal = Calendar.getInstance()
-        val currentHour = cal.get(Calendar.HOUR_OF_DAY)
-        val minuteOfDay = currentHour * 60 + cal.get(Calendar.MINUTE)
-
-        preferences.setHourlyPassthroughCount(preferences.getHourlyPassthroughCount() + 1)
-
-        val schedule = preferences.getNotificationSchedule()
-        val period = schedule.firstOrNull { p ->
-            val startMin = p.startHour * 60 + p.startMinute
-            val endMin = p.endHour * 60 + p.endMinute
-            minuteOfDay in startMin until endMin
-        }
-        if (period != null) {
-            preferences.setBudgetSpentCurrentPeriod(
-                preferences.getBudgetSpentCurrentPeriod() + priority.pointCost
-            )
-        }
-    }
-
-    private fun postProxyNotification(
-        originalId: String,
-        appName: String?,
-        title: String?,
-        text: String?
-    ) {
-        val proxyId = originalId.hashCode()
-        val builder = NotificationCompat.Builder(this, PROXY_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_farhan_transparent)
-            .setContentTitle(title)
-            .setContentText(text)
-            .setSubText(appName)
-            .setAutoCancel(true)
-        intentHashmap[originalId]?.let { builder.setContentIntent(it) }
-
-        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.notify(proxyId, builder.build())
-        proxyToOriginalId[proxyId] = originalId
-        Timber.d("Proxy posted: $appName")
-    }
-
-    private fun startDeliveryScheduler() {
-        deliveryJob?.cancel()
-        deliveryJob = serviceScope.launch {
-            while (true) {
-                val cal = Calendar.getInstance()
-                val minutesToNextHour = 60 - cal.get(Calendar.MINUTE)
-                val msToNextHour = (minutesToNextHour * 60 - cal.get(Calendar.SECOND)) * 1000L
-                delay(msToNextHour.coerceAtLeast(60_000L))
-                deliverQueuedNotifications()
-            }
-        }
-    }
-
-    private suspend fun deliverQueuedNotifications() {
-        val cal = Calendar.getInstance()
-        val currentHour = cal.get(Calendar.HOUR_OF_DAY)
-        val minuteOfDay = currentHour * 60 + cal.get(Calendar.MINUTE)
-
-        val schedule = preferences.getNotificationSchedule()
-        val period = schedule.firstOrNull { p ->
-            val startMin = p.startHour * 60 + p.startMinute
-            val endMin = p.endHour * 60 + p.endMinute
-            minuteOfDay in startMin until endMin
-        } ?: return
-
-        if (period.budgetPoints == 0) return
-
-        val periodStartMinute = period.startHour * 60 + period.startMinute
-        val savedStart = preferences.getCurrentBudgetPeriodStartMinute()
-        var spentPoints = if (savedStart == periodStartMinute) preferences.getBudgetSpentCurrentPeriod()
-        else {
-            preferences.setCurrentBudgetPeriodStartMinute(periodStartMinute)
-            preferences.setBudgetSpentCurrentPeriod(0)
-            0
-        }
-
-        // Reset hourly rate limit at the top of each delivery tick
-        preferences.setPassthroughWindowHour(currentHour)
-        preferences.setHourlyPassthroughCount(0)
-        var hourlyCount = 0
-
-        val highMediumItems = notificationFilterUseCases.getUndeliveredNotifications(3)
-        for (item in highMediumItems) {
-            if (hourlyCount >= MAX_HOURLY_PASSTHROUGH) break
-            val cost = item.priority.pointCost
-            if (spentPoints + cost > period.budgetPoints) continue
-            postProxyNotification(item.id, item.appName, item.title, item.text)
-            notificationFilterUseCases.markNotificationAsDelivered(item.id)
-            spentPoints += cost
-            hourlyCount++
-        }
-
-        if (currentHour % 2 == 0) {
-            val lowItems = notificationFilterUseCases.getUndeliveredNotifications(4)
-                .filter { it.priority == NotificationPriority.LOW }
-            for (item in lowItems) {
-                if (hourlyCount >= MAX_HOURLY_PASSTHROUGH) break
-                val cost = item.priority.pointCost
-                if (spentPoints + cost > period.budgetPoints) continue
-                postProxyNotification(item.id, item.appName, item.title, item.text)
-                notificationFilterUseCases.markNotificationAsDelivered(item.id)
-                spentPoints += cost
-                hourlyCount++
-            }
-        }
-
-        preferences.setBudgetSpentCurrentPeriod(spentPoints)
-        preferences.setHourlyPassthroughCount(hourlyCount)
-    }
+    private fun isSystemExemptCategory(category: String?): Boolean =
+        category == Notification.CATEGORY_SERVICE ||
+            category == Notification.CATEGORY_CALL ||
+            category == Notification.CATEGORY_ALARM ||
+            category == Notification.CATEGORY_MISSED_CALL ||
+            category == Notification.CATEGORY_SYSTEM
 
     private fun createProxyNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 PROXY_CHANNEL_ID,
-                "Farhan — Scheduled Notifications",
-                NotificationManager.IMPORTANCE_DEFAULT
+                "Farhan — Delivered Notifications",
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Notifications delivered by Farhan according to your schedule"
+                enableVibration(true)
+                enableLights(true)
             }
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             nm.createNotificationChannel(channel)

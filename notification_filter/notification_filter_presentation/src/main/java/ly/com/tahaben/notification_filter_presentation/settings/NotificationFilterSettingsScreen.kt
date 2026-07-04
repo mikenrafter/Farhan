@@ -75,7 +75,6 @@ import timber.log.Timber
 @Composable
 fun NotificationFilterSettingsScreen(
     onNavigateUp: () -> Unit,
-    onNavigateToExceptions: () -> Unit,
     viewModel: NotificationSettingsViewModel = hiltViewModel(),
     shouldShowRational: (String) -> Boolean,
     snackbarHostState: SnackbarHostState,
@@ -170,9 +169,6 @@ fun NotificationFilterSettingsScreen(
             viewModel.onEvent(NotificationSettingsEvent.OnShouldShowcase(false))
         }) {
         val filterSwitchMsg = msgStyle.copy(getAnnotatedStringResource(id = R.string.notification_filter_settings_showcase_msg1), arrow = Arrow(head = Head.TRIANGLE, color = MaterialTheme.colorScheme.background))
-        val exceptionsMsg1 = msgStyle.copy(getAnnotatedStringResource(id = R.string.notification_filter_settings_showcase_msg2))
-        val exceptionsMsg2 = msgStyle.copy(getAnnotatedStringResource(id = R.string.notification_filter_settings_showcase_msg3))
-        val exceptionsMsg3 = msgStyle.copy(getAnnotatedStringResource(id = R.string.notification_filter_settings_showcase_msg4),arrow = Arrow(targetFrom = Side.Top,head = Head.TRIANGLE, color = MaterialTheme.colorScheme.background))
         val notifyMeMsg1 = msgStyle.copy(getAnnotatedStringResource(id = R.string.notification_filter_settings_showcase_msg5))
         val notifyMeMsg2 = msgStyle.copy(getAnnotatedStringResource(id = R.string.notification_filter_settings_showcase_msg6), arrow = Arrow(targetFrom = Side.Top, head = Head.TRIANGLE, color = MaterialTheme.colorScheme.background))
         Column(
@@ -225,27 +221,8 @@ fun NotificationFilterSettingsScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .showcase(2, exceptionsMsg1)
-                        .showcase(3, exceptionsMsg2)
-                        .showcase(4, exceptionsMsg3)
-                        .padding(vertical = spacing.spaceMedium)
-                        .clickable {
-                            onNavigateToExceptions()
-                        },
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(R.string.exceptions),
-                        textAlign = TextAlign.Start
-                    )
-                }
-                Divider()
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .showcase(5, notifyMeMsg1)
-                        .showcase(6, notifyMeMsg2)
+                        .showcase(2, notifyMeMsg1)
+                        .showcase(3, notifyMeMsg2)
                         .padding(vertical = spacing.spaceMedium)
                         .selectable(
                             selected = state.isNotifyMeEnabled,
@@ -277,6 +254,47 @@ fun NotificationFilterSettingsScreen(
                                 viewModel.onEvent(NotificationSettingsEvent.ShowNotifyMeTimePicker)
                             }
                         }
+                    )
+                }
+                Divider()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = spacing.spaceMedium)
+                        .selectable(
+                            selected = state.isDeliveryTestingMode,
+                            onClick = {
+                                viewModel.onEvent(
+                                    NotificationSettingsEvent.OnSetDeliveryTestingMode(!state.isDeliveryTestingMode)
+                                )
+                            },
+                            role = Role.Switch
+                        ),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = "Delivery testing mode")
+                        Text(
+                            text = "Replace hourly delivery boundaries with 3-minute boundaries for faster testing.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(
+                        checked = state.isDeliveryTestingMode,
+                        onCheckedChange = { enabled ->
+                            viewModel.onEvent(NotificationSettingsEvent.OnSetDeliveryTestingMode(enabled))
+                        }
+                    )
+                }
+                TextButton(
+                    onClick = { viewModel.onEvent(NotificationSettingsEvent.ClearBudgetSpend) },
+                    modifier = Modifier.padding(bottom = spacing.spaceSmall),
+                ) {
+                    Text(
+                        text = "Clear budget spend (debug)",
+                        color = MaterialTheme.colorScheme.error,
                     )
                 }
                 val timePickerState = rememberTimePickerState()

@@ -12,5 +12,6 @@ data class NotificationFilterSettingsState(
     val visiblePermissionDialogQueue: SnapshotStateList<String> = mutableStateListOf(),
     val declinedPermissions: SnapshotStateList<String> = mutableStateListOf(),
     val isWarningDialogVisible: Boolean = false,
-    val isShowcaseOn: Boolean = false
+    val isShowcaseOn: Boolean = false,
+    val isDeliveryTestingMode: Boolean = false,
 )

@@ -72,6 +72,7 @@ fun StatusBarNotification.toNotificationItem(
     category: ly.com.tahaben.notification_filter_domain.model.NotificationCategory = ly.com.tahaben.notification_filter_domain.model.NotificationCategory.OTHER,
     channelId: String? = null,
     priorityReason: String? = null,
+    isDelivered: Boolean = false,
 ): NotificationItem {
     val notification = notification
     val extras = notification.extras
@@ -93,7 +94,7 @@ fun StatusBarNotification.toNotificationItem(
         isRead = false,
         channelId = channelId,
         isCleared = false,
-        isDelivered = false,
+        isDelivered = isDelivered,
         priorityReason = priorityReason,
     )
 }
