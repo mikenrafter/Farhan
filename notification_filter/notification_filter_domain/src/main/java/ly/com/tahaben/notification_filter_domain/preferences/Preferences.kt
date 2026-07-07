@@ -38,9 +38,11 @@ interface Preferences {
     fun getCategoryPriorityOverride(category: ly.com.tahaben.notification_filter_domain.model.NotificationCategory): ly.com.tahaben.notification_filter_domain.model.NotificationPriority?
     fun setCategoryPriorityOverride(category: ly.com.tahaben.notification_filter_domain.model.NotificationCategory, priority: ly.com.tahaben.notification_filter_domain.model.NotificationPriority?)
 
-    // Per-channel priority overrides (highest-priority override, overrides app and category defaults)
-    fun getChannelPriorityOverride(packageName: String, channelId: String): ly.com.tahaben.notification_filter_domain.model.NotificationPriority?
-    fun setChannelPriorityOverride(packageName: String, channelId: String, priority: ly.com.tahaben.notification_filter_domain.model.NotificationPriority?)
+    // Per-channel priority offset relative to the app's effective priority.
+    // 0 = follow the app exactly; positive = higher priority (lower level); negative = lower priority.
+    // Effective channel priority = clamp(appPriority.level - offset, 1, 4).
+    fun getChannelPriorityOffset(packageName: String, channelId: String): Int
+    fun setChannelPriorityOffset(packageName: String, channelId: String, offset: Int)
 
     // Notification delivery schedule (budget per time period)
     fun getNotificationSchedule(): List<ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod>
@@ -99,7 +101,7 @@ interface Preferences {
         const val KEY_BUDGET_SPEND_LEDGER = "notification_budget_spend_ledger"
         const val KEY_HOURLY_PASSTHROUGH_COUNT = "notification_hourly_passthrough_count"
         const val KEY_PASSTHROUGH_WINDOW_HOUR = "notification_passthrough_window_hour"
-        const val KEY_CHANNEL_PRIORITY_PREFIX = "notification_channel_priority_"
+        const val KEY_CHANNEL_PRIORITY_OFFSET_PREFIX = "notification_channel_priority_offset_"
         const val KEY_PRIORITY_DELIVERY_SETTINGS = "notification_priority_delivery_settings"
         const val KEY_DELIVERY_TESTING_MODE = "notification_delivery_testing_mode"
         const val KEY_KNOWN_PACKAGE_SOURCES = "notification_known_package_sources"

@@ -17,5 +17,12 @@ data class AppPriorityInfo(
 
 data class ChannelPriorityInfo(
     val channelId: String,
-    val override: NotificationPriority?,  // null = inherits from app
-)
+    // Relative offset from the app's current priority level.
+    // offset > 0 → channel is higher priority (lower level number) than the app.
+    // offset < 0 → channel is lower priority.
+    // 0 (default) → follows the app exactly.
+    val offset: Int = 0,
+) {
+    fun effectivePriority(appPriority: NotificationPriority): NotificationPriority =
+        NotificationPriority.fromLevel((appPriority.level - offset).coerceIn(1, 4))
+}

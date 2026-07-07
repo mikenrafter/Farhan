@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_domain.use_cases.NotificationFilterUseCases
 import javax.inject.Inject
 
@@ -50,7 +51,10 @@ class AppPriorityViewModel @Inject constructor(
                 patchApp(event.packageName)
             }
             is AppPriorityEvent.OnSetChannelPriority -> {
-                useCases.setChannelPriorityOverride(event.packageName, event.channelId, event.priority)
+                val appPriority = state.apps.find { it.packageName == event.packageName }?.currentPriority
+                    ?: NotificationPriority.MEDIUM
+                val offset = if (event.priority == null) 0 else appPriority.level - event.priority.level
+                useCases.setChannelPriorityOverride(event.packageName, event.channelId, offset)
                 patchApp(event.packageName)
             }
         }

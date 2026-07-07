@@ -21,14 +21,38 @@ class ClassifyNotificationTest {
     }
 
     @Test
-    fun `channel override beats app override`() {
+    fun `channel offset promotes above app override`() {
         preferences.setAppPriorityOverride("com.app", NotificationPriority.LOW)
-        preferences.setChannelPriorityOverride("com.app", "alerts", NotificationPriority.CRITICAL)
+        // LOW.level=4, CRITICAL.level=1, offset = 4-1 = 3
+        preferences.setChannelPriorityOffset("com.app", "alerts", 3)
 
         val (priority, category) = classify("msg", "com.app", "alerts")
 
         assertThat(priority).isEqualTo(NotificationPriority.CRITICAL)
         assertThat(category).isEqualTo(NotificationCategory.COMMUNICATION)
+    }
+
+    @Test
+    fun `channel offset clamps at low when app is demoted`() {
+        // App is medium (3), channel offset = -1 (channel is low), app demoted to low (4)
+        // effective = 4 - (-1) = 5, clamped to 4 = LOW
+        preferences.setAppPriorityOverride("com.app", NotificationPriority.LOW)
+        preferences.setChannelPriorityOffset("com.app", "promo", -1)
+
+        val (priority, _) = classify(null, "com.app", "promo")
+
+        assertThat(priority).isEqualTo(NotificationPriority.LOW)
+    }
+
+    @Test
+    fun `channel offset tracks app when app promoted`() {
+        // App promoted to HIGH (2), channel has offset -1 → effective = 2-(-1) = 3 = MEDIUM
+        preferences.setAppPriorityOverride("com.app", NotificationPriority.HIGH)
+        preferences.setChannelPriorityOffset("com.app", "promo", -1)
+
+        val (priority, _) = classify(null, "com.app", "promo")
+
+        assertThat(priority).isEqualTo(NotificationPriority.MEDIUM)
     }
 
     @Test
@@ -71,15 +95,15 @@ class ClassifyNotificationTest {
 
     private class FakePreferences : Preferences {
         private val appOverrides = mutableMapOf<String, NotificationPriority>()
-        private val channelOverrides = mutableMapOf<Pair<String, String>, NotificationPriority>()
+        private val channelOffsets = mutableMapOf<Pair<String, String>, Int>()
         private val lockedApps = mutableSetOf<String>()
 
-        override fun getChannelPriorityOverride(packageName: String, channelId: String) =
-            channelOverrides[packageName to channelId]
+        override fun getChannelPriorityOffset(packageName: String, channelId: String) =
+            channelOffsets[packageName to channelId] ?: 0
 
-        override fun setChannelPriorityOverride(packageName: String, channelId: String, priority: NotificationPriority?) {
-            if (priority == null) channelOverrides.remove(packageName to channelId)
-            else channelOverrides[packageName to channelId] = priority
+        override fun setChannelPriorityOffset(packageName: String, channelId: String, offset: Int) {
+            if (offset == 0) channelOffsets.remove(packageName to channelId)
+            else channelOffsets[packageName to channelId] = offset
         }
 
         override fun isAppPriorityLocked(packageName: String) = packageName in lockedApps

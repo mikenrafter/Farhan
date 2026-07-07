@@ -99,8 +99,8 @@ class GetNotificationDashboardSummaryTest {
         override fun setAppPriorityLocked(packageName: String, locked: Boolean) = Unit
         override fun getCategoryPriorityOverride(category: NotificationCategory) = null
         override fun setCategoryPriorityOverride(category: NotificationCategory, priority: NotificationPriority?) = Unit
-        override fun getChannelPriorityOverride(packageName: String, channelId: String) = null
-        override fun setChannelPriorityOverride(packageName: String, channelId: String, priority: NotificationPriority?) = Unit
+        override fun getChannelPriorityOffset(packageName: String, channelId: String) = 0
+        override fun setChannelPriorityOffset(packageName: String, channelId: String, offset: Int) = Unit
         override fun getNotificationSchedule() =
             ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod.DEFAULT_SCHEDULE
         override fun setNotificationSchedule(schedule: List<ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod>) = Unit

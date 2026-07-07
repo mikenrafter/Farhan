@@ -250,7 +250,7 @@ class NotificationService : NotificationListenerService() {
 
         val isException = notificationFilterUseCases.isPackageInNotificationException(appPackageName)
         val hasChannelOverride = channelId != null &&
-            preferences.getChannelPriorityOverride(appPackageName, channelId) != null
+            preferences.getChannelPriorityOffset(appPackageName, channelId) != 0
         val hasAppOverride = preferences.getAppPriorityOverride(appPackageName) != null
         val isLocked = preferences.isAppPriorityLocked(appPackageName)
 

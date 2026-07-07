@@ -74,7 +74,7 @@ class GetAppPriorityInfoList(
         val channels = source.channelIds.sorted().map { channelId ->
             ChannelPriorityInfo(
                 channelId = channelId,
-                override = preferences.getChannelPriorityOverride(source.packageName, channelId),
+                offset = preferences.getChannelPriorityOffset(source.packageName, channelId),
             )
         }
 

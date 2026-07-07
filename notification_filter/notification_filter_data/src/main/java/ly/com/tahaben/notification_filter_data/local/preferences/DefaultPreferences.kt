@@ -213,7 +213,7 @@ class DefaultPreferences(
     }
 
     override fun getStandingThresholdHours(): Int =
-        sharedPref.getInt(Preferences.KEY_STANDING_THRESHOLD_HOURS, 3)
+        sharedPref.getInt(Preferences.KEY_STANDING_THRESHOLD_HOURS, 6)
 
     override fun setStandingThresholdHours(hours: Int) {
         sharedPref.edit().putInt(Preferences.KEY_STANDING_THRESHOLD_HOURS, hours).apply()
@@ -400,22 +400,17 @@ class DefaultPreferences(
         sharedPref.edit().putInt(Preferences.KEY_PASSTHROUGH_WINDOW_HOUR, hour).apply()
     }
 
-    override fun getChannelPriorityOverride(packageName: String, channelId: String): ly.com.tahaben.notification_filter_domain.model.NotificationPriority? {
-        val key = Preferences.KEY_CHANNEL_PRIORITY_PREFIX + packageName + "_" + channelId
-        val stored = sharedPref.getString(key, null) ?: return null
-        return try {
-            ly.com.tahaben.notification_filter_domain.model.NotificationPriority.valueOf(stored)
-        } catch (e: IllegalArgumentException) {
-            null
-        }
+    override fun getChannelPriorityOffset(packageName: String, channelId: String): Int {
+        val key = Preferences.KEY_CHANNEL_PRIORITY_OFFSET_PREFIX + packageName + "_" + channelId
+        return sharedPref.getInt(key, 0)
     }
 
-    override fun setChannelPriorityOverride(packageName: String, channelId: String, priority: ly.com.tahaben.notification_filter_domain.model.NotificationPriority?) {
-        val key = Preferences.KEY_CHANNEL_PRIORITY_PREFIX + packageName + "_" + channelId
-        if (priority == null) {
+    override fun setChannelPriorityOffset(packageName: String, channelId: String, offset: Int) {
+        val key = Preferences.KEY_CHANNEL_PRIORITY_OFFSET_PREFIX + packageName + "_" + channelId
+        if (offset == 0) {
             sharedPref.edit().remove(key).apply()
         } else {
-            sharedPref.edit().putString(key, priority.name).apply()
+            sharedPref.edit().putInt(key, offset).apply()
         }
     }
 

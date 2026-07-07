@@ -48,27 +48,30 @@ class ClassifyNotification(private val preferences: Preferences) {
         channelId: String?,
         category: NotificationCategory,
     ): Pair<NotificationPriority, NotificationCategory> {
+        val appPriority = resolveAppPriority(packageName, category)
+
         if (channelId != null) {
-            val channelOverride = preferences.getChannelPriorityOverride(packageName, channelId)
-            if (channelOverride != null) {
-                return Pair(channelOverride, category)
+            val offset = preferences.getChannelPriorityOffset(packageName, channelId)
+            if (offset != 0) {
+                val effective = NotificationPriority.fromLevel((appPriority.level - offset).coerceIn(1, 4))
+                return Pair(effective, category)
             }
         }
 
+        return Pair(appPriority, category)
+    }
+
+    private fun resolveAppPriority(packageName: String, category: NotificationCategory): NotificationPriority {
         val isLocked = preferences.isAppPriorityLocked(packageName)
         val priorityOverride = preferences.getAppPriorityOverride(packageName)
 
         if (isLocked) {
-            val lockedPriority = priorityOverride
+            return priorityOverride
                 ?: (preferences.getCategoryPriorityOverride(category) ?: category.defaultPriority)
-            return Pair(lockedPriority, category)
         }
 
-        if (priorityOverride != null) {
-            return Pair(priorityOverride, category)
-        }
+        if (priorityOverride != null) return priorityOverride
 
-        val categoryPriority = preferences.getCategoryPriorityOverride(category) ?: category.defaultPriority
-        return Pair(categoryPriority, category)
+        return preferences.getCategoryPriorityOverride(category) ?: category.defaultPriority
     }
 }

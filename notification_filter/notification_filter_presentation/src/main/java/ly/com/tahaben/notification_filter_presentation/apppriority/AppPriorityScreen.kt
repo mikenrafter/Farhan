@@ -161,7 +161,6 @@ private fun AppPriorityCard(
             .alpha(contentAlpha),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        enabled = enabled,
         onClick = onToggleExpanded,
     ) {
         Column(
@@ -191,7 +190,7 @@ private fun AppPriorityCard(
                         )
                     } else {
                         Text(
-                            text = "Notifications disabled for this app",
+                            text = "Notifications appear disabled (e.g. work profile)",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -228,7 +227,7 @@ private fun AppPriorityCard(
                 }
             }
 
-            if (enabled && isExpanded) {
+            if (isExpanded) {
                 Spacer(modifier = Modifier.height(4.dp))
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(4.dp))
@@ -280,6 +279,7 @@ private fun AppPriorityCard(
                     appInfo.channels.forEach { channelInfo ->
                         ChannelRow(
                             channelInfo = channelInfo,
+                            appPriority = appInfo.currentPriority,
                             onSetPriority = { priority ->
                                 onSetChannelPriority(channelInfo.channelId, priority)
                             }
@@ -326,8 +326,12 @@ private fun AppCategorySummary(appInfo: AppPriorityInfo) {
 @Composable
 private fun ChannelRow(
     channelInfo: ChannelPriorityInfo,
+    appPriority: NotificationPriority,
     onSetPriority: (NotificationPriority?) -> Unit,
 ) {
+    val effectivePriority = if (channelInfo.offset == 0) null
+    else channelInfo.effectivePriority(appPriority)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -341,7 +345,7 @@ private fun ChannelRow(
             fontWeight = FontWeight.Medium,
         )
         PriorityChipRow(
-            selected = channelInfo.override,
+            selected = effectivePriority,
             onSelect = onSetPriority,
             showDefault = true,
             compact = true,
