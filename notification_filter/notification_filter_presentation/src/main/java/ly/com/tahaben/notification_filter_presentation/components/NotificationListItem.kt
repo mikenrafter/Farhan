@@ -150,7 +150,10 @@ fun NotificationListItem(
                 Text(
                     modifier = Modifier.alignByBaseline(),
                     color = MaterialTheme.colorScheme.onSurface,
-                    text = notification.time,
+                    text = if (notification.timestamp > 0L)
+                        notification.timestamp.toNotificationDateTimeLabel()
+                    else
+                        notification.time,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }

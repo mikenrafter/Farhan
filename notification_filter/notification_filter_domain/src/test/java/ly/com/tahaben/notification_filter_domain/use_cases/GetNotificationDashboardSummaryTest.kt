@@ -33,6 +33,21 @@ class GetNotificationDashboardSummaryTest {
         assertThat(summary.healthScore).isLessThan(100)
     }
 
+    @Test
+    fun `critical notifications past standing threshold do not count as standing`() = runBlocking {
+        val now = System.currentTimeMillis()
+        val notifications = listOf(
+            item("1", NotificationPriority.CRITICAL, now - 4 * 3_600_000L, isRead = false),
+        )
+
+        val summary = GetNotificationDashboardSummary(
+            repository = FakeRepository(notifications),
+            preferences = FakePreferences(),
+        )().first()
+
+        assertThat(summary.standingCount).isEqualTo(0)
+    }
+
     private fun item(
         id: String,
         priority: NotificationPriority,

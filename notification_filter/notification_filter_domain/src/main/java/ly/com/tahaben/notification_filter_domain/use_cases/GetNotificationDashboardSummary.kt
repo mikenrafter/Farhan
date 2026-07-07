@@ -35,7 +35,9 @@ class GetNotificationDashboardSummary(
 
             val todayNotifications = notifications.filter { it.timestamp >= dayStart }
             val unread = notifications.filter { !it.isRead }
-            val standing = notifications.filter { it.timestamp < standingCutoff && !it.isRead }
+            val standing = notifications.filter {
+                it.timestamp < standingCutoff && !it.isRead && it.priority != NotificationPriority.CRITICAL
+            }
             val recent = notifications.filter { it.timestamp >= floodWindowStart }
             val isFlooding = recent.size >= preferences.getFloodThreshold()
 

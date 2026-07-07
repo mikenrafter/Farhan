@@ -1,4 +1,4 @@
-.PHONY: build install install-app install-demo-messenger install-demo-social \
+.PHONY: build install install-all install-app install-demo-messenger install-demo-social \
         install-demo-calendar install-demo-storm install-demo \
         install/emulator install-emulator emulator
 
@@ -7,8 +7,11 @@ build:
 	./gradlew assembleDebug
 	( cd testing && ./gradlew assembleDebug )
 
+# Install Farhan (primary app only)
+install: install-app
+
 # Install Farhan and all demo apps
-install: install-app install-demo-messenger install-demo-social install-demo-calendar install-demo-storm
+install-all: install-app install-demo-messenger install-demo-social install-demo-calendar install-demo-storm
 
 install-app:
 	./gradlew :app:assembleDebug

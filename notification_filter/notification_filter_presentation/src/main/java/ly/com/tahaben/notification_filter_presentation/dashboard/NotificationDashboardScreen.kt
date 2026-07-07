@@ -62,7 +62,11 @@ fun NotificationDashboardScreen(
 
     val standingItems = state.batches
         .flatMap { it.items }
-        .filter { !it.isRead && it.timestamp < System.currentTimeMillis() - state.standingThresholdHours * 3600 * 1000L }
+        .filter {
+            !it.isRead
+                && it.priority != NotificationPriority.CRITICAL
+                && it.timestamp < System.currentTimeMillis() - state.standingThresholdHours * 3600 * 1000L
+        }
         .sortedBy { it.timestamp }
 
     val healthDescription = buildString {

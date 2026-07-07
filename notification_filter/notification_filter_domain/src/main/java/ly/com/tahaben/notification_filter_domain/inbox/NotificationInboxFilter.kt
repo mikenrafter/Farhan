@@ -11,7 +11,9 @@ object NotificationInboxFilter {
         nowMillis: Long = System.currentTimeMillis(),
     ): NotificationPriority {
         val standingCutoffMillis = standingThresholdHours * 3_600_000L
-        val isStanding = !item.isRead && (nowMillis - item.timestamp) > standingCutoffMillis
+        val isStanding = !item.isRead
+            && item.priority != NotificationPriority.CRITICAL
+            && (nowMillis - item.timestamp) > standingCutoffMillis
         return if (isStanding) item.priority.degraded(1) else item.priority
     }
 

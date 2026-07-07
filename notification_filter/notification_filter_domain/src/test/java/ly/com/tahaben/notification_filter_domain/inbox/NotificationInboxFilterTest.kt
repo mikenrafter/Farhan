@@ -131,6 +131,16 @@ class NotificationInboxFilterTest {
     }
 
     @Test
+    fun `critical notifications are not degraded when standing`() {
+        val oldTimestamp = now - (standingHours * 3_600_000L + 1)
+        val notification = item("1", NotificationPriority.CRITICAL, timestamp = oldTimestamp, isRead = false)
+
+        assertThat(
+            NotificationInboxFilter.effectivePriority(notification, standingThresholdHours = standingHours, nowMillis = now)
+        ).isEqualTo(NotificationPriority.CRITICAL)
+    }
+
+    @Test
     fun `read notifications are not degraded when standing`() {
         val oldTimestamp = now - (standingHours * 3_600_000L + 1)
         val notification = item("1", NotificationPriority.HIGH, timestamp = oldTimestamp, isRead = true)
