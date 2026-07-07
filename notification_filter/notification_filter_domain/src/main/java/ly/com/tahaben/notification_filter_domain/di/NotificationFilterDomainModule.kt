@@ -11,6 +11,7 @@ import ly.com.tahaben.notification_filter_domain.preferences.Preferences
 import ly.com.tahaben.notification_filter_domain.repository.NotificationRepository
 import ly.com.tahaben.notification_filter_domain.use_cases.*
 import ly.com.tahaben.notification_filter_domain.use_cases.settings.*
+import ly.com.tahaben.notification_filter_domain.util.KnownPackageSourceRegistry
 import ly.com.tahaben.notification_filter_domain.util.ServiceUtil
 import javax.inject.Singleton
 
@@ -26,10 +27,11 @@ object NotificationFilterDomainModule {
         serviceUtil: ServiceUtil,
         @ApplicationContext context: Context,
         preferences: Preferences,
-        installedAppsRepo: InstalledAppsRepository
+        installedAppsRepo: InstalledAppsRepository,
+        knownPackageSourceRegistry: KnownPackageSourceRegistry,
     ): NotificationFilterUseCases {
         val setAppPriorityOverride = SetAppPriorityOverride(preferences)
-        val registerKnownNotificationSources = RegisterKnownNotificationSources(preferences)
+        val registerKnownNotificationSources = RegisterKnownNotificationSources(knownPackageSourceRegistry)
         val scanVisibleNotificationSources = ScanVisibleNotificationSources(
             serviceUtil,
             registerKnownNotificationSources,
@@ -95,9 +97,11 @@ object NotificationFilterDomainModule {
             SetChannelPriorityOverride(preferences),
             GetAppPriorityInfoList(
                 preferences,
+                knownPackageSourceRegistry,
                 classifyNotification,
                 scanInstalledNotificationSources,
                 scanVisibleNotificationSources,
+                serviceUtil,
             ),
             GetPriorityDeliverySettings(preferences),
             SetPriorityDeliverySetting(preferences),

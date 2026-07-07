@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "ad7b6a6e018490fff28e5612a8b00892",
+    "identityHash": "0344a77a4ad7ae94b24df28d73ff58fe",
     "entities": [
       {
         "tableName": "NotificationItemEntity",
@@ -107,14 +107,36 @@
             "id"
           ]
         },
-        "indices": [],
+        "indices": [
+          {
+            "name": "index_NotificationItemEntity_creatorPackage_timestamp",
+            "unique": false,
+            "columnNames": [
+              "creatorPackage",
+              "timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_NotificationItemEntity_creatorPackage_timestamp` ON `${TABLE_NAME}` (`creatorPackage`, `timestamp`)"
+          },
+          {
+            "name": "index_NotificationItemEntity_isDelivered_isCleared_priority",
+            "unique": false,
+            "columnNames": [
+              "isDelivered",
+              "isCleared",
+              "priority"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_NotificationItemEntity_isDelivered_isCleared_priority` ON `${TABLE_NAME}` (`isDelivered`, `isCleared`, `priority`)"
+          }
+        ],
         "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ad7b6a6e018490fff28e5612a8b00892')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0344a77a4ad7ae94b24df28d73ff58fe')"
     ]
   }
 }

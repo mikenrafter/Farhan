@@ -7,7 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -21,6 +24,7 @@ import ly.com.tahaben.notification_filter_domain.util.ServiceUtil
 import timber.log.Timber
 import javax.inject.Inject
 
+@OptIn(FlowPreview::class)
 @HiltViewModel
 class NotificationFilterViewModel @Inject constructor(
     private val notificationFilterUseCases: NotificationFilterUseCases,
@@ -66,6 +70,8 @@ class NotificationFilterViewModel @Inject constructor(
         getNotificationsJob?.cancel()
         getNotificationsJob =
             notificationFilterUseCases.getNotificationsFromDB()
+                .debounce(NOTIFICATION_LIST_DEBOUNCE_MS)
+                .flowOn(Dispatchers.Default)
                 .onEach { notifications ->
                     applyNotificationList(notifications)
                 }
@@ -81,14 +87,14 @@ class NotificationFilterViewModel @Inject constructor(
             standingThresholdHours = standingThresholdHours,
             nowMillis = nowMillis,
         )
-        val displayPriorities = notifications.associate { item ->
+        val displayPriorities = filtered.associate { item ->
             item.id to NotificationInboxFilter.effectivePriority(
                 item = item,
                 standingThresholdHours = standingThresholdHours,
                 nowMillis = nowMillis,
             )
         }
-        val actions = notifications.associate { item ->
+        val actions = filtered.associate { item ->
             item.id to serviceUtil.getNotificationActionTitles(item.id)
         }.filterValues { it.isNotEmpty() }
         state = state.copy(
@@ -202,5 +208,9 @@ class NotificationFilterViewModel @Inject constructor(
 
     fun openAppSettings() {
         notificationFilterUseCases.openAppSettings()
+    }
+
+    companion object {
+        private const val NOTIFICATION_LIST_DEBOUNCE_MS = 150L
     }
 }

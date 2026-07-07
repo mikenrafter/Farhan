@@ -1,12 +1,14 @@
 package ly.com.tahaben.notification_filter_data.service
 
 import android.app.AlarmManager
+import android.app.AppOpsManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Context.NOTIFICATION_SERVICE
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -85,6 +87,22 @@ class ServiceUtilImpl(
 
     override fun getNotificationChannelsForPackage(packageName: String): List<String> =
         NotificationService.getNotificationChannelsForPackage(packageName)
+
+    override fun areAppNotificationsEnabled(packageName: String): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
+        val uid = try {
+            context.packageManager.getApplicationInfo(packageName, 0).uid
+        } catch (_: PackageManager.NameNotFoundException) {
+            return false
+        }
+        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val mode = appOps.unsafeCheckOpNoThrow(POST_NOTIFICATION_OP, uid, packageName)
+        return when (mode) {
+            AppOpsManager.MODE_ALLOWED -> true
+            AppOpsManager.MODE_ERRORED -> true
+            else -> false
+        }
+    }
 
     override fun createNotifyMeNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -175,5 +193,9 @@ class ServiceUtilImpl(
         appInfoIntent.data =
             Uri.fromParts("package", packageName, null)
         context.startActivity(appInfoIntent)
+    }
+
+    companion object {
+        private const val POST_NOTIFICATION_OP = "android:post_notification"
     }
 }

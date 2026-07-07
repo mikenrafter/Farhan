@@ -1,4 +1,36 @@
-.PHONY: install/emulator install-emulator emulator
+.PHONY: build install install-app install-demo-messenger install-demo-social \
+        install-demo-calendar install-demo-storm install-demo \
+        install/emulator install-emulator emulator
+
+# Build all debug APKs
+build:
+	./gradlew assembleDebug
+	( cd testing && ./gradlew assembleDebug )
+
+# Install Farhan and all demo apps
+install: install-app install-demo-messenger install-demo-social install-demo-calendar install-demo-storm
+
+install-app:
+	./gradlew :app:assembleDebug
+	adb install -r app/build/outputs/apk/debug/app-debug.apk
+
+install-demo-messenger:
+	( cd testing && ./gradlew :test-messenger:assembleDebug )
+	adb install -r testing/test-messenger/build/outputs/apk/debug/test-messenger-debug.apk
+
+install-demo-social:
+	( cd testing && ./gradlew :test-social:assembleDebug )
+	adb install -r testing/test-social/build/outputs/apk/debug/test-social-debug.apk
+
+install-demo-calendar:
+	( cd testing && ./gradlew :test-calendar:assembleDebug )
+	adb install -r testing/test-calendar/build/outputs/apk/debug/test-calendar-debug.apk
+
+install-demo-storm:
+	( cd testing && ./gradlew :test-storm:assembleDebug )
+	adb install -r testing/test-storm/build/outputs/apk/debug/test-storm-debug.apk
+
+install-demo: install-demo-messenger install-demo-social install-demo-calendar install-demo-storm
 
 # Build, boot (or reuse) the Android emulator, then install Farhan + demo apps.
 # Requires: nix develop shell (provides ANDROID_SDK_ROOT, adb, emulator, avdmanager).

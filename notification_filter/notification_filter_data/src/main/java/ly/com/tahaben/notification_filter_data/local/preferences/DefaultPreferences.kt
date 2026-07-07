@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import ly.com.tahaben.core.util.GlobalKey
+import ly.com.tahaben.notification_filter_domain.model.AppStoreCategory
 import ly.com.tahaben.notification_filter_domain.model.BudgetBehavior
 import ly.com.tahaben.notification_filter_domain.model.BudgetSpendEntry
 import ly.com.tahaben.notification_filter_domain.model.DeliveryCadence
@@ -27,6 +28,18 @@ class DefaultPreferences(
 ) : Preferences {
 
     private val mainSwitchKey = booleanPreferencesKey(GlobalKey.Pref_KEY_APP_MAIN_SWITCH)
+
+    @Volatile
+    private var serviceEnabledCache: Boolean? = null
+
+    @Volatile
+    private var scheduleCache: List<NotificationSchedulePeriod>? = null
+
+    @Volatile
+    private var deliverySettingsCache: Map<NotificationPriority, PriorityDeliverySetting>? = null
+
+    private val pendingLedgerEntries = ArrayList<BudgetSpendEntry>()
+    private val ledgerLock = Any()
 
     @SuppressLint("ApplySharedPref")
     override fun saveShouldShowOnBoarding(shouldShow: Boolean) {
@@ -58,14 +71,21 @@ class DefaultPreferences(
     }
 
     override suspend fun isServiceEnabled(): Boolean {
-        return sharedPref.getBoolean(Preferences.KEY_NOTIFICATION_SERVICE_STATS, false) &&
-                dataStore.data.map { data -> data[mainSwitchKey] ?: true }.first()
+        serviceEnabledCache?.let { return it }
+        val enabled = isNotificationServiceStatsEnabled() &&
+            dataStore.data.map { data -> data[mainSwitchKey] ?: true }.first()
+        serviceEnabledCache = enabled
+        return enabled
     }
+
+    override fun isNotificationServiceStatsEnabled(): Boolean =
+        sharedPref.getBoolean(Preferences.KEY_NOTIFICATION_SERVICE_STATS, false)
 
     override fun setServiceState(isEnabled: Boolean) {
         sharedPref.edit()
             .putBoolean(Preferences.KEY_NOTIFICATION_SERVICE_STATS, isEnabled)
             .apply()
+        serviceEnabledCache = null
     }
 
     override fun savePackageToNotificationExceptions(packageName: String) {
@@ -225,8 +245,9 @@ class DefaultPreferences(
     }
 
     override fun getNotificationSchedule(): List<NotificationSchedulePeriod> {
+        scheduleCache?.let { return it }
         val json = sharedPref.getString(Preferences.KEY_NOTIFICATION_SCHEDULE, null)
-            ?: return NotificationSchedulePeriod.DEFAULT_SCHEDULE
+            ?: return NotificationSchedulePeriod.DEFAULT_SCHEDULE.also { scheduleCache = it }
         return try {
             val arr = JSONArray(json)
             (0 until arr.length()).map { i ->
@@ -238,13 +259,14 @@ class DefaultPreferences(
                     endMinute = obj.getInt("em"),
                     budgetPoints = obj.getInt("b"),
                 )
-            }
+            }.also { scheduleCache = it }
         } catch (e: Exception) {
-            NotificationSchedulePeriod.DEFAULT_SCHEDULE
+            NotificationSchedulePeriod.DEFAULT_SCHEDULE.also { scheduleCache = it }
         }
     }
 
     override fun setNotificationSchedule(schedule: List<NotificationSchedulePeriod>) {
+        scheduleCache = schedule
         val arr = JSONArray()
         schedule.forEach { period ->
             arr.put(JSONObject().apply {
@@ -273,6 +295,7 @@ class DefaultPreferences(
     }
 
     override fun getBudgetSpendLedger(periodStartMinute: Int): List<BudgetSpendEntry> {
+        flushPendingLedgerEntries()
         val json = sharedPref.getString(Preferences.KEY_BUDGET_SPEND_LEDGER, null) ?: return emptyList()
         return try {
             val arr = JSONArray(json)
@@ -294,20 +317,16 @@ class DefaultPreferences(
     }
 
     override fun addBudgetSpendEntry(entry: BudgetSpendEntry) {
-        val existing = readBudgetSpendLedgerRaw()
-        existing.put(JSONObject().apply {
-            put("a", entry.appName)
-            put("t", entry.title)
-            put("pr", entry.priority.name)
-            put("c", entry.pointCost)
-            put("ts", entry.timestamp)
-            put("p", entry.periodStartMinute)
-        })
-        trimBudgetSpendLedger(existing)
-        sharedPref.edit().putString(Preferences.KEY_BUDGET_SPEND_LEDGER, existing.toString()).apply()
+        synchronized(ledgerLock) {
+            pendingLedgerEntries.add(entry)
+            if (pendingLedgerEntries.size >= LEDGER_FLUSH_THRESHOLD) {
+                flushPendingLedgerEntries()
+            }
+        }
     }
 
     override fun clearBudgetSpendLedgerBefore(periodStartMinute: Int) {
+        flushPendingLedgerEntries()
         val existing = readBudgetSpendLedgerRaw()
         val filtered = JSONArray()
         for (index in 0 until existing.length()) {
@@ -320,6 +339,9 @@ class DefaultPreferences(
     }
 
     override fun clearAllBudgetSpend() {
+        synchronized(ledgerLock) {
+            pendingLedgerEntries.clear()
+        }
         sharedPref.edit()
             .putInt(Preferences.KEY_BUDGET_SPENT, 0)
             .putInt(Preferences.KEY_BUDGET_PERIOD_START_MINUTE, -1)
@@ -327,6 +349,26 @@ class DefaultPreferences(
             .putInt(Preferences.KEY_PASSTHROUGH_WINDOW_HOUR, -1)
             .putString(Preferences.KEY_BUDGET_SPEND_LEDGER, "[]")
             .apply()
+    }
+
+    private fun flushPendingLedgerEntries() {
+        val entriesToFlush = synchronized(ledgerLock) {
+            if (pendingLedgerEntries.isEmpty()) return
+            pendingLedgerEntries.toList().also { pendingLedgerEntries.clear() }
+        }
+        val existing = readBudgetSpendLedgerRaw()
+        entriesToFlush.forEach { entry ->
+            existing.put(JSONObject().apply {
+                put("a", entry.appName)
+                put("t", entry.title)
+                put("pr", entry.priority.name)
+                put("c", entry.pointCost)
+                put("ts", entry.timestamp)
+                put("p", entry.periodStartMinute)
+            })
+        }
+        trimBudgetSpendLedger(existing)
+        sharedPref.edit().putString(Preferences.KEY_BUDGET_SPEND_LEDGER, existing.toString()).apply()
     }
 
     private fun readBudgetSpendLedgerRaw(): JSONArray {
@@ -378,22 +420,26 @@ class DefaultPreferences(
     }
 
     override fun getPriorityDeliverySettings(): Map<NotificationPriority, PriorityDeliverySetting> {
-        val json = sharedPref.getString(Preferences.KEY_PRIORITY_DELIVERY_SETTINGS, null) ?: return PriorityDeliverySetting.DEFAULTS
+        deliverySettingsCache?.let { return it }
+        val json = sharedPref.getString(Preferences.KEY_PRIORITY_DELIVERY_SETTINGS, null)
+            ?: return PriorityDeliverySetting.DEFAULTS.also { deliverySettingsCache = it }
         return try {
             val obj = JSONObject(json)
             NotificationPriority.entries.associateWith { priority ->
-                val entry = obj.optJSONObject(priority.name) ?: return@associateWith PriorityDeliverySetting.defaultFor(priority)
+                val entry = obj.optJSONObject(priority.name)
+                    ?: return@associateWith PriorityDeliverySetting.defaultFor(priority)
                 PriorityDeliverySetting(
                     cadence = DeliveryCadence.valueOf(entry.getString("cadence")),
                     budgetBehavior = BudgetBehavior.valueOf(entry.getString("budget")),
                 )
-            }
+            }.also { deliverySettingsCache = it }
         } catch (e: Exception) {
-            PriorityDeliverySetting.DEFAULTS
+            PriorityDeliverySetting.DEFAULTS.also { deliverySettingsCache = it }
         }
     }
 
     override fun setPriorityDeliverySetting(priority: NotificationPriority, setting: PriorityDeliverySetting) {
+        deliverySettingsCache = null
         val current = getPriorityDeliverySettings().toMutableMap()
         current[priority] = setting
         val obj = JSONObject()
@@ -404,6 +450,7 @@ class DefaultPreferences(
             })
         }
         sharedPref.edit().putString(Preferences.KEY_PRIORITY_DELIVERY_SETTINGS, obj.toString()).apply()
+        deliverySettingsCache = current
     }
 
     override fun isDeliveryTestingMode(): Boolean =
@@ -430,6 +477,9 @@ class DefaultPreferences(
                             appName = obj.optString("name", packageName),
                             channelIds = channels,
                             androidCategories = categories,
+                            appCategoryCode = obj.optInt("appCat", AppStoreCategory.UNDEFINED)
+                                .takeIf { it != AppStoreCategory.UNDEFINED },
+                            appCategoryLabel = obj.optString("appCatLabel", null)?.takeIf { it.isNotBlank() },
                         )
                     )
                 }
@@ -447,6 +497,8 @@ class DefaultPreferences(
                 put("name", source.appName)
                 put("channels", JSONArray(source.channelIds.sorted()))
                 put("categories", JSONArray(source.androidCategories.sorted()))
+                source.appCategoryCode?.let { put("appCat", it) }
+                source.appCategoryLabel?.let { put("appCatLabel", it) }
             })
         }
         sharedPref.edit().putString(Preferences.KEY_KNOWN_PACKAGE_SOURCES, arr.toString()).apply()
@@ -464,5 +516,9 @@ class DefaultPreferences(
                 add(getString(i))
             }
         }
+    }
+
+    companion object {
+        private const val LEDGER_FLUSH_THRESHOLD = 5
     }
 }

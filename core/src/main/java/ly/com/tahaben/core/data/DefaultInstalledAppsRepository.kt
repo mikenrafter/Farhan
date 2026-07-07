@@ -29,6 +29,7 @@ class DefaultInstalledAppsRepository(
                         packageName = ai.packageName,
                         category = ApplicationInfo.getCategoryTitle(context, ai.category)
                             ?.toString(),
+                        appCategoryCode = ai.category,
                         isSystemApp = isSys
                     )
                 )

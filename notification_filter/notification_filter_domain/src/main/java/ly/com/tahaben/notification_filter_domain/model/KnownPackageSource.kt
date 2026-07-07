@@ -5,6 +5,8 @@ data class KnownPackageSource(
     val appName: String,
     val channelIds: Set<String> = emptySet(),
     val androidCategories: Set<String> = emptySet(),
+    val appCategoryCode: Int? = null,
+    val appCategoryLabel: String? = null,
 )
 
 data class VisibleNotificationSource(
@@ -12,4 +14,6 @@ data class VisibleNotificationSource(
     val appName: String?,
     val channelId: String?,
     val androidCategory: String?,
+    val appCategoryCode: Int? = null,
+    val appCategoryLabel: String? = null,
 )

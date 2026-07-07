@@ -2,9 +2,15 @@ package ly.com.tahaben.notification_filter_data.local.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity
+@Entity(
+    indices = [
+        Index(value = ["creatorPackage", "timestamp"]),
+        Index(value = ["isDelivered", "isCleared", "priority"]),
+    ]
+)
 data class NotificationItemEntity(
     @PrimaryKey(autoGenerate = false)
     val id: String,

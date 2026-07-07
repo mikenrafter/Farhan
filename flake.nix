@@ -104,8 +104,9 @@
           echo ""
           # Ensure the Gradle wrapper is executable after a fresh clone.
           [ -f gradlew ] && chmod +x gradlew
-          echo "Build: ./gradlew assembleDebug"
-          echo "Install: make install/emulator"
+          echo "Build: make build"
+          echo "Install (device): make install"
+          echo "Install (emulator): make install-emulator"
           echo ""
         '';
       };

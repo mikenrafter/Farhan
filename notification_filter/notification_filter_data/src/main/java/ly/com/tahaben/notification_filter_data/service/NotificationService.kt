@@ -22,7 +22,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import ly.com.tahaben.core.R
 import ly.com.tahaben.notification_filter_data.mapper.toNotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationCategory
@@ -31,6 +30,7 @@ import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_domain.model.VisibleNotificationSource
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
 import ly.com.tahaben.notification_filter_domain.use_cases.NotificationFilterUseCases
+import ly.com.tahaben.notification_filter_domain.util.KnownPackageSourceRegistry
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -45,6 +45,12 @@ class NotificationService : NotificationListenerService() {
 
     @Inject
     lateinit var deliveryEngine: NotificationDeliveryEngine
+
+    @Inject
+    lateinit var rateTracker: PackageNotificationRateTracker
+
+    @Inject
+    lateinit var knownPackageSourceRegistry: KnownPackageSourceRegistry
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -176,23 +182,19 @@ class NotificationService : NotificationListenerService() {
         modificationType: Int,
     ) {
         if (modificationType == NOTIFICATION_CHANNEL_OR_GROUP_DELETED) return
-        val appName = try {
-            packageManager.getApplicationLabel(
-                packageManager.getApplicationInfo(pkg, 0)
-            ).toString()
-        } catch (_: PackageManager.NameNotFoundException) {
-            pkg
-        }
-        notificationFilterUseCases.registerKnownNotificationSources(
-            listOf(
-                VisibleNotificationSource(
-                    packageName = pkg,
-                    appName = appName,
-                    channelId = channel.id,
-                    androidCategory = null,
+        serviceScope.launch {
+            val appName = resolveApplicationName(pkg)
+            notificationFilterUseCases.registerKnownNotificationSources(
+                listOf(
+                    VisibleNotificationSource(
+                        packageName = pkg,
+                        appName = appName,
+                        channelId = channel.id,
+                        androidCategory = null,
+                    )
                 )
             )
-        )
+        }
         super.onNotificationChannelModified(pkg, user, channel, modificationType)
     }
 
@@ -202,84 +204,81 @@ class NotificationService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
-        val isEnabled = runBlocking { notificationFilterUseCases.checkIfNotificationServiceIsEnabled() }
-        if (!isEnabled) return
+        if (!preferences.isNotificationServiceStatsEnabled()) return
+        val statusBarNotification = sbn ?: return
+        serviceScope.launch {
+            processNotificationPosted(statusBarNotification)
+        }
+    }
 
-        val notification = sbn?.notification ?: return
-        val appPackageName = sbn.packageName ?: ""
+    private suspend fun processNotificationPosted(sbn: StatusBarNotification) {
+        if (!notificationFilterUseCases.checkIfNotificationServiceIsEnabled()) return
+
+        val notification = sbn.notification ?: return
+        val appPackageName = sbn.packageName
 
         if (isSystemExemptCategory(notification.category)) {
-            super.onNotificationPosted(sbn)
             return
         }
 
         if (appPackageName == packageName) {
-            super.onNotificationPosted(sbn)
             return
         }
 
-        val pm: PackageManager = packageManager
-        val ai: ApplicationInfo? = try {
-            pm.getApplicationInfo(appPackageName, 0)
-        } catch (e: PackageManager.NameNotFoundException) {
-            null
-        }
-        val applicationName = (if (ai != null) pm.getApplicationLabel(ai) else appPackageName) as String?
+        val applicationName = resolveApplicationName(appPackageName)
         val channelId = notification.channelId
 
-        val passThrough = runBlocking(Dispatchers.IO) {
-            notificationFilterUseCases.registerKnownNotificationSources(
-                listOf(
-                    VisibleNotificationSource(
-                        packageName = appPackageName,
-                        appName = applicationName,
-                        channelId = channelId,
-                        androidCategory = notification.category,
-                    )
+        notificationFilterUseCases.registerKnownNotificationSources(
+            listOf(
+                VisibleNotificationSource(
+                    packageName = appPackageName,
+                    appName = applicationName,
+                    channelId = channelId,
+                    androidCategory = notification.category,
                 )
             )
+        )
 
-            val (basePriority, category) = notificationFilterUseCases
-                .classifyNotification(notification.category, appPackageName, channelId)
+        val knownSource = knownPackageSourceRegistry.getAll()[appPackageName]
+        val (basePriority, category) = notificationFilterUseCases.classifyNotification(
+            androidCategory = notification.category,
+            packageName = appPackageName,
+            channelId = channelId,
+            appCategoryCode = knownSource?.appCategoryCode,
+            knownAndroidCategories = knownSource?.androidCategories.orEmpty(),
+        )
 
-            val isException = notificationFilterUseCases.isPackageInNotificationException(appPackageName)
-            val isLocked = notificationFilterUseCases.isAppPriorityLocked(appPackageName)
-            val hasChannelOverride = channelId != null &&
-                preferences.getChannelPriorityOverride(appPackageName, channelId) != null
-            val hasAppOverride = preferences.getAppPriorityOverride(appPackageName) != null
+        val isException = notificationFilterUseCases.isPackageInNotificationException(appPackageName)
+        val hasChannelOverride = channelId != null &&
+            preferences.getChannelPriorityOverride(appPackageName, channelId) != null
+        val hasAppOverride = preferences.getAppPriorityOverride(appPackageName) != null
+        val isLocked = preferences.isAppPriorityLocked(appPackageName)
 
-            val (effectivePriority, priorityReason) = when {
-                hasChannelOverride -> Pair(basePriority, "Set by user")
-                isLocked -> Pair(basePriority, "Locked by user")
-                hasAppOverride -> Pair(basePriority, "Set by user")
-                else -> applyDynamicAdjustments(basePriority, appPackageName)
-            }
-
-            val shouldPassThrough = isException || effectivePriority == NotificationPriority.CRITICAL
-            val item = captureNotificationToInbox(
-                sbn = sbn,
-                applicationName = applicationName,
-                effectivePriority = effectivePriority,
-                category = category,
-                channelId = channelId,
-                priorityReason = priorityReason,
-                deliveredToSystemTray = shouldPassThrough,
-            )
-
-            if (shouldPassThrough) {
-                true
-            } else {
-                cancelNotification(sbn.key)
-                deliveryEngine.tryImmediateDelivery(this@NotificationService, item, effectivePriority)
-                false
-            }
+        val (effectivePriority, priorityReason) = when {
+            hasChannelOverride -> Pair(basePriority, "Set by user")
+            isLocked -> Pair(basePriority, "Locked by user")
+            hasAppOverride -> Pair(basePriority, "Set by user")
+            else -> applyDynamicAdjustments(basePriority, appPackageName)
         }
 
-        if (passThrough) {
-            Timber.d("${sbn.packageName} passed through to system tray and recorded in inbox")
-            super.onNotificationPosted(sbn)
+        val shouldPassThrough = isException || effectivePriority == NotificationPriority.CRITICAL
+        val item = captureNotificationToInbox(
+            sbn = sbn,
+            applicationName = applicationName,
+            effectivePriority = effectivePriority,
+            category = category,
+            channelId = channelId,
+            priorityReason = priorityReason,
+            deliveredToSystemTray = shouldPassThrough,
+        )
+
+        if (shouldPassThrough) {
+            Timber.d("$appPackageName passed through to system tray and recorded in inbox")
             return
         }
+
+        cancelNotification(sbn.key)
+        deliveryEngine.tryImmediateDelivery(this@NotificationService, item, effectivePriority)
 
         if (notificationFilterUseCases.getNotifyMeHour() != -1) {
             notificationFilterUseCases.createNotifyMeNotificationChannel()
@@ -289,7 +288,17 @@ class NotificationService : NotificationListenerService() {
             )
         }
 
-        Timber.d("${sbn.packageName} intercepted")
+        Timber.d("$appPackageName intercepted")
+    }
+
+    private fun resolveApplicationName(appPackageName: String): String? {
+        val pm = packageManager
+        val ai: ApplicationInfo? = try {
+            pm.getApplicationInfo(appPackageName, 0)
+        } catch (_: PackageManager.NameNotFoundException) {
+            null
+        }
+        return (if (ai != null) pm.getApplicationLabel(ai) else appPackageName) as String?
     }
 
     private suspend fun captureNotificationToInbox(
@@ -369,21 +378,19 @@ class NotificationService : NotificationListenerService() {
         super.onDestroy()
     }
 
-    private suspend fun applyDynamicAdjustments(
+    private fun applyDynamicAdjustments(
         base: NotificationPriority,
         packageName: String,
     ): Pair<NotificationPriority, String> {
-        val now = System.currentTimeMillis()
+        val counts = rateTracker.record(packageName)
         val floodThreshold = notificationFilterUseCases.getDashboardSettings.getFloodThreshold()
-        val recentCount = notificationFilterUseCases.getPackageNotificationCountSince(packageName, now - 600_000L)
 
-        if (recentCount >= floodThreshold) {
-            return Pair(base.degraded(2), "Flood – $recentCount in 10 min")
+        if (counts.lastTenMinutes >= floodThreshold) {
+            return Pair(base.degraded(2), "Flood – ${counts.lastTenMinutes} in 10 min")
         }
 
-        val hourlyCount = notificationFilterUseCases.getPackageNotificationCountSince(packageName, now - 3_600_000L)
-        if (hourlyCount >= CHATTER_HOUR_THRESHOLD) {
-            return Pair(base.degraded(1), "Chatter – ${hourlyCount}/hr")
+        if (counts.lastHour >= CHATTER_HOUR_THRESHOLD) {
+            return Pair(base.degraded(1), "Chatter – ${counts.lastHour}/hr")
         }
 
         return Pair(base, "Category default")

@@ -11,6 +11,7 @@ import ly.com.tahaben.notification_filter_domain.model.BudgetBehavior
 import ly.com.tahaben.notification_filter_domain.model.BudgetSpendEntry
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
+import ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod
 import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
 import ly.com.tahaben.notification_filter_domain.use_cases.NotificationFilterUseCases
@@ -39,10 +40,9 @@ class NotificationDeliveryEngine @Inject constructor(
             return
         }
 
-        val timeContext = currentTimeContext()
         val schedule = preferences.getNotificationSchedule()
         val deliverySettings = preferences.getPriorityDeliverySettings()
-
+        val timeContext = currentTimeContext()
         var budget = readDeliveryBudget().let { current ->
             if (current.passthroughWindowHour != timeContext.passthroughWindowKey) {
                 current.copy(passthroughWindowHour = timeContext.passthroughWindowKey, hourlyCount = 0)
@@ -65,7 +65,7 @@ class NotificationDeliveryEngine @Inject constructor(
             useCases.markNotificationAsDelivered(item.id)
             val setting = deliverySettings[item.priority]
                 ?: PriorityDeliverySetting.defaultFor(item.priority)
-            recordBudgetSpend(item, item.priority, setting)
+            queueBudgetSpend(item, item.priority, setting, schedule, timeContext)
         }
         if (delivered.isNotEmpty()) {
             Timber.i("Farhan batch-delivered ${delivered.size} notification(s)")
@@ -81,42 +81,38 @@ class NotificationDeliveryEngine @Inject constructor(
     ) {
         if (!canPostNotifications(context)) return
 
+        val schedule = preferences.getNotificationSchedule()
         val deliverySettings = preferences.getPriorityDeliverySettings()
         val setting = deliverySettings[effectivePriority]
             ?: PriorityDeliverySetting.defaultFor(effectivePriority)
-        if (NotificationDeliveryPolicy.shouldDeliverOnArrival(setting) &&
-            canDeliverNow(effectivePriority, setting)
-        ) {
-            NotificationService.postProxyNotification(context, item.id, item.appName, item.title, item.text)
-            useCases.markNotificationAsDelivered(item.id)
-            recordPassthrough(effectivePriority, setting)
-            recordBudgetSpend(item, effectivePriority, setting)
-        }
-    }
+        if (!NotificationDeliveryPolicy.shouldDeliverOnArrival(setting)) return
 
-    private fun canDeliverNow(priority: NotificationPriority, setting: PriorityDeliverySetting): Boolean {
         val timeContext = currentTimeContext()
-        val decision = NotificationDeliveryPolicy.canDeliverNow(
-            priority = priority,
+        var budget = readDeliveryBudget()
+        val deliverDecision = NotificationDeliveryPolicy.canDeliverNow(
+            priority = effectivePriority,
             setting = setting,
-            schedule = preferences.getNotificationSchedule(),
+            schedule = schedule,
             timeContext = timeContext,
-            budget = readDeliveryBudget(),
+            budget = budget,
         )
-        writeDeliveryBudget(decision.updatedBudget)
-        return decision.canDeliver
-    }
+        budget = deliverDecision.updatedBudget
+        if (!deliverDecision.canDeliver) {
+            writeDeliveryBudget(budget)
+            return
+        }
 
-    private fun recordPassthrough(priority: NotificationPriority, setting: PriorityDeliverySetting) {
-        val timeContext = currentTimeContext()
-        val updated = NotificationDeliveryPolicy.recordPassthrough(
-            priority = priority,
+        NotificationService.postProxyNotification(context, item.id, item.appName, item.title, item.text)
+        useCases.markNotificationAsDelivered(item.id)
+        budget = NotificationDeliveryPolicy.recordPassthrough(
+            priority = effectivePriority,
             setting = setting,
-            schedule = preferences.getNotificationSchedule(),
+            schedule = schedule,
             minuteOfDay = timeContext.scheduleMinuteOfDay,
-            budget = readDeliveryBudget(),
+            budget = budget,
         )
-        writeDeliveryBudget(updated)
+        writeDeliveryBudget(budget)
+        queueBudgetSpend(item, effectivePriority, setting, schedule, timeContext)
     }
 
     private fun currentTimeContext(): DeliveryTimeContext {
@@ -147,16 +143,17 @@ class NotificationDeliveryEngine @Inject constructor(
         preferences.setPassthroughWindowHour(budget.passthroughWindowHour)
     }
 
-    private fun recordBudgetSpend(
+    private fun queueBudgetSpend(
         item: NotificationItem,
         priority: NotificationPriority,
         setting: PriorityDeliverySetting,
+        schedule: List<NotificationSchedulePeriod>,
+        timeContext: DeliveryTimeContext,
     ) {
         if (setting.budgetBehavior == BudgetBehavior.IGNORING || priority.pointCost == 0) return
 
-        val timeContext = currentTimeContext()
         val period = NotificationDeliveryPolicy.findActivePeriod(
-            schedule = preferences.getNotificationSchedule(),
+            schedule = schedule,
             minuteOfDay = timeContext.scheduleMinuteOfDay,
         ) ?: return
 

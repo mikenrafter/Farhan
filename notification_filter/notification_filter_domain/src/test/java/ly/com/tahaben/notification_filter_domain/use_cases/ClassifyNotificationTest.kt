@@ -1,6 +1,7 @@
 package ly.com.tahaben.notification_filter_domain.use_cases
 
 import com.google.common.truth.Truth.assertThat
+import ly.com.tahaben.notification_filter_domain.model.AppStoreCategory
 import ly.com.tahaben.notification_filter_domain.model.NotificationCategory
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
@@ -56,6 +57,18 @@ class ClassifyNotificationTest {
         assertThat(category).isEqualTo(NotificationCategory.OTHER)
     }
 
+    @Test
+    fun `app store category provides default when notification category missing`() {
+        val (priority, category) = classify.classifyForApp(
+            packageName = "com.game",
+            androidCategories = emptySet(),
+            appCategoryCode = AppStoreCategory.GAME,
+        )
+
+        assertThat(category).isEqualTo(NotificationCategory.ENTERTAINMENT)
+        assertThat(priority).isEqualTo(NotificationPriority.LOW)
+    }
+
     private class FakePreferences : Preferences {
         private val appOverrides = mutableMapOf<String, NotificationPriority>()
         private val channelOverrides = mutableMapOf<Pair<String, String>, NotificationPriority>()
@@ -91,6 +104,7 @@ class ClassifyNotificationTest {
         override fun loadShouldShowcase() = false
         override fun saveShouldShowcase(shouldShow: Boolean) = Unit
         override suspend fun isServiceEnabled() = true
+        override fun isNotificationServiceStatsEnabled() = true
         override fun setServiceState(isEnabled: Boolean) = Unit
         override fun savePackageToNotificationExceptions(packageName: String) = Unit
         override fun removePackageFromNotificationExceptions(packageName: String) = Unit

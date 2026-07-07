@@ -4,10 +4,15 @@ data class AppPriorityInfo(
     val packageName: String,
     val appName: String,
     val currentPriority: NotificationPriority,
+    val defaultPriority: NotificationPriority,
+    val resolvedCategory: NotificationCategory,
     val priorityReason: String,
+    val appCategoryLabel: String?,
+    val androidNotificationCategoryLabels: List<String>,
     val isLocked: Boolean,
     val userOverride: NotificationPriority?,
     val channels: List<ChannelPriorityInfo>,
+    val notificationsEnabled: Boolean = true,
 )
 
 data class ChannelPriorityInfo(

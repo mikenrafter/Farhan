@@ -4,6 +4,7 @@ data class AppItem(
     var name: String?,
     var packageName: String,
     var category: String? = null,
+    var appCategoryCode: Int = 0,
     var isException: Boolean = false,
     var isSystemApp: Boolean = false,
     val activityName: String = "",

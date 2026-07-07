@@ -20,4 +20,5 @@ interface ServiceUtil {
     fun getVisibleNotificationSources(): List<ly.com.tahaben.notification_filter_domain.model.VisibleNotificationSource>
     fun getOwnPackageName(): String
     fun getNotificationChannelsForPackage(packageName: String): List<String>
+    fun areAppNotificationsEnabled(packageName: String): Boolean
 }

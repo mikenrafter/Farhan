@@ -1,6 +1,7 @@
 package ly.com.tahaben.notification_filter_domain.use_cases
 
 import ly.com.tahaben.notification_filter_domain.model.NotificationCategory
+import ly.com.tahaben.notification_filter_domain.model.NotificationCategoryResolver
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
 
@@ -10,18 +11,43 @@ class ClassifyNotification(private val preferences: Preferences) {
         androidCategory: String?,
         packageName: String,
         channelId: String? = null,
+        appCategoryCode: Int? = null,
+        knownAndroidCategories: Set<String> = emptySet(),
     ): Pair<NotificationPriority, NotificationCategory> {
-        val category = when (androidCategory) {
-            "msg", "email" -> NotificationCategory.COMMUNICATION
-            "call", "missed_call" -> NotificationCategory.COMMUNICATION
-            "social", "promo", "recommendation" -> NotificationCategory.SOCIAL
-            "reminder", "event" -> NotificationCategory.PRODUCTIVITY
-            "sys", "service" -> NotificationCategory.SYSTEM
-            "workout", "navigation", "location" -> NotificationCategory.HEALTH
-            else -> NotificationCategory.OTHER
-        }
+        val category = NotificationCategoryResolver.resolve(
+            primaryAndroidCategory = androidCategory,
+            knownAndroidCategories = knownAndroidCategories,
+            appCategoryCode = appCategoryCode,
+        )
+        return resolvePriority(
+            packageName = packageName,
+            channelId = channelId,
+            category = category,
+        )
+    }
 
-        // Channel-level override has highest priority
+    fun classifyForApp(
+        packageName: String,
+        androidCategories: Set<String>,
+        appCategoryCode: Int?,
+    ): Pair<NotificationPriority, NotificationCategory> {
+        val category = NotificationCategoryResolver.resolve(
+            primaryAndroidCategory = null,
+            knownAndroidCategories = androidCategories,
+            appCategoryCode = appCategoryCode,
+        )
+        return resolvePriority(
+            packageName = packageName,
+            channelId = null,
+            category = category,
+        )
+    }
+
+    private fun resolvePriority(
+        packageName: String,
+        channelId: String?,
+        category: NotificationCategory,
+    ): Pair<NotificationPriority, NotificationCategory> {
         if (channelId != null) {
             val channelOverride = preferences.getChannelPriorityOverride(packageName, channelId)
             if (channelOverride != null) {
@@ -32,20 +58,17 @@ class ClassifyNotification(private val preferences: Preferences) {
         val isLocked = preferences.isAppPriorityLocked(packageName)
         val priorityOverride = preferences.getAppPriorityOverride(packageName)
 
-        // If the priority is locked, use the override (or category default) without any dynamic adjustment
         if (isLocked) {
-            val lockedPriority = priorityOverride ?: (preferences.getCategoryPriorityOverride(category) ?: category.defaultPriority)
+            val lockedPriority = priorityOverride
+                ?: (preferences.getCategoryPriorityOverride(category) ?: category.defaultPriority)
             return Pair(lockedPriority, category)
         }
 
-        // Manual app-level override takes precedence over category default
         if (priorityOverride != null) {
             return Pair(priorityOverride, category)
         }
 
-        // Use category-level override if set, otherwise use the category's default priority
         val categoryPriority = preferences.getCategoryPriorityOverride(category) ?: category.defaultPriority
-
         return Pair(categoryPriority, category)
     }
 }

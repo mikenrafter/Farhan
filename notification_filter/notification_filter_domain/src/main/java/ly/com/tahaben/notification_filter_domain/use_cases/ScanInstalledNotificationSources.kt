@@ -10,7 +10,13 @@ class ScanInstalledNotificationSources(
     private val serviceUtil: ServiceUtil,
     private val registerKnownNotificationSources: RegisterKnownNotificationSources,
 ) {
-    suspend operator fun invoke() = withContext(Dispatchers.IO) {
+    @Volatile
+    private var lastScanAtMillis = 0L
+
+    suspend operator fun invoke(force: Boolean = false) = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        if (!force && now - lastScanAtMillis < SCAN_INTERVAL_MS) return@withContext
+
         val ownPackageName = serviceUtil.getOwnPackageName()
         val sources = getInstalledAppsList()
             .asSequence()
@@ -19,6 +25,8 @@ class ScanInstalledNotificationSources(
             .flatMap { app ->
                 val packageName = app.packageName
                 val appName = app.name?.takeIf { it.isNotBlank() } ?: packageName
+                val appCategoryCode = app.appCategoryCode.takeIf { it != 0 }
+                val appCategoryLabel = app.category?.takeIf { it.isNotBlank() }
                 val channelIds = serviceUtil.getNotificationChannelsForPackage(packageName)
                 if (channelIds.isEmpty()) {
                     sequenceOf(
@@ -27,6 +35,8 @@ class ScanInstalledNotificationSources(
                             appName = appName,
                             channelId = null,
                             androidCategory = null,
+                            appCategoryCode = appCategoryCode,
+                            appCategoryLabel = appCategoryLabel,
                         )
                     )
                 } else {
@@ -36,11 +46,18 @@ class ScanInstalledNotificationSources(
                             appName = appName,
                             channelId = channelId,
                             androidCategory = null,
+                            appCategoryCode = appCategoryCode,
+                            appCategoryLabel = appCategoryLabel,
                         )
                     }
                 }
             }
             .toList()
         registerKnownNotificationSources(sources)
+        lastScanAtMillis = now
+    }
+
+    companion object {
+        private const val SCAN_INTERVAL_MS = 5 * 60 * 1000L
     }
 }

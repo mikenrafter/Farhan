@@ -76,6 +76,7 @@ class GetNotificationDashboardSummaryTest {
         override fun loadShouldShowcase() = false
         override fun saveShouldShowcase(shouldShow: Boolean) = Unit
         override suspend fun isServiceEnabled() = true
+        override fun isNotificationServiceStatsEnabled() = true
         override fun setServiceState(isEnabled: Boolean) = Unit
         override fun savePackageToNotificationExceptions(packageName: String) = Unit
         override fun removePackageFromNotificationExceptions(packageName: String) = Unit

@@ -9,14 +9,20 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import ly.com.tahaben.notification_filter_data.local.preferences.DefaultPreferences
+import ly.com.tahaben.notification_filter_data.local.preferences.KnownPackageSourceStore
 import ly.com.tahaben.notification_filter_data.service.ServiceUtilImpl
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
+import ly.com.tahaben.notification_filter_domain.util.KnownPackageSourceRegistry
 import ly.com.tahaben.notification_filter_domain.util.ServiceUtil
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NotificationFilterDataModule {
+
+    @Provides
+    @Singleton
+    fun provideKnownPackageSourceRegistry(store: KnownPackageSourceStore): KnownPackageSourceRegistry = store
 
     @Provides
     @Singleton

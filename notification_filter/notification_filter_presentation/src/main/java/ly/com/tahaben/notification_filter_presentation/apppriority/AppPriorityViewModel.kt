@@ -6,7 +6,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ly.com.tahaben.notification_filter_domain.use_cases.NotificationFilterUseCases
 import javax.inject.Inject
 
@@ -19,11 +21,14 @@ class AppPriorityViewModel @Inject constructor(
         private set
 
     init {
-        loadData()
+        loadData(showLoading = true)
     }
 
     fun refresh() {
-        loadData()
+        viewModelScope.launch(Dispatchers.Default) {
+            val apps = useCases.getAppPriorityInfoList(forceRescan = false)
+            state = state.copy(apps = apps)
+        }
     }
 
     fun onEvent(event: AppPriorityEvent) {
@@ -38,24 +43,39 @@ class AppPriorityViewModel @Inject constructor(
             }
             is AppPriorityEvent.OnSetAppPriority -> {
                 useCases.setAppPriorityOverride(event.packageName, event.priority)
-                loadData()
+                patchApp(event.packageName)
             }
             is AppPriorityEvent.OnSetAppLocked -> {
                 useCases.setAppPriorityLocked(event.packageName, event.locked)
-                loadData()
+                patchApp(event.packageName)
             }
             is AppPriorityEvent.OnSetChannelPriority -> {
                 useCases.setChannelPriorityOverride(event.packageName, event.channelId, event.priority)
-                loadData()
+                patchApp(event.packageName)
             }
         }
     }
 
-    private fun loadData() {
+    private fun loadData(showLoading: Boolean) {
         viewModelScope.launch {
-            state = state.copy(isLoading = true)
-            val apps = useCases.getAppPriorityInfoList()
+            if (showLoading) {
+                state = state.copy(isLoading = true)
+            }
+            val apps = withContext(Dispatchers.Default) {
+                useCases.getAppPriorityInfoList(forceRescan = false)
+            }
             state = state.copy(apps = apps, isLoading = false)
+        }
+    }
+
+    private fun patchApp(packageName: String) {
+        viewModelScope.launch(Dispatchers.Default) {
+            val updated = useCases.getAppPriorityInfoList.forPackage(packageName) ?: return@launch
+            state = state.copy(
+                apps = state.apps.map { app ->
+                    if (app.packageName == packageName) updated else app
+                }
+            )
         }
     }
 }

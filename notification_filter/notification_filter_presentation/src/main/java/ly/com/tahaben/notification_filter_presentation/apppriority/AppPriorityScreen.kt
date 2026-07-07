@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -37,17 +38,17 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
 import ly.com.tahaben.core_ui.LocalSpacing
-import ly.com.tahaben.core_ui.OnLifecycleEvent
 import ly.com.tahaben.core_ui.mirror
 import ly.com.tahaben.notification_filter_domain.model.AppPriorityInfo
 import ly.com.tahaben.notification_filter_domain.model.ChannelPriorityInfo
+import ly.com.tahaben.notification_filter_domain.model.NotificationCategory
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 
 private val PRIORITY_COLORS = mapOf(
@@ -65,12 +66,7 @@ fun AppPriorityScreen(
 ) {
     val spacing = LocalSpacing.current
     val state = viewModel.state
-
-    OnLifecycleEvent { _, event ->
-        if (event == Lifecycle.Event.ON_RESUME) {
-            viewModel.refresh()
-        }
-    }
+    val listState = rememberLazyListState()
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
@@ -89,46 +85,55 @@ fun AppPriorityScreen(
             }
         )
 
-        if (state.isLoading) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        when {
+            state.isLoading && state.apps.isEmpty() -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
             }
-        } else if (state.apps.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                Text(
-                    text = "No apps found.\nInstall apps that send notifications to manage their priorities here.",
-                    modifier = Modifier.align(Alignment.Center).padding(24.dp),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(spacing.spaceMedium),
-                verticalArrangement = Arrangement.spacedBy(spacing.spaceSmall)
-            ) {
-                items(state.apps, key = { it.packageName }) { appInfo ->
-                    val isExpanded = appInfo.packageName in state.expandedPackages
-                    AppPriorityCard(
-                        appInfo = appInfo,
-                        isExpanded = isExpanded,
-                        onToggleExpanded = {
-                            viewModel.onEvent(AppPriorityEvent.OnToggleExpanded(appInfo.packageName))
-                        },
-                        onSetPriority = { priority ->
-                            viewModel.onEvent(AppPriorityEvent.OnSetAppPriority(appInfo.packageName, priority))
-                        },
-                        onSetLocked = { locked ->
-                            viewModel.onEvent(AppPriorityEvent.OnSetAppLocked(appInfo.packageName, locked))
-                        },
-                        onSetChannelPriority = { channelId, priority ->
-                            viewModel.onEvent(
-                                AppPriorityEvent.OnSetChannelPriority(appInfo.packageName, channelId, priority)
-                            )
-                        }
+            state.apps.isEmpty() -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        text = "No apps found.\nInstall apps that send notifications to manage their priorities here.",
+                        modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     )
+                }
+            }
+            else -> {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(spacing.spaceMedium),
+                    verticalArrangement = Arrangement.spacedBy(spacing.spaceSmall)
+                ) {
+                    items(
+                        items = state.apps,
+                        key = { it.packageName },
+                        contentType = { if (it.packageName in state.expandedPackages) "expanded" else "collapsed" },
+                    ) { appInfo ->
+                        val isExpanded = appInfo.packageName in state.expandedPackages
+                        AppPriorityCard(
+                            appInfo = appInfo,
+                            isExpanded = isExpanded,
+                            onToggleExpanded = {
+                                viewModel.onEvent(AppPriorityEvent.OnToggleExpanded(appInfo.packageName))
+                            },
+                            onSetPriority = { priority ->
+                                viewModel.onEvent(AppPriorityEvent.OnSetAppPriority(appInfo.packageName, priority))
+                            },
+                            onSetLocked = { locked ->
+                                viewModel.onEvent(AppPriorityEvent.OnSetAppLocked(appInfo.packageName, locked))
+                            },
+                            onSetChannelPriority = { channelId, priority ->
+                                viewModel.onEvent(
+                                    AppPriorityEvent.OnSetChannelPriority(appInfo.packageName, channelId, priority)
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -147,11 +152,16 @@ private fun AppPriorityCard(
 ) {
     val spacing = LocalSpacing.current
     val priorityColor = PRIORITY_COLORS[appInfo.currentPriority] ?: Color(0xFF9E9E9E)
+    val enabled = appInfo.notificationsEnabled
+    val contentAlpha = if (enabled) 1f else 0.45f
 
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .alpha(contentAlpha),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        enabled = enabled,
         onClick = onToggleExpanded,
     ) {
         Column(
@@ -160,7 +170,6 @@ private fun AppPriorityCard(
                 .padding(spacing.spaceMedium),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            // Header row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -173,17 +182,25 @@ private fun AppPriorityCard(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Text(
-                        text = appInfo.priorityReason,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (enabled) {
+                        AppCategorySummary(appInfo = appInfo)
+                        Text(
+                            text = appInfo.priorityReason,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        Text(
+                            text = "Notifications disabled for this app",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Priority badge
                     Surface(
                         shape = RoundedCornerShape(4.dp),
                         color = priorityColor.copy(alpha = 0.15f),
@@ -196,7 +213,6 @@ private fun AppPriorityCard(
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
-                    // Lock icon
                     Icon(
                         imageVector = if (appInfo.isLocked) Icons.Filled.Lock else Icons.Filled.LockOpen,
                         contentDescription = if (appInfo.isLocked) "Locked" else "Unlocked",
@@ -204,7 +220,6 @@ private fun AppPriorityCard(
                         else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(2.dp)
                     )
-                    // Expand/collapse icon
                     Icon(
                         imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                         contentDescription = if (isExpanded) "Collapse" else "Expand",
@@ -213,12 +228,17 @@ private fun AppPriorityCard(
                 }
             }
 
-            if (isExpanded) {
+            if (enabled && isExpanded) {
                 Spacer(modifier = Modifier.height(4.dp))
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Override priority row
+                Text(
+                    text = "Default priority: ${appInfo.defaultPriority.name.lowercase().replaceFirstChar { it.uppercase() }}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
                 Text(
                     text = "Override priority:",
                     style = MaterialTheme.typography.labelMedium,
@@ -232,7 +252,6 @@ private fun AppPriorityCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Lock toggle
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -249,7 +268,6 @@ private fun AppPriorityCard(
                     )
                 }
 
-                // Channels section
                 if (appInfo.channels.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(4.dp))
                     HorizontalDivider()
@@ -269,6 +287,38 @@ private fun AppPriorityCard(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AppCategorySummary(appInfo: AppPriorityInfo) {
+    val resolvedLabel = appInfo.resolvedCategory.name
+        .lowercase()
+        .replace('_', ' ')
+        .replaceFirstChar { it.uppercase() }
+
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        appInfo.appCategoryLabel?.let { label ->
+            Text(
+                text = "App category: $label",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (appInfo.androidNotificationCategoryLabels.isNotEmpty()) {
+            Text(
+                text = "Notification categories: ${appInfo.androidNotificationCategoryLabels.joinToString(", ")}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (appInfo.appCategoryLabel != null || appInfo.androidNotificationCategoryLabels.isNotEmpty()) {
+            Text(
+                text = "Default group: $resolvedLabel",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
     }
 }
@@ -316,7 +366,6 @@ private fun PriorityChipRow(
             FilterChip(
                 selected = isSelected,
                 onClick = {
-                    // Toggle off → null (Default), otherwise select
                     onSelect(if (isSelected) null else priority)
                 },
                 label = {

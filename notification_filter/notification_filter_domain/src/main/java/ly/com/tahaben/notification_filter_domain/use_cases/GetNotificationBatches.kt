@@ -1,6 +1,10 @@
 package ly.com.tahaben.notification_filter_domain.use_cases
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import ly.com.tahaben.notification_filter_domain.model.NotificationBatch
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
@@ -13,7 +17,9 @@ class GetNotificationBatches(
 ) {
 
     operator fun invoke(): Flow<List<NotificationBatch>> {
-        return repository.getNotifications().map { notifications ->
+        return repository.getNotifications()
+            .debounce(DEBOUNCE_MS)
+            .map { notifications ->
             val windowMillis = preferences.getBatchWindowMinutes() * 60 * 1000L
             notifications
                 .sortedByDescending { it.timestamp }
@@ -46,5 +52,11 @@ class GetNotificationBatches(
                         .thenByDescending { it.latestTimestamp }
                 )
         }
+            .flowOn(Dispatchers.Default)
+            .distinctUntilChanged()
+    }
+
+    companion object {
+        private const val DEBOUNCE_MS = 150L
     }
 }
