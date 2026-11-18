@@ -512,6 +512,10 @@ class RescueActivity : Activity() {
 
         title(R.string.step_export)
         body(R.string.export_body)
+        button(R.string.open_notification_access_settings) {
+            try { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
+            catch (_: android.content.ActivityNotFoundException) { startActivity(Intent(Settings.ACTION_SETTINGS)) }
+        }
         confirmStop = CheckBox(this).apply { setText(R.string.confirm_stop) }.also { add(it, true) }
         button(R.string.export, guarded = true) { onExport() }
 

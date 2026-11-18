@@ -100,11 +100,11 @@ class AdbBridgeService : Service() {
         when (request) {
             is BridgeRequest.Pair -> pair(request)
             is BridgeRequest.Check -> withConnection(request.host, request.port) { shell ->
-                BridgeEvent.Checked(CaptureEngine(shell) { progress -> send(BridgeEvent.ProgressUpdate(progress), operation) }.check(request.target))
+                BridgeEvent.Checked(CaptureEngine(shell, reportProgress = { progress -> send(BridgeEvent.ProgressUpdate(progress), operation) }).check(request.target))
             }
             is BridgeRequest.Export -> withConnection(request.host, request.port) { shell ->
                 val job = try { paths.rawJobs.create(request.jobId) } catch (failure: Exception) { throw CaptureException(FailureCode.STORAGE_FAILED) }
-                val facts = CaptureEngine(shell) { progress -> send(BridgeEvent.ProgressUpdate(progress), operation) }.export(request.target, job)
+                val facts = CaptureEngine(shell, reportProgress = { progress -> send(BridgeEvent.ProgressUpdate(progress), operation) }).export(request.target, job)
                 // CLAIM(identity-erased): the key is useless once the capture completed, so it is removed now.
                 paths.identity.erase()
                 BridgeEvent.Captured(facts)

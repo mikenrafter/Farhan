@@ -19,33 +19,29 @@ import ly.com.tahaben.farhan.BuildConfig
 import ly.com.tahaben.farhan.db.FarhanDatabase
 import ly.com.tahaben.settings_portability.*
 
-class RecoveryRequiredException : IllegalStateException("Settings recovery must finish before opening stores")
-
 /** The startup importer and Hilt share these exact instances. Public reads default to denied. */
 object ProcessStores {
     private lateinit var context: Context
-    @Volatile private var normalOperationAllowed = false
+    internal val gate = SettingsStoreGate()
     @Volatile var startupResult: StartupResult? = null
         private set
-    private val rawSharedPreferences by lazy { context.getSharedPreferences("shared_pref", Context.MODE_PRIVATE) }
-    private val rawDataStore by lazy { PreferenceDataStoreFactory.create(produceFile = { context.preferencesDataStoreFile("farhan_data_store") }) }
-    private val rawDatabase by lazy { Room.databaseBuilder(context, FarhanDatabase::class.java, "farhan_db").allowMainThreadQueries().build() }
+    private val rawSharedPreferences = lazy { context.getSharedPreferences("shared_pref", Context.MODE_PRIVATE) }
+    private val rawDataStore = lazy { PreferenceDataStoreFactory.create(produceFile = { context.preferencesDataStoreFile("farhan_data_store") }) }
+    private val rawDatabase = lazy { Room.databaseBuilder(context, FarhanDatabase::class.java, "farhan_db").allowMainThreadQueries().build() }
     private val journal by lazy { AndroidImportJournal(context.noBackupFilesDir) }
-    private val sharedPort = AndroidSharedPreferences { rawSharedPreferences }
-    private val dataPort = AndroidDataStore { rawDataStore }
-    private val rowsPort = SqlConfigurationRowsStore(AndroidSqlTransactions { rawDatabase.openHelper.writableDatabase })
+    private val sharedPort = AndroidSharedPreferences { rawSharedPreferences.value }
+    private val dataPort = AndroidDataStore { rawDataStore.value }
+    private val rowsPort = SqlConfigurationRowsStore(AndroidSqlTransactions { rawDatabase.value.openHelper.writableDatabase })
     private fun importer(storage: ImportJournalStorage = journal) = ImportCoordinator(storage, sharedPort, dataPort, rowsPort, AndroidSettingsValidator)
-    private fun requireReady() { if (!normalOperationAllowed) throw RecoveryRequiredException() }
-    fun sharedPreferences(): SharedPreferences { requireReady(); return rawSharedPreferences }
-    fun dataStore(): DataStore<Preferences> { requireReady(); return rawDataStore }
-    fun database(): FarhanDatabase { requireReady(); return rawDatabase }
+    private fun requireReady() = gate.requireOpen()
+    fun sharedPreferences(): SharedPreferences = gate.access(rawSharedPreferences)
+    fun dataStore(): DataStore<Preferences> = gate.access(rawDataStore)
+    fun database(): FarhanDatabase = gate.access(rawDatabase)
 
     internal fun startup(application: Context): StartupResult {
-        normalOperationAllowed = false
         context = application.applicationContext
         return importer().startup().also { startupResult = it }
     }
-    internal fun allowNormalOperation() { normalOperationAllowed = true }
     // Retry never opens the public gate: this process did not initialize Hilt or WorkManager.
     internal fun retry(): StartupResult = importer().startup().also { startupResult = it }
     internal fun outcome(): ImportJournal? { requireReady(); return journal.read() }
@@ -86,7 +82,7 @@ object ProcessStores {
     internal fun stage(bytes: ByteArray): StageResult {
         requireReady()
         // Open/migrate the real Room schema while the normal process is healthy, before any durable draft.
-        rawDatabase.openHelper.writableDatabase
+        rawDatabase.value.openHelper.writableDatabase
         return importer().stage(bytes)
     }
 }

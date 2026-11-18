@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Farhan settings rescue</string>
-    <string name="intro">Saves the settings of your installed Farhan to a file, so you can reinstall Farhan with a new signing key and load them back. It reads settings only, never notification or usage history. Farhan is not changed or uninstalled. It is stopped once, when you tap Stop Farhan and export.</string>
+    <string name="intro">Saves the settings of your installed Farhan to a file, so you can reinstall Farhan with a new signing key and load them back. It reads settings only, never notification or usage history. The old Farhan is stopped once when you tap Stop Farhan and export; it is not uninstalled. Force-stop may turn off its accessibility services. If you keep the old app, check and re-enable its notification and accessibility access after saving.</string>
 
     <string name="step_source">1. Which Farhan</string>
     <string name="hint_package">Package name</string>
@@ -25,7 +25,8 @@
     <string name="check">Check access</string>
 
     <string name="step_export">4. Stop Farhan and export</string>
-    <string name="export_body">This stops Farhan now so its files are consistent. Do not open Farhan again until the backup is saved.</string>
+    <string name="export_body">Before exporting, turn off notification access for the OLD Farhan in Android Settings. This helps keep its files quiet. Export stops the old Farhan once. Keep it closed until the backup is saved. Force-stop may turn off its accessibility services; check both permissions after saving if you keep the old app.</string>
+    <string name="open_notification_access_settings">Open notification access settings</string>
     <string name="confirm_stop">Stop Farhan now and export its settings</string>
     <string name="export">Stop Farhan and export</string>
 
@@ -64,7 +65,7 @@
     <string name="save_cancelled">No file was chosen. The backup is still ready: tap Save backup file to try again.</string>
     <string name="save_failed">The file could not be saved or did not read back the same. The backup is still ready: try again, or choose another place.</string>
     <string name="saved_title">Backup saved and checked</string>
-    <string name="saved_next">Before you uninstall Farhan:\n\n1. If Farhan was holding notifications for you, open the old Farhan once now so it releases them.\n2. In Developer options, Wireless debugging, Paired devices, remove \"Farhan settings rescue\".\n3. Turn Wireless debugging off.\n\nThen install the new Farhan and import this file from Settings backup.</string>
+    <string name="saved_next">After saving, if you keep the old Farhan, check and re-enable its notification and accessibility access. Force-stop may have turned off accessibility services.\n\nBefore you uninstall Farhan:\n\n1. If Farhan was holding notifications for you, open the old Farhan once now so it releases them.\n2. In Developer options, Wireless debugging, Paired devices, remove \"Farhan settings rescue\".\n3. Turn Wireless debugging off.\n\nThen install the new Farhan and import this file from Settings backup.</string>
     <string name="pending_found">A converted backup from an earlier run is waiting.</string>
 
     <string name="failure_prefix">Stopped: %1$s</string>
@@ -90,7 +91,7 @@
     <string name="failure_output_budget">The phone sent more text than the helper accepts, so it stopped.</string>
     <string name="failure_copy_incomplete">A copy came out shorter than the original. Try again.</string>
     <string name="failure_digest">A copy did not match the original. Try again.</string>
-    <string name="failure_source_changed">Farhan changed while it was being read. Make sure it is closed, then try again.</string>
+    <string name="failure_source_changed">The old Farhan changed while it was being read. Turn off its notification access in Android Settings, keep it closed, then try again. If you keep the old app after saving, check and re-enable its notification and accessibility access.</string>
     <string name="failure_storage">The helper could not write its private working files.</string>
     <string name="failure_conversion">The copied settings could not be converted: %1$s</string>
     <string name="failure_timeout">That step took too long and was stopped. The pairing key was erased.</string>

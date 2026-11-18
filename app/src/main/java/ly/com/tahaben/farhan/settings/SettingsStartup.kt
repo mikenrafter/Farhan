@@ -2,27 +2,18 @@ package ly.com.tahaben.farhan.settings
 
 import android.content.Context
 import android.os.Process
-import ly.com.tahaben.settings_portability.*
+import ly.com.tahaben.settings_portability.SettingsStartupCoordinator
 
 internal object SettingsStartup {
     /** Worker join finishes before Hilt's generated Application superclass can inject any store consumers. */
     fun run(context: Context): Boolean {
         var allowed = false
+        var processDeath: Error? = null
         val worker = Thread({
-            val components = RecoveryComponents(context)
             try {
-                val result = ProcessStores.startup(context)
-                if (result.allowsNormalOperation) {
-                    components.heal()
-                    ProcessStores.allowNormalOperation()
-                    allowed = true
-                } else if (components.block()) {
-                    Process.killProcess(Process.myPid())
-                }
-            } catch (failure: Exception) {
-                // A failed state snapshot or toggle cannot justify initializing normal consumers.
-                try { if (components.block()) Process.killProcess(Process.myPid()) } catch (_: Exception) { }
-            }
+                allowed = SettingsStartupCoordinator(ProcessStores.gate, { ProcessStores.startup(context) },
+                    RecoveryComponents(context), { Process.killProcess(Process.myPid()) }).run()
+            } catch (death: Error) { processDeath = death }
         }, "settings-startup")
         worker.start()
         try { worker.join() } catch (interrupted: InterruptedException) {
@@ -30,6 +21,7 @@ internal object SettingsStartup {
             Process.killProcess(Process.myPid())
             return false
         }
+        processDeath?.let { throw it }
         return allowed
     }
 }
