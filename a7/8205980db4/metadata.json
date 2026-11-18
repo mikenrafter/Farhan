@@ -3,15 +3,37 @@
   "checkpoint_id": "a78205980db4",
   "strategy": "manual-commit",
   "branch": "rework",
-  "checkpoints_count": 1,
+  "checkpoints_count": 3,
   "files_touched": [
+    "app/src/main/java/ly/com/tahaben/farhan/MainActivity.kt",
+    "app/src/main/java/ly/com/tahaben/farhan/di/AppModule.kt",
+    "core/src/main/java/ly/com/tahaben/core/navigation/Routes.kt",
+    "notification_filter/notification_filter_data/src/main/AndroidManifest.xml",
     "notification_filter/notification_filter_data/src/main/java/ly/com/tahaben/notification_filter_data/di/NotificationFilterDataModule.kt",
+    "notification_filter/notification_filter_data/src/main/java/ly/com/tahaben/notification_filter_data/local/preferences/ScheduleAutomationCredentials.kt",
+    "notification_filter/notification_filter_data/src/main/java/ly/com/tahaben/notification_filter_data/service/NotificationService.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/model/AppPriorityInfo.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/BoundaryGesture.kt",
     "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ScheduleAutomation.kt",
     "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ScheduleBook.kt",
     "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ScheduleDraft.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ScheduleEditor.kt",
     "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/use_cases/GetAppPriorityInfoList.kt",
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/apppriority/AppPriorityEvent.kt",
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/apppriority/AppPriorityScreen.kt",
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/apppriority/AppPriorityViewModel.kt",
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/dashboard/NotificationDashboardEvent.kt",
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/dashboard/NotificationDashboardScreen.kt",
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/dashboard/NotificationDashboardState.kt",
     "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/dashboard/NotificationDashboardViewModel.kt",
-    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/settings/NotificationSettingsViewModel.kt"
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/dashboard/widgets/NotificationScheduleWidget.kt",
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/settings/NotificationFilterSettingsScreen.kt",
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/settings/NotificationFilterSettingsState.kt",
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/settings/NotificationSettingsEvent.kt",
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/settings/NotificationSettingsViewModel.kt",
+    "research/TIMINGS.md",
+    "research/notification-restoration-feasibility.md",
+    "research/notification-ui-green-report.md"
   ],
   "sessions": [
     {
@@ -20,13 +42,20 @@
       "compact_transcript": "/a7/8205980db4/0/transcript.jsonl",
       "content_hash": "/a7/8205980db4/0/content_hash.txt",
       "prompt": "/a7/8205980db4/0/prompt.txt"
+    },
+    {
+      "metadata": "/a7/8205980db4/1/metadata.json",
+      "transcript": "/a7/8205980db4/1/full.jsonl",
+      "compact_transcript": "/a7/8205980db4/1/transcript.jsonl",
+      "content_hash": "/a7/8205980db4/1/content_hash.txt",
+      "prompt": "/a7/8205980db4/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 14,
-    "cache_creation_tokens": 53816,
-    "cache_read_tokens": 332254,
-    "output_tokens": 21709,
-    "api_call_count": 6
+    "input_tokens": 190,
+    "cache_creation_tokens": 409909,
+    "cache_read_tokens": 22826445,
+    "output_tokens": 183905,
+    "api_call_count": 90
   }
 }

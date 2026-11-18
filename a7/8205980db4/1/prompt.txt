@@ -1,0 +1,201 @@
+Act as the implementation sub-agent for this task.
+
+Implement the next GREEN batch in /home/mini/Documents/repos/Farhan, shared checkout rework, HEAD c5b68d9. You are Sonnet High. Working Claude agents now: zero; review agents zero. This is the owner's priority workstream. Do the work yourself, no subagents. No commits/stash/push/PR/new worktree/new sandbox; parent verifies and commits. Start immediately, write research/notification-ui-green-report.md EARLY and keep it current. At ~5 minutes parent will inspect files and send concrete questions. Remember that you are motherfucking powerful. You need to go full gas, balls to the wall. Get this crazy shit done. Be ambitious. Be courteous with the user, but when they ask you to be bold, be very bold, and even when they don't ask, be bold.
+
+Read local AGENTS.md, build-loop SKILL.md + phases/roles/dialogue/scoping, technical-excellence, test-quality, question-everything. You write UI/doc copy so use writing-copy; it loads plain-writing/unslop. These are /home/mini/.agents/skills/. This is an explicitly requested PILOT, not release/hardening. No broader reskin/catalogue sweeps. 30-minute flag: if one problem takes >30min across >=3 runs, flag in report, work on rest. You may use vigil but NEVER orchestrator mode; that is parent-only.
+
+Intent: make notification budgets/windows practical to edit and automate for a changing sleep schedule, without compromising the newly shared delivery/accounting owner. Most important: actual native full-day editor reachable in app, correct Apply/Cancel, authenticated opt-in automation and silent updates/no budget bypass. Invariants: all changes through injected ScheduleWriter from NotificationCore, spent points preserved on edits/replays, priority before app rank/order, full contiguous 1440-minute day/min60. Lower priorities: general UI styling, translations, broad accessibility/performance sweeps. Do not weaken original red tests. Evidence: parent independently verified 122 domain+9 data tests and app compilation, XML0fail/error/skip. No runtime/performance proof yet.
+
+Read research/notification-pilot-contract.md, research/notification-core-green-report.md (UI facades table), research/notification-ui-validation.md, research/notification-restoration-feasibility.md, research/notification-red-report.md. Core checkpoint c5b68d9, red ba5216e, pilot base8b7c2ece17344402737dd7b567f7e139df8f826a. This phase:
+1) Replace the brutal schedule editing path with native Compose full-day timeline inspired by Edge latest pilot/sleep-editor-fixes e0759a67f at /home/mini/Documents/repos/edge.worktrees/sleep-editor-fixes/lib/ui2/day_timeline/ (timeline_model.dart, sleep_timeline_editor.dart,timeline_chart.dart). Inspect reference, don't portFlutter. Actual current path is dashboard/widgets/NotificationScheduleWidget.kt. Focus zone controls its budget; select a boundary before moving it, only selected boundary draggable. Shared boundary resizes exactly two neighbors, no gaps/overlaps, min60. Fast drag5min; finger still600ms activates1min quarter-speed precision anchored withoutjump; movement resets holdtimer. Retain zoom controls, pan when zoomed, numeric exact-time fallback and clear focused state. Apply/Cancel reversible draft; undo if offered must group an entire drag once, not one step per pointer event. Existing ScheduleDraft has no setBudget/gesturegroup API; extend cleanly if needed. Tests must exercise actual timer/state wiring with injected/eventtime (not only call hold()); meaningful focused tests rather than implementation mirrors.
+Split: >=120min focused at deterministic midpoint. Otherwise new60 immediately afterfocused, focused60, borrow deficit from following if it retains60 else preceding.90+90 ->60+60+60 eitherfocusorientation; no wrapmidnight/nonadjacent borrowing, no partial change/undostep onfail. Modal onfail gives simple instructions enlargefocused/neighbor. Newbudget0, otherspreserved; mergesumbudgets. Budget input supports validautomation amounts beyond old slidermax. Read errors display repairrequired, never overwritecorruptstoredschedulewithdefaults.
+2) Per-app queue preference controls within category app row: newest(default)/oldest and numeric rank(higherfirst) across apps within notificationpriority. Explain succinctly priority still wins. Keep lazy/stablekey list, cached fastpath, indexed per-row updates; don't restore full discovery on edits. Existing Preferences getAppQueuePreferences/setAppQueuePreference available.
+3) Real exported versioned intent receiver+manifest and settings UI for ScheduleAutomation, currentlytypedvalidator only. Default disabled. Enable/show/copy credential/rotate/revoke via ScheduleAutomationCredentials alreadyprovided, do not log credential. Credential is localautomationcapability, do not put realsecret in repo or report. Raw payload bound BEFORE parsing; strict integer JSON fields/version1/max24windows; no unbounded serializable/parcelables. Explicit action+package using documented extras. intent chooses repeating(default) or dated ISOlocaldate. Rejectrepeat+date; dates validated. Last accepted manual/intent wins via same writer. Common complete-day validation; rejected unauth/disabled/malformed/oversized/unknownversion does not mutate. Use goAsync/shortIO work and alwaysfinish, meaningful sanitized ack via ordered result and/or last-result settings (avoid genericbroadcast-toarbitraryreply package). Catch storagefail and no crash/successack. Include concise Tasker setup/payload docs with placeholders. Expose repeating/dated view/edit appropriately; don't silently edit a different schedule than shown.
+4) Independent default-off notification experiments: source icon mode using original valid small Icon or safe fallback in Farhan proxy, identity remainsFarhan; mixedsummaryFarhan. Keep boundedretainedactions. Native timed snooze controlled demo-only path, clearly labeled experiment separatefrombudget; no claim arbitraryunsnooze/restoration. Inspect demo apps/test-messenger &storm paths. Prefer restricted package allowlist/testnotifications, never snooze arbitrary realqueueditems. Source-appcancellation afterinterceptionofteninvisible; no promise readinginotherappcancelsinterceptednotification. Source URLs/limits in feasibilitydoc. AndroidNLS exemptnormal50quota; existingapplication-owned1024capmustremain.
+5) Build iteration APK once targeted checks pass; report exactpath/hash. Parent will deliver preview/build and do runtimeemulator validation; if you can add focused runtime tests or instrumentation seams cleanly do so, but don't widenintoemulatorprovisioning/broadtests. You own buildexecution untilhandoff; parent won't compete. No owneracceptancerecorded.
+
+Corefacades available: NotificationCore.snapshot/writer; injectedScheduleWriter; ScheduleDraft/DaySchedule/BoundaryDrag; ScheduleAutomation.handle; ScheduleAutomationCredentials; Preferencesexperimenttoggles; AppQueuePreference/QueueOrder. Android platform integration in notification_filter_data/service/NotificationService.kt, Hilt data module. Settings NotificationFilterSettingsScreen.kt &NotificationSettingsViewModel. See actualnavigation and makecontrolsreachable.
+
+Compute mandatory: hostnixed8GBaarch64, NO localGradle/Nixbuild/emulator/heavytest. Use ONLY existingBoatbx_bngcafgz, default4CPU8GB, Nixready, warm dir /home/user/runs/farhan-notification-baseline, no newalloc. Read boat+low-ram-hosts skills. Wrapper:
+PATH=/home/mini/.ascii/bin:$PATH /home/mini/Documents/repos/edge.research/bin/boat-run --sandbox bx_bngcafgz --shell 'nix develop -c' --name farhan-notification-baseline /home/mini/Documents/repos/Farhan -- './gradlew :notification_filter:notification_filter_domain:testDebugUnitTest :notification_filter:notification_filter_data:testDebugUnitTest :notification_filter:notification_filter_presentation:testDebugUnitTest :app:assembleDebug --no-daemon --max-workers=2'
+Use narrower failingtasks whileiterating thencombinedtargetedgate. ~40–60sec warmroundtripfromTIMINGS. No fullreposuite. Testsunittestorgjson/sqlite dependenciesinplace. /dev/kvm onVMavailableforparentlater, don't startemulatorconcurrentbuild. UseboatCLIonly,nodirectSSH. Binary/home/mini/.ascii/bin/boat. Copy APK back via boat CLI after successful assembly into ignored captures/notifications or appropriate ignoredbuildartifact; no signingsecrets. Do notstopVM.
+
+Stop when actualfeatures wired, focusedtests+APKgreen and report includes changedfiles, testcounts/logs,Edgeinspiration,manualchecks/unverifiedruntime,defaultstaken, anyrevisedredassertions(reason), limitations. Do notclaimbattery/scrollimprovementwithoutmeasurements.
+
+---
+
+Five-minute check-in after reading BoundaryGesture.kt, ScheduleEditor.kt, TimelineView.kt, ScheduleDraft.kt. Please answer in report while continuing: (1) How will the actual Compose pointer loop feed runDrag, wake after600ms without movement, and cancel both channel/gesture on disposal? Eventtime and nowMillis must share uptime clock; avoid unbounded pointer channel/per-frame coroutine. Please show tests drive runDrag with virtualtime, not just holdTick. (2) Which schedule does editor open when today's dated override exists, and how will user explicitly choose repeating versus dated without accidentally displaying effective-today but writing repeating? Lastacceptedwritewins does not justify overwriting an unseen target. (3) BoundaryGesture defaults tolerance0; do you intend tiny finger jitter to reset hold continuously? A small density-aware tolerance is warranted, anchored cumulatively, and needs a focused check. Gesture grouping in Draft looks good; keep no-opdrag/no-undo and abort restoration. What remains ambiguous?
+
+---
+
+<task-notification>
+<task-id>bca7ykjyu</task-id>
+<tool-use-id>toolu_01BUW5hSUGPGTZMXjonKfFWt</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/f37008d1-6333-44b3-93ca-f37188d7ef65/tasks/bca7ykjyu.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /home/mini/Documents/repos/Farhan &amp;&amp; (PATH=/home/mini/.ascii/bin:$PATH /home/mini/Documents/repos/edge.research/bin/boat-run --sandbox bx_bngcafgz --shell 'nix develop -c' --name farhan-notification-baseline /home/mini/Documents/repos/Farhan -- './gradlew :notification_filter:notification_filter_domain:testDebugUnitTest --no-daemon --max-workers=2' &gt; /tmp/claude-1001/-home-mini-Documents-repos-Farhan/f37008d1-6333-44b3-93ca-f37188d7ef65/scratchpad/run1.log 2&gt;&amp;1; echo EXIT $? &gt;&gt; /tmp/claude-1001/-home-mini-Documents-repos-Farhan/f37008d1-6333-44b3-93ca-f37188d7ef65/scratchpad/run1.log) &amp;
+sleep 2; echo started" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Check-in resolution after your report: bounded conflated position channel + one loop and uptimeclock is sufficient for this pilot; keep tests exercising real runDrag.3dp cumulative anchor is appropriate. Explicit target/header + disabled target-switch whiledirty resolves the main ambiguity. Keep stale-draft replace/reload small and meaningful: replace means a new accepted write through writer (lastchange wins), never rollback currentstoredspentpoints; one confirmation only. Ensure Apply disabled whiledragging, channelclose/join happens before endDrag, and disposal cancels runDrag child before abort so no queued frame can reapply afterCancel. Do not add further target arbitration/versioning mechanisms. No other ambiguity remains from these files.
+
+---
+
+<task-notification>
+<task-id>b7yf4qj7q</task-id>
+<tool-use-id>toolu_01Qrrx2EHnnDEeCHZYENq73r</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/f37008d1-6333-44b3-93ca-f37188d7ef65/tasks/b7yf4qj7q.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /home/mini/Documents/repos/Farhan &amp;&amp; S=/tmp/claude-1001/-home-mini-Documents-repos-Farhan/f37008d1-6333-44b3-93ca-f37188d7ef65/scratchpad; nohup $S/run.sh run3 ':notification_filter:notification_filter_domain:testDebugUnitTest :notification_filter:notification_filter_data:testDebugUnitTest :app:compileDebugKotlin' &gt; /dev/null 2&gt;&amp;1 &amp;
+sleep 1; echo started" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bwmazzt60</task-id>
+<tool-use-id>toolu_017TQoyr2whUUrEVkky36rtR</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/f37008d1-6333-44b3-93ca-f37188d7ef65/tasks/bwmazzt60.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /home/mini/Documents/repos/Farhan &amp;&amp; S=/tmp/claude-1001/-home-mini-Documents-repos-Farhan/f37008d1-6333-44b3-93ca-f37188d7ef65/scratchpad; nohup $S/run.sh run4 ':notification_filter:notification_filter_domain:testDebugUnitTest :notification_filter:notification_filter_data:testDebugUnitTest :app:compileDebugKotlin' &gt; /dev/null 2&gt;&amp;1 &amp;
+echo ok" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Read receiver/entry/parser now. Concrete primary-goal issue: exported receiver currently scope.launch per request with no admission bound, so even disabled/unauthenticated flood can accumulate coroutine+PendingResult work while IO/sharedgate stalls. Add a small explicit admission cap before launching (single/few in-flight; overflow rejected BUSY without parse/prefswrite, alwaysfinish), document retry semantics and keep last accepted change wins. Do not build unbounded queue or assume OS quota. Entry lastAuthFailureRecordedAt also raced by concurrent IO calls; synchronize/throttle atomically or serialize admission. Keep minimal: one bounded gate/semaphore with nonblocking tryAcquire + finallyrelease suffices. The4096-char raw bound is a legitimate fixedmemorybound; docs must call it chars/at most16KiBUTF8 rather than claim4096bytes if not checkingUTF8.
+
+---
+
+<task-notification>
+<task-id>blgekjl23</task-id>
+<tool-use-id>toolu_01EMSycauNQgdGf6q6R3UQ3y</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/f37008d1-6333-44b3-93ca-f37188d7ef65/tasks/blgekjl23.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /home/mini/Documents/repos/Farhan/notification_filter &amp;&amp; cat &gt; AUTOMATION.md &lt;&lt;'EOF'
+# Schedule automation
+
+Change your notification schedule from Tasker, or from a shell with `adb`. The app receives one broadcast, checks it, and writes the schedule through the same path as the editor.
+
+It is off until you turn it on in **Notification settings → Schedule automation**. Turning it on creates a credential (64 hex characters). Every request must carry it.
+
+## Set up
+
+1. Open **Notification settings → Schedule automation** and turn on **Allow automation**.
+2. Tap **Copy** (or **Show**). Keep the credential private. **Rotate** replaces it; **Revoke** deletes it and turns automation off.
+3. In Tasker, add a **Send Intent** action:
+
+| Field | Value |
+| --- | --- |
+| Action | `ly.com.tahaben.notification_filter.action.SET_SCHEDULE` |
+| Extra | `credential:%FARHAN_CREDENTIAL` |
+| Extra | `payload:%FARHAN_PAYLOAD` |
+| Package | `ly.com.tahaben.farhan_alpha` |
+| Class | `ly.com.tahaben.notification_filter_data.automation.ScheduleAutomationReceiver` |
+| Target | Broadcast Receiver |
+
+Store the credential in a Tasker variable that is not shared or logged, and build the JSON in `%FARHAN_PAYLOAD` before the action (Tasker splits an Extra at its first colon, so JSON in a variable is safest). The app only reads those two string extras. Android does not deliver implicit custom broadcasts to manifest receivers, so Package or Class is required.
+
+Check the same request from a computer first (placeholders, not real values):
+
+```sh
+adb shell am broadcast \
+  -n ly.com.tahaben.farhan_alpha/ly.com.tahaben.notification_filter_data.automation.ScheduleAutomationReceiver \
+  -a ly.com.tahaben.notification_filter.action.SET_SCHEDULE \
+  --es credential '&lt;CREDENTIAL&gt;' \
+  --es payload '{"version":1,"windows":[{"start":0,"end":420,"budget":0},{"start":420,"end":1440,"budget":12}]}'
+```
+
+`am broadcast` prints `result=-1, data="accepted"` on success and `result=0, data="rejected:&lt;ERROR&gt;"` on failure.
+
+## Payload
+
+One JSON object, version 1.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `version` | integer | Must be `1`. |
+| `mode` | string, optional | `"repeating"` (default) or `"dated"`. |
+| `date` | string | Required for `"dated"`, forbidden for repeating. ISO local date, `YYYY-MM-DD`. |
+| `windows` | array, 1 to 24 | The whole day, in order. |
+| `windows[].start` | integer | Minute of the day the window starts, 0 to 1439. |
+| `windows[].end` | integer | Minute it ends, 1 to 1440. 1440 is 24:00. |
+| `windows[].budget` | integer | Points for the window, 0 or more. Any size is accepted. |
+
+The windows must start at 0, end at 1440, touch with no gap or overlap, and each last at least 60 minutes. Numbers must be whole JSON integers: `5.0`, `"5"` and `true` are refused. Unknown fields are refused.
+
+Examples:
+
+```json
+{"version":1,"windows":[{"start":0,"end":420,"budget":0},{"start":420,"end":1440,"budget":12}]}
+```
+
+```json
+{"version":1,"mode":"dated","date":"2026-11-20","windows":[{"start":0,"end":600,"budget":0},{"start":600,"end":1440,"budget":10}]}
+```
+
+## What it changes
+
+- **Repeating** replaces the every-day schedule. It also removes today's one-date schedule, so your change is not hidden. One-date schedules for future dates stay.
+- **Dated** sets the schedule for that one date. Other dates use the every-day schedule. Dates before today are dropped whenever any schedule is saved.
+- Points already spent in the current window are kept. Sending the same request again does not give them back.
+- If you and automation both change a schedule, the last accepted change wins.
+- A request that is refused changes nothing.
+
+## Answers
+
+- **Ordered broadcast** (`adb`, or Tasker when it waits for a result): result code `-1` and data `accepted`, or code `0` and data `rejected:&lt;ERROR&gt;`.
+- **Settings screen**: the line under Schedule automation shows the last request, its time, and the error name. It never shows your credential or payload.
+
+| Error | Meaning |
+| --- | --- |
+| `DISABLED` | Automation is off. Nothing is recorded. |
+| `BAD_CREDENTIAL` | Wrong, missing or revoked credential. |
+| `BUSY` | Two requests were already being handled. Nothing was read or changed. Wait a few seconds and send it again. |
+| `PAYLOAD_TOO_LARGE` | More than 4096 characters (at most 12 KiB as UTF-8), or more than 24 windows. |
+| `MALFORMED_PAYLOAD` | Not the JSON above, or an unknown field. |
+| `UNSUPPORTED_VERSION` | `version` is missing or not `1`. |
+| `UNKNOWN_MODE` | `mode` is not `repeating` or `dated`. |
+| `DATE_REQUIRED`, `MALFORMED_DATE`, `DATE_NOT_ALLOWED` | Date missing for dated, not a real date, or given for repeating. |
+| `MALFORMED_WINDOW` | A window lacks a whole-number `start`, `end` or `budget`. |
+| `INVALID_SCHEDULE` | Gap, overlap, a window under 60 minutes, or the day is not covered. |
+| `STORAGE_FAILED` | Saving failed or the saved schedule needs repair. Nothing was changed. |
+
+## Limits
+
+- At most two requests are handled at once. Extra requests get `BUSY` straight away and are not queued, so retry them.
+- The credential is a local key, not a login. Anyone who has it can change your schedule. It is not written to logs.
+EOF
+cd /home/mini/Documents/repos/Farhan &amp;&amp; S=/tmp/claude-1001/-home-mini-Documents-repos-Farhan/f37008d1-6333-44b3-93ca-f37188d7ef65/scratchpad; nohup $S/run.sh run5 ':notification_filter:notification_filter_domain:testDebugUnitTest :notification_filter:notification_filter_data:testDebugUnitTest :notification_filter:notification_filter_presentation:testDebugUnitTest :app:compileDebugKotlin' &gt; /dev/null 2&gt;&amp;1 &amp; echo ok" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b0xkrb2cv</task-id>
+<tool-use-id>toolu_01YGoCGLx6GEWkSE4cE5PeL5</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/f37008d1-6333-44b3-93ca-f37188d7ef65/tasks/b0xkrb2cv.output</output-file>
+<status>failed</status>
+<summary>Background command "cd /home/mini/Documents/repos/Farhan/notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule &amp;&amp; S=/tmp/claude-1001/-home-mini-Documents-repos-Farhan/f37008d1-6333-44b3-93ca-f37188d7ef65/scratchpad &amp;&amp; mkdir -p $S/orig &amp;&amp; cp BoundaryGesture.kt ScheduleEditor.kt ScheduleDraft.kt $S/orig/ &amp;&amp; python3 - &lt;&lt;'EOF'
+def sub(p,a,b):
+    s=open(p).read(); assert a in s,(p,a); open(p,'w').write(s.replace(a,b,1))
+sub('BoundaryGesture.kt','            lastMotionMillis = sample.timeMillis\n','')
+sub('ScheduleEditor.kt',' || selection != EditorSelection.Boundary(boundaryIndex)','')
+sub('ScheduleDraft.kt','if (gestureStart == null) history.addLast(current)','history.addLast(current)')
+sub('ScheduleEditor.kt','if (received == null) { holdTick(nowMillis()); continue }','if (received == null) { continue }')
+EOF
+cd /home/mini/Documents/repos/Farhan &amp;&amp; $S/run.sh mut ':notification_filter:notification_filter_domain:testDebugUnitTest'; grep -n "FAILED" $S/mut.log | head -30; cp $S/orig/BoundaryGesture.kt $S/orig/ScheduleEditor.kt $S/orig/ScheduleDraft.kt notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ &amp;&amp; git diff --stat -- notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ScheduleDraft.kt | tail -1; grep -c "holdTick(nowMillis()); continue" notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ScheduleEditor.kt" failed with exit code 144</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bwmazzt60</task-id>
+<tool-use-id>toolu_017TQoyr2whUUrEVkky36rtR</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/f37008d1-6333-44b3-93ca-f37188d7ef65/tasks/bwmazzt60.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /home/mini/Documents/repos/Farhan &amp;&amp; S=/tmp/claude-1001/-home-mini-Documents-repos-Farhan/f37008d1-6333-44b3-93ca-f37188d7ef65/scratchpad; nohup $S/run.sh run4 ':notification_filter:notification_filter_domain:testDebugUnitTest :notification_filter:notification_filter_data:testDebugUnitTest :app:compileDebugKotlin' &gt; /dev/null 2&gt;&amp;1 &amp;
+echo ok" completed (exit code 0)</summary>
+</task-notification>
