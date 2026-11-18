@@ -41,14 +41,21 @@ class FakeRowStore : DeliveryRowStore {
     }
 
     override suspend fun pending(maxPriorityLevel: Int): List<NotificationItem> {
-        val snapshot = rows.values.filter { !it.isDelivered && !it.isCleared && it.priority.level <= maxPriorityLevel }
+        val snapshot = rows.values.filter { !it.isDelivered && !it.isCleared && !it.deliveryInvalidated && it.priority.level <= maxPriorityLevel }
         val gate = pendingGate
         pendingGate = null
         gate?.await()
         return snapshot
     }
 
-    fun pendingIds(): List<String> = rows.values.filter { !it.isDelivered && !it.isCleared }.map { it.id }
+    override suspend fun invalidateBefore(session: String, order: Long) {
+        rows.replaceAll { _, row ->
+            if (row.sourceSession == session && row.sourceEventOrder in 1..order && !row.isDelivered && !row.isCleared)
+                row.copy(deliveryInvalidated = true, priorityReason = "Not proxied after intake overflow. Open the source app.") else row
+        }
+    }
+
+    fun pendingIds(): List<String> = rows.values.filter { !it.isDelivered && !it.isCleared && !it.deliveryInvalidated }.map { it.id }
 }
 
 class FakeBudgetStore(var state: DeliveryBudgetState = DeliveryBudgetState()) : DeliveryBudgetStore {

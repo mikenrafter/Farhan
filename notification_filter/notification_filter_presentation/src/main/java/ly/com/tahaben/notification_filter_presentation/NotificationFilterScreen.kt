@@ -129,10 +129,12 @@ fun NotificationFilterScreen(
     OnLifecycleEvent { _, event ->
         when (event) {
             Lifecycle.Event.ON_RESUME -> {
+                viewModel.startObserving()
                 viewModel.checkServiceStats()
                 requestPostNotificationPermissionIfNeeded()
             }
 
+            Lifecycle.Event.ON_STOP -> viewModel.stopObserving()
             else -> Unit
         }
     }
@@ -246,6 +248,12 @@ fun NotificationFilterScreen(
                             onClick = { viewModel.onEvent(NotificationFilterEvent.OnToggleClearedView) },
                             label = { Text("Cleared", style = MaterialTheme.typography.labelSmall) }
                         )
+                    }
+
+                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = spacing.spaceMedium), horizontalArrangement = Arrangement.SpaceBetween) {
+                        androidx.compose.material3.TextButton(onClick = viewModel::previousPage, enabled = state.page > 0) { Text("Newer") }
+                        Text("Page ${state.page + 1}", style = MaterialTheme.typography.labelSmall)
+                        androidx.compose.material3.TextButton(onClick = viewModel::nextPage, enabled = state.hasNextPage) { Text("Older") }
                     }
 
                     if (displayList.isEmpty()) {

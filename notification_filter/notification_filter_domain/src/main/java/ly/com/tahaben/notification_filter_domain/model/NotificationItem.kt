@@ -15,4 +15,7 @@ data class NotificationItem(
     val isCleared: Boolean = false,
     val isDelivered: Boolean = false,
     val priorityReason: String? = null,
+    val sourceSession: String = "",
+    val sourceEventOrder: Long = 0,
+    val deliveryInvalidated: Boolean = false,
 )

@@ -54,20 +54,13 @@ fun NotificationDashboardScreen(
 
     OnLifecycleEvent { _, event ->
         if (event == Lifecycle.Event.ON_RESUME) {
-            viewModel.reloadSettings()
-        }
+            viewModel.startObserving()
+        } else if (event == Lifecycle.Event.ON_STOP) viewModel.stopObserving()
     }
 
     val summary = state.summary
 
-    val standingItems = state.batches
-        .flatMap { it.items }
-        .filter {
-            !it.isRead
-                && it.priority != NotificationPriority.CRITICAL
-                && it.timestamp < System.currentTimeMillis() - state.standingThresholdHours * 3600 * 1000L
-        }
-        .sortedBy { it.timestamp }
+    val standingItems = state.standingItems
 
     val healthDescription = buildString {
         if (summary.standingCount > 0) append("${summary.standingCount} standing alert${if (summary.standingCount > 1) "s" else ""}")
@@ -155,6 +148,7 @@ fun NotificationDashboardScreen(
                     if (standingItems.isNotEmpty()) {
                         item {
                             StandingAlarmsWidget(
+                                totalCount = summary.standingCount,
                                 standingItems = standingItems,
                                 standingThresholdHours = state.standingThresholdHours,
                                 onClearAll = { viewModel.onEvent(NotificationDashboardEvent.OnClearAllStanding) }
@@ -193,7 +187,9 @@ fun NotificationDashboardScreen(
                         )
                     }
 
-                    item {
+                    if (state.scheduleError != null) item {
+                        Text(state.scheduleError, color = MaterialTheme.colorScheme.error)
+                    } else item {
                         NotificationScheduleWidget(
                             schedule = state.schedule,
                             onPeriodChanged = { index, period ->
@@ -215,6 +211,7 @@ fun NotificationDashboardScreen(
 
                     item {
                         RecentBatchesWidget(
+                            onBatchPage = { key, offset -> viewModel.onEvent(NotificationDashboardEvent.OnBatchPage(key, offset)) },
                             batches = state.batches,
                             expandedKeys = state.expandedBatchKeys,
                             onToggleBatch = { key ->

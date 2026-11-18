@@ -12,6 +12,8 @@ data class DeliveryBudgetState(
     val periodStartMinute: Int = -1,
     val hourlyCount: Int = 0,
     val passthroughWindowHour: Int = -1,
+    val localDay: String = "",
+    val accountingId: String = "",
 )
 
 data class DeliveryDecision(
@@ -61,10 +63,11 @@ object NotificationDeliveryPolicy {
         timeContext: DeliveryTimeContext,
         budget: DeliveryBudgetState,
     ): DeliveryDecision {
-        val budgetWithHour = if (budget.passthroughWindowHour != timeContext.passthroughWindowKey) {
-            budget.copy(passthroughWindowHour = timeContext.passthroughWindowKey, hourlyCount = 0)
+        val current = normalizeBudget(budget, schedule, timeContext.scheduleMinuteOfDay, timeContext.localDay)
+        val budgetWithHour = if (current.passthroughWindowHour != timeContext.passthroughWindowKey) {
+            current.copy(passthroughWindowHour = timeContext.passthroughWindowKey, hourlyCount = 0)
         } else {
-            budget
+            current
         }
 
         if (setting.budgetBehavior == BudgetBehavior.IGNORING) {
@@ -88,7 +91,7 @@ object NotificationDeliveryPolicy {
             spentPoints = spentPoints,
             periodStartMinute = periodStartMinute,
         )
-        val canDeliver = spentPoints + priority.pointCost <= period.budgetPoints
+        val canDeliver = spentPoints.toLong() + priority.pointCost <= period.budgetPoints.toLong()
 
         return DeliveryDecision(canDeliver = canDeliver, updatedBudget = budgetWithPeriod)
     }
@@ -137,17 +140,16 @@ object NotificationDeliveryPolicy {
         val periodStartMinute = period?.let { it.startHour * 60 + it.startMinute }
             ?: budget.periodStartMinute
 
-        var spentPoints = resolveSpentPoints(budget, periodStartMinute)
-        var hourlyCount = if (budget.passthroughWindowHour == timeContext.passthroughWindowKey) {
-            budget.hourlyCount
+        val normalized = normalizeBudget(budget, schedule, timeContext.scheduleMinuteOfDay, timeContext.localDay)
+        var spentPoints = normalized.spentPoints
+        var hourlyCount = if (normalized.passthroughWindowHour == timeContext.passthroughWindowKey) {
+            normalized.hourlyCount
         } else {
             0
         }
         val delivered = mutableListOf<NotificationItem>()
 
-        val sorted = eligible.sortedWith(
-            compareBy<NotificationItem> { it.priority.level }.thenBy { it.timestamp }
-        )
+        val sorted = orderCandidates(eligible, queuePreferences)
 
         for (item in sorted) {
             val setting = settings[item.priority] ?: PriorityDeliverySetting.defaultFor(item.priority)
@@ -156,8 +158,8 @@ object NotificationDeliveryPolicy {
 
             if (!ignoresBudget) {
                 if (period == null || period.budgetPoints == 0) continue
-                if (hourlyCount >= MAX_HOURLY_PASSTHROUGH) break
-                if (spentPoints + cost > period.budgetPoints) continue
+                if (hourlyCount >= MAX_HOURLY_PASSTHROUGH) continue
+                if (spentPoints.toLong() + cost > period.budgetPoints.toLong()) continue
             }
 
             delivered += item
@@ -167,12 +169,51 @@ object NotificationDeliveryPolicy {
             }
         }
 
-        return delivered to budget.copy(
+        return delivered to normalized.copy(
             spentPoints = spentPoints,
             hourlyCount = hourlyCount,
             periodStartMinute = periodStartMinute,
             passthroughWindowHour = timeContext.passthroughWindowKey,
         )
+    }
+
+    /** Calendar identity is independent of editable boundaries; unknown legacy day binds on first use.
+     * CLAIM(day-budget): [NotificationCoreTest]. ScheduleWriter rebases the active start under DeliveryGate.
+     */
+    fun normalizeBudget(budget: DeliveryBudgetState, schedule: List<NotificationSchedulePeriod>, minute: Int, localDay: String = ""): DeliveryBudgetState {
+        val start = findActivePeriod(schedule, minute)?.startMinuteOfDay ?: -1
+        val dayChanged = localDay.isNotEmpty() && budget.localDay.isNotEmpty() && localDay != budget.localDay
+        return budget.copy(
+            spentPoints = if (!dayChanged && start == budget.periodStartMinute) budget.spentPoints else 0,
+            periodStartMinute = start,
+            hourlyCount = if (dayChanged) 0 else budget.hourlyCount,
+            passthroughWindowHour = if (dayChanged) -1 else budget.passthroughWindowHour,
+            localDay = localDay.ifEmpty { budget.localDay },
+            accountingId = if (dayChanged || start != budget.periodStartMinute || budget.accountingId.isEmpty())
+                "${localDay.ifEmpty { budget.localDay }}:$start" else budget.accountingId,
+        )
+    }
+
+    /** App heads compete by priority, descending rank, recency, then stable package/key ties [QueueOrderTest]. */
+    fun orderCandidates(candidates: List<NotificationItem>, preferences: Map<String, AppQueuePreference>): List<NotificationItem> {
+        val heads = compareBy<NotificationItem> { it.priority.level }
+            .thenByDescending { preferences[it.packageName]?.rank ?: 0 }
+            .thenByDescending { it.timestamp }.thenBy { it.packageName }.thenBy { it.id }
+        val queues = candidates.groupBy { it.priority to it.packageName }.values.map { appItems ->
+            val oldest = preferences[appItems.first().packageName]?.order == QueueOrder.OLDEST_FIRST
+            java.util.ArrayDeque(appItems.sortedWith(
+                if (oldest) compareBy<NotificationItem> { it.timestamp }.thenBy { it.id }
+                else compareByDescending<NotificationItem> { it.timestamp }.thenBy { it.id }))
+        }
+        val pending = java.util.PriorityQueue<java.util.ArrayDeque<NotificationItem>> { a, b -> heads.compare(a.first, b.first) }
+        pending.addAll(queues)
+        return buildList {
+            while (pending.isNotEmpty()) {
+                val queue = pending.remove()
+                add(queue.removeFirst())
+                if (queue.isNotEmpty()) pending.add(queue)
+            }
+        }
     }
 
     private fun resolveSpentPoints(budget: DeliveryBudgetState, periodStartMinute: Int): Int =

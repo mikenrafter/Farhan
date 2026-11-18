@@ -1,0 +1,186 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "cba56f88b4538acb4afb94cb2c6e30f9",
+    "entities": [
+      {
+        "tableName": "NotificationItemEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `appName` TEXT, `title` TEXT, `text` TEXT, `time` TEXT NOT NULL, `creatorPackage` TEXT NOT NULL, `timestamp` INTEGER NOT NULL DEFAULT 0, `priority` INTEGER NOT NULL DEFAULT 3, `category` TEXT NOT NULL DEFAULT 'OTHER', `isRead` INTEGER NOT NULL DEFAULT 0, `channelId` TEXT DEFAULT NULL, `isCleared` INTEGER NOT NULL DEFAULT 0, `isDelivered` INTEGER NOT NULL DEFAULT 0, `priorityReason` TEXT DEFAULT NULL, `sourceSession` TEXT NOT NULL DEFAULT '', `sourceEventOrder` INTEGER NOT NULL DEFAULT 0, `deliveryInvalidated` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appName",
+            "columnName": "appName",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "text",
+            "columnName": "text",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "time",
+            "columnName": "time",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creatorPackage",
+            "columnName": "creatorPackage",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "priority",
+            "columnName": "priority",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "3"
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'OTHER'"
+          },
+          {
+            "fieldPath": "isRead",
+            "columnName": "isRead",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "channelId",
+            "columnName": "channelId",
+            "affinity": "TEXT",
+            "notNull": false,
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "isCleared",
+            "columnName": "isCleared",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "isDelivered",
+            "columnName": "isDelivered",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "priorityReason",
+            "columnName": "priorityReason",
+            "affinity": "TEXT",
+            "notNull": false,
+            "defaultValue": "NULL"
+          },
+          {
+            "fieldPath": "sourceSession",
+            "columnName": "sourceSession",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "sourceEventOrder",
+            "columnName": "sourceEventOrder",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "deliveryInvalidated",
+            "columnName": "deliveryInvalidated",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_NotificationItemEntity_creatorPackage_timestamp",
+            "unique": false,
+            "columnNames": [
+              "creatorPackage",
+              "timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_NotificationItemEntity_creatorPackage_timestamp` ON `${TABLE_NAME}` (`creatorPackage`, `timestamp`)"
+          },
+          {
+            "name": "index_NotificationItemEntity_isDelivered_isCleared_priority",
+            "unique": false,
+            "columnNames": [
+              "isDelivered",
+              "isCleared",
+              "priority"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_NotificationItemEntity_isDelivered_isCleared_priority` ON `${TABLE_NAME}` (`isDelivered`, `isCleared`, `priority`)"
+          },
+          {
+            "name": "index_NotificationItemEntity_isCleared_timestamp_id",
+            "unique": false,
+            "columnNames": [
+              "isCleared",
+              "timestamp",
+              "id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_NotificationItemEntity_isCleared_timestamp_id` ON `${TABLE_NAME}` (`isCleared`, `timestamp`, `id`)"
+          },
+          {
+            "name": "index_NotificationItemEntity_isCleared_isRead_priority_timestamp",
+            "unique": false,
+            "columnNames": [
+              "isCleared",
+              "isRead",
+              "priority",
+              "timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_NotificationItemEntity_isCleared_isRead_priority_timestamp` ON `${TABLE_NAME}` (`isCleared`, `isRead`, `priority`, `timestamp`)"
+          }
+        ],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cba56f88b4538acb4afb94cb2c6e30f9')"
+    ]
+  }
+}

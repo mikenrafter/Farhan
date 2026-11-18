@@ -11,5 +11,8 @@ data class NotificationBatch(
     val oldestTimestamp: Long,
     val preview: String?,
     val isExpanded: Boolean = false,
-    val items: List<NotificationItem> = emptyList()
+    val items: List<NotificationItem> = emptyList(),
+    val itemsOffset: Int = 0,
+    val rangeStart: Long = 0,
+    val rangeEnd: Long = Long.MAX_VALUE,
 )

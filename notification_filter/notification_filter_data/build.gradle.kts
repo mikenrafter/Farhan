@@ -17,4 +17,6 @@ dependencies {
     "implementation"(libs.room.ktx)
     "implementation"(libs.room.runtime)
     implementation(libs.androidx.datastore)
+    testImplementation("org.json:json:20240303")
+    testImplementation("org.xerial:sqlite-jdbc:3.46.1.0")
 }

@@ -8,6 +8,7 @@ data class DeliveryTimeContext(
     val calendarHour: Int,
     val dayOfYear: Int,
     val testingMode: Boolean = false,
+    val localDay: String = "",
 ) {
     /** Minute-of-day used for schedule/budget lookups (3 min = 1 h in testing mode). */
     val scheduleMinuteOfDay: Int
@@ -26,6 +27,7 @@ data class DeliveryTimeContext(
             minuteOfDay: Int,
             dayOfYear: Int,
             testingMode: Boolean,
+            localDay: String = "",
         ): DeliveryTimeContext {
             return if (testingMode) {
                 DeliveryTimeContext(
@@ -36,6 +38,7 @@ data class DeliveryTimeContext(
                     calendarHour = calendarHour,
                     dayOfYear = dayOfYear,
                     testingMode = true,
+                    localDay = localDay,
                 )
             } else {
                 DeliveryTimeContext(
@@ -46,6 +49,7 @@ data class DeliveryTimeContext(
                     calendarHour = calendarHour,
                     dayOfYear = dayOfYear,
                     testingMode = false,
+                    localDay = localDay,
                 )
             }
         }
@@ -55,6 +59,7 @@ data class DeliveryTimeContext(
             second: Int,
             millis: Int,
             testingMode: Boolean,
+            localDay: String = "",
         ): Long {
             return if (testingMode) {
                 val minuteInSlot = minute % TESTING_BOUNDARY_MINUTES

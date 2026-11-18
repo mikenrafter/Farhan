@@ -23,6 +23,9 @@ fun NotificationItem.toNotificationEntity(): NotificationItemEntity {
         isCleared = isCleared,
         isDelivered = isDelivered,
         priorityReason = priorityReason,
+        sourceSession = sourceSession,
+        sourceEventOrder = sourceEventOrder,
+        deliveryInvalidated = deliveryInvalidated,
     )
 }
 
@@ -42,6 +45,9 @@ fun NotificationItemEntity.toNotificationItem(): NotificationItem {
         isCleared = isCleared,
         isDelivered = isDelivered,
         priorityReason = priorityReason,
+        sourceSession = sourceSession,
+        sourceEventOrder = sourceEventOrder,
+        deliveryInvalidated = deliveryInvalidated,
     )
 }
 

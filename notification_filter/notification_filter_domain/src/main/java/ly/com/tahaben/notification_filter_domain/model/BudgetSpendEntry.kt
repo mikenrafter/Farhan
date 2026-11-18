@@ -7,4 +7,6 @@ data class BudgetSpendEntry(
     val pointCost: Int,
     val timestamp: Long,
     val periodStartMinute: Int,
+    val accountingId: String = "",
+    val effectId: String = "",
 )

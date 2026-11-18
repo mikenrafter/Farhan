@@ -29,6 +29,7 @@ object NotificationFilterDomainModule {
         preferences: Preferences,
         installedAppsRepo: InstalledAppsRepository,
         knownPackageSourceRegistry: KnownPackageSourceRegistry,
+        core: ly.com.tahaben.notification_filter_domain.delivery.NotificationCore,
     ): NotificationFilterUseCases {
         val setAppPriorityOverride = SetAppPriorityOverride(preferences)
         val registerKnownNotificationSources = RegisterKnownNotificationSources(knownPackageSourceRegistry)
@@ -46,9 +47,9 @@ object NotificationFilterDomainModule {
         return NotificationFilterUseCases(
             CheckIfNotificationServiceIsEnabled(serviceUtil),
             CheckIfNotificationAccessIsGranted(serviceUtil),
-            DeleteNotificationFromDB(notificationRepository),
+            DeleteNotificationFromDB(notificationRepository, core, serviceUtil),
             DeleteNotificationIntentFromHashmap(serviceUtil),
-            DeleteAllNotifications(notificationRepository),
+            DeleteAllNotifications(notificationRepository, core, serviceUtil),
             EnableNotificationService(serviceUtil),
             InsertNotificationToDB(notificationRepository),
             GetNotificationsFromDB(notificationRepository),
@@ -85,11 +86,11 @@ object NotificationFilterDomainModule {
             GetCategoryPriorityOverride(preferences),
             SetCategoryPriorityOverride(preferences),
             GetNotificationSchedule(preferences),
-            SetNotificationSchedule(preferences),
+            SetNotificationSchedule(core.writer),
             GetCurrentBudgetStatus(preferences),
-            ClearBudgetSpend(preferences),
+            ClearBudgetSpend(core),
             GetClearedNotifications(notificationRepository),
-            MarkNotificationAsCleared(notificationRepository),
+            MarkNotificationAsCleared(core, serviceUtil),
             MarkNotificationAsDelivered(notificationRepository),
             GetUndeliveredNotifications(notificationRepository),
             GetPackageNotificationCountSince(notificationRepository),

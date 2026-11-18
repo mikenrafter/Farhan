@@ -25,7 +25,8 @@ fun StandingAlarmsWidget(
     standingItems: List<NotificationItem>,
     standingThresholdHours: Int,
     onClearAll: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    totalCount: Int = standingItems.size,
 ) {
     val spacing = LocalSpacing.current
     if (standingItems.isEmpty()) return
@@ -49,7 +50,7 @@ fun StandingAlarmsWidget(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Standing Alarms (${standingItems.size})",
+                    text = "Standing Alarms ($totalCount)",
                     style = MaterialTheme.typography.titleSmall,
                     color = accentColor
                 )
@@ -85,9 +86,9 @@ fun StandingAlarmsWidget(
                     )
                 }
             }
-            if (standingItems.size > 3) {
+            if (totalCount > 3) {
                 Text(
-                    text = "+${standingItems.size - 3} more",
+                    text = "+${totalCount - 3} more",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

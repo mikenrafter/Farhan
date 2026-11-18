@@ -18,17 +18,20 @@ class GetAppPriorityInfoList(
     private val scanVisibleNotificationSources: ScanVisibleNotificationSources,
     private val serviceUtil: ServiceUtil,
 ) {
+    private val enabledCache = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+
     suspend operator fun invoke(forceRescan: Boolean = false): List<AppPriorityInfo> {
         scanInstalledNotificationSources(force = forceRescan)
         scanVisibleNotificationSources()
+        knownPackageSourceRegistry.getAll().keys.forEach { enabledCache[it] = serviceUtil.areAppNotificationsEnabled(it) }
         return buildList()
     }
 
-    /** The catalog as already known, with no discovery scan. RED STUB: returns nothing. */
-    fun cached(): List<AppPriorityInfo> = emptyList()
+    /** The catalog as already known, with no discovery scan. */
+    fun cached(): List<AppPriorityInfo> = buildList()
 
     fun forPackage(packageName: String): AppPriorityInfo? {
-        val source = knownPackageSourceRegistry.getAll()[packageName] ?: return null
+        val source = knownPackageSourceRegistry.get(packageName) ?: return null
         return buildInfo(source)
     }
 
@@ -93,7 +96,7 @@ class GetAppPriorityInfoList(
             isLocked = preferences.isAppPriorityLocked(source.packageName),
             userOverride = userOverride,
             channels = channels,
-            notificationsEnabled = serviceUtil.areAppNotificationsEnabled(source.packageName),
+            notificationsEnabled = enabledCache[source.packageName] ?: true,
         )
     }
 }

@@ -3,6 +3,7 @@ package ly.com.tahaben.notification_filter_domain.util
 import android.app.PendingIntent
 
 interface ServiceUtil {
+    fun clearNotificationActions() {}
 
     suspend fun isNotificationServiceEnabled(): Boolean
     fun isNotificationAccessPermissionGranted(): Boolean

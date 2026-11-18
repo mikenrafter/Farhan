@@ -41,6 +41,7 @@ fun RecentBatchesWidget(
     expandedKeys: Set<String>,
     onToggleBatch: (String) -> Unit,
     onOpenNotification: (NotificationItem) -> Unit,
+    onBatchPage: (String, Int) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -69,7 +70,8 @@ fun RecentBatchesWidget(
                     batch = batch,
                     isExpanded = expandedKeys.contains(batch.key),
                     onToggle = { onToggleBatch(batch.key) },
-                    onOpenNotification = onOpenNotification
+                    onOpenNotification = onOpenNotification,
+                    onBatchPage = onBatchPage
                 )
             }
         }
@@ -81,7 +83,8 @@ private fun BatchRow(
     batch: NotificationBatch,
     isExpanded: Boolean,
     onToggle: () -> Unit,
-    onOpenNotification: (NotificationItem) -> Unit
+    onOpenNotification: (NotificationItem) -> Unit,
+    onBatchPage: (String, Int) -> Unit,
 ) {
     val spacing = LocalSpacing.current
     val priorityColor = priorityColor[batch.priority]
@@ -162,6 +165,10 @@ private fun BatchRow(
                 modifier = Modifier.padding(start = spacing.spaceLarge),
                 verticalArrangement = Arrangement.spacedBy(spacing.spaceExtraSmall)
             ) {
+                if (batch.count > 100) Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                    androidx.compose.material3.TextButton(onClick = { onBatchPage(batch.key, (batch.itemsOffset - 100).coerceAtLeast(0)) }, enabled = batch.itemsOffset > 0) { Text("Newer") }
+                    androidx.compose.material3.TextButton(onClick = { onBatchPage(batch.key, batch.itemsOffset + 100) }, enabled = batch.itemsOffset + batch.items.size < batch.count) { Text("Older") }
+                }
                 batch.items.forEach { item ->
                     Text(
                         text = buildString {

@@ -54,16 +54,16 @@ class ServiceUtilImpl(
         }
     }
 
+    override fun clearNotificationActions() = NotificationService.cancelAllProxies(context)
+
     override fun getNotificationIntent(notificationKey: String): PendingIntent? {
-        Timber.d("notification click $notificationKey")
         val pendingIntent = NotificationService.getIntentForNotification(notificationKey)
-        NotificationService.removeIntentFromHashmap(notificationKey)
         return pendingIntent
     }
 
     override fun deleteNotificationIntent(notificationKey: String) {
-        NotificationService.removeIntentFromHashmap(notificationKey)
         NotificationService.removeActionsForNotification(notificationKey)
+        NotificationService.cancelProxy(context, notificationKey)
     }
 
     override fun getNotificationActionTitles(notificationId: String): List<String> =
@@ -81,7 +81,7 @@ class ServiceUtilImpl(
     }
 
     override fun getVisibleNotificationSources(): List<VisibleNotificationSource> =
-        NotificationService.getVisibleNotificationSources()
+        NotificationDiagnostics.trace("farhan.catalog.discovery") { NotificationService.getVisibleNotificationSources() }
 
     override fun getOwnPackageName(): String = context.packageName
 

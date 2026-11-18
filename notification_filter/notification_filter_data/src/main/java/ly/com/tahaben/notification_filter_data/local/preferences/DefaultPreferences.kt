@@ -24,7 +24,8 @@ import java.util.Calendar
 
 class DefaultPreferences(
     private val sharedPref: SharedPreferences,
-    private val dataStore: DataStore<androidx.datastore.preferences.core.Preferences>
+    private val dataStore: DataStore<androidx.datastore.preferences.core.Preferences>,
+    private val clock: java.time.Clock = ly.com.tahaben.notification_filter_domain.delivery.DeliveryClock.systemClock,
 ) : Preferences {
 
     private val mainSwitchKey = booleanPreferencesKey(GlobalKey.Pref_KEY_APP_MAIN_SWITCH)
@@ -33,12 +34,10 @@ class DefaultPreferences(
     private var serviceEnabledCache: Boolean? = null
 
     @Volatile
-    private var scheduleCache: List<NotificationSchedulePeriod>? = null
-
-    @Volatile
     private var deliverySettingsCache: Map<NotificationPriority, PriorityDeliverySetting>? = null
 
-    private val pendingLedgerEntries = ArrayList<BudgetSpendEntry>()
+    private val stateLock = Any()
+    private var snapshotCache: ly.com.tahaben.notification_filter_domain.schedule.ScheduleSnapshot? = null
     private val ledgerLock = Any()
 
     @SuppressLint("ApplySharedPref")
@@ -244,157 +243,142 @@ class DefaultPreferences(
         else sharedPref.edit().putString(key, priority.name).apply()
     }
 
-    override fun getNotificationSchedule(): List<NotificationSchedulePeriod> {
-        scheduleCache?.let { return it }
-        val json = sharedPref.getString(Preferences.KEY_NOTIFICATION_SCHEDULE, null)
-            ?: return NotificationSchedulePeriod.DEFAULT_SCHEDULE.also { scheduleCache = it }
-        return try {
-            val arr = JSONArray(json)
-            (0 until arr.length()).map { i ->
-                val obj = arr.getJSONObject(i)
-                NotificationSchedulePeriod(
-                    startHour = obj.getInt("sh"),
-                    startMinute = obj.getInt("sm"),
-                    endHour = obj.getInt("eh"),
-                    endMinute = obj.getInt("em"),
-                    budgetPoints = obj.getInt("b"),
-                )
-            }.also { scheduleCache = it }
-        } catch (e: Exception) {
-            NotificationSchedulePeriod.DEFAULT_SCHEDULE.also { scheduleCache = it }
+    override fun getNotificationSchedule(): List<NotificationSchedulePeriod> =
+        getScheduleSnapshot().book.scheduleFor(java.time.LocalDate.now(clock))
+
+    /** Legacy callers must use SetNotificationSchedule, which serializes through NotificationCore.writer. */
+    override fun setNotificationSchedule(schedule: List<NotificationSchedulePeriod>) {
+        error("Use ScheduleWriter for atomic, budget-preserving writes")
+    }
+
+    override fun getScheduleSnapshot(): ly.com.tahaben.notification_filter_domain.schedule.ScheduleSnapshot = try { synchronized(stateLock) {
+        snapshotCache?.let { return@synchronized it }
+        val stored = sharedPref.getString(SNAPSHOT_KEY, null)
+        val legacy = sharedPref.getString(Preferences.KEY_NOTIFICATION_SCHEDULE, null)
+        val old = if (stored != null) ScheduleCodec.decode(stored) else {
+            ly.com.tahaben.notification_filter_domain.schedule.ScheduleSnapshot(
+                ly.com.tahaben.notification_filter_domain.schedule.ScheduleBook(
+                    legacy?.let(ScheduleCodec::decodeSchedule) ?: NotificationSchedulePeriod.DEFAULT_SCHEDULE),
+                ly.com.tahaben.notification_filter_domain.delivery.DeliveryBudgetState(
+                    sharedPref.getInt(Preferences.KEY_BUDGET_SPENT, 0), sharedPref.getInt(Preferences.KEY_BUDGET_PERIOD_START_MINUTE, -1),
+                    sharedPref.getInt(Preferences.KEY_HOURLY_PASSTHROUGH_COUNT, 0), sharedPref.getInt(Preferences.KEY_PASSTHROUGH_WINDOW_HOUR, -1)))
+        }
+        val today = java.time.LocalDate.now(clock)
+        val minute = ly.com.tahaben.notification_filter_domain.delivery.DeliveryClock.current(isDeliveryTestingMode(), clock).scheduleMinuteOfDay
+        val repairedBook = old.book.copy(
+            repeating = ly.com.tahaben.notification_filter_domain.schedule.DaySchedule.repairLegacy(old.book.repeating),
+            dated = old.book.dated.mapValues { ly.com.tahaben.notification_filter_domain.schedule.DaySchedule.repairLegacy(it.value) })
+        val policy = ly.com.tahaben.notification_filter_domain.delivery.NotificationDeliveryPolicy
+        val normalized = policy.normalizeBudget(old.budget, old.book.scheduleFor(today), minute, today.toString())
+        val repaired = old.copy(book = repairedBook, budget = normalized.copy(
+            periodStartMinute = policy.findActivePeriod(repairedBook.scheduleFor(today), minute)?.startMinuteOfDay ?: -1))
+        if (stored == null || repaired != old) {
+            val editor = sharedPref.edit()
+            if (legacy != null && !sharedPref.contains(LEGACY_BACKUP_KEY)) editor.putString(LEGACY_BACKUP_KEY, legacy)
+            check(editor.putString(SNAPSHOT_KEY, ScheduleCodec.encode(repaired)).commit()) { "Schedule migration could not be saved" }
+        }
+        snapshotCache = repaired
+        repaired
+    } } catch (error: ly.com.tahaben.notification_filter_domain.schedule.ScheduleReadException) { throw error }
+        catch (error: Exception) { throw ly.com.tahaben.notification_filter_domain.schedule.ScheduleReadException(error) }
+
+    override fun commitScheduleSnapshot(snapshot: ly.com.tahaben.notification_filter_domain.schedule.ScheduleSnapshot) = synchronized(stateLock) {
+        check(sharedPref.edit().putString(SNAPSHOT_KEY, ScheduleCodec.encode(snapshot))
+            .putString(Preferences.KEY_NOTIFICATION_SCHEDULE, ScheduleCodec.encodeSchedule(snapshot.book.repeating))
+            .putInt(Preferences.KEY_BUDGET_SPENT, snapshot.budget.spentPoints)
+            .putInt(Preferences.KEY_BUDGET_PERIOD_START_MINUTE, snapshot.budget.periodStartMinute)
+            .putInt(Preferences.KEY_HOURLY_PASSTHROUGH_COUNT, snapshot.budget.hourlyCount)
+            .putInt(Preferences.KEY_PASSTHROUGH_WINDOW_HOUR, snapshot.budget.passthroughWindowHour).commit()) { "Schedule/budget commit failed" }
+        snapshotCache = snapshot
+    }
+
+    override fun getAppQueuePreferences(): Map<String, ly.com.tahaben.notification_filter_domain.delivery.AppQueuePreference> {
+        val json = JSONObject(sharedPref.getString(QUEUE_KEY, "{}")!!)
+        return json.keys().asSequence().associate { pkg ->
+            val preference = json.getJSONObject(pkg)
+            pkg to ly.com.tahaben.notification_filter_domain.delivery.AppQueuePreference(
+                ly.com.tahaben.notification_filter_domain.delivery.QueueOrder.valueOf(preference.getString("order")), preference.getInt("rank"))
         }
     }
 
-    override fun setNotificationSchedule(schedule: List<NotificationSchedulePeriod>) {
-        scheduleCache = schedule
-        val arr = JSONArray()
-        schedule.forEach { period ->
-            arr.put(JSONObject().apply {
-                put("sh", period.startHour)
-                put("sm", period.startMinute)
-                put("eh", period.endHour)
-                put("em", period.endMinute)
-                put("b", period.budgetPoints)
-            })
-        }
-        sharedPref.edit().putString(Preferences.KEY_NOTIFICATION_SCHEDULE, arr.toString()).apply()
+    override fun setAppQueuePreference(packageName: String, preference: ly.com.tahaben.notification_filter_domain.delivery.AppQueuePreference) = synchronized(stateLock) {
+        val json = JSONObject(sharedPref.getString(QUEUE_KEY, "{}")!!)
+        json.put(packageName, JSONObject().put("order", preference.order.name).put("rank", preference.rank))
+        check(sharedPref.edit().putString(QUEUE_KEY, json.toString()).commit())
     }
+
+    override fun isExperimentEnabled(name: String): Boolean = sharedPref.getBoolean("notification_experiment_" + name, false)
+    override fun setExperimentEnabled(name: String, enabled: Boolean) { sharedPref.edit().putBoolean("notification_experiment_" + name, enabled).apply() }
 
     override fun getBudgetSpentCurrentPeriod(): Int =
-        sharedPref.getInt(Preferences.KEY_BUDGET_SPENT, 0)
+        getScheduleSnapshot().budget.spentPoints
 
     override fun setBudgetSpentCurrentPeriod(points: Int) {
         sharedPref.edit().putInt(Preferences.KEY_BUDGET_SPENT, points).apply()
     }
 
     override fun getCurrentBudgetPeriodStartMinute(): Int =
-        sharedPref.getInt(Preferences.KEY_BUDGET_PERIOD_START_MINUTE, -1)
+        getScheduleSnapshot().budget.periodStartMinute
 
     override fun setCurrentBudgetPeriodStartMinute(minuteOfDay: Int) {
         sharedPref.edit().putInt(Preferences.KEY_BUDGET_PERIOD_START_MINUTE, minuteOfDay).apply()
     }
 
-    override fun getBudgetSpendLedger(periodStartMinute: Int): List<BudgetSpendEntry> {
-        flushPendingLedgerEntries()
-        val json = sharedPref.getString(Preferences.KEY_BUDGET_SPEND_LEDGER, null) ?: return emptyList()
-        return try {
-            val arr = JSONArray(json)
-            (0 until arr.length()).mapNotNull { index ->
-                val obj = arr.getJSONObject(index)
-                if (obj.getInt("p") != periodStartMinute) return@mapNotNull null
-                BudgetSpendEntry(
-                    appName = obj.getString("a"),
-                    title = obj.getString("t"),
-                    priority = NotificationPriority.valueOf(obj.getString("pr")),
-                    pointCost = obj.getInt("c"),
-                    timestamp = obj.getLong("ts"),
-                    periodStartMinute = obj.getInt("p"),
-                )
-            }
-        } catch (e: Exception) {
-            emptyList()
+    override fun getBudgetSpendLedger(periodStartMinute: Int): List<BudgetSpendEntry> = synchronized(ledgerLock) {
+        val arr = readBudgetSpendLedgerRaw()
+        (0 until arr.length()).mapNotNull { index ->
+            val obj = arr.getJSONObject(index)
+            if (obj.getInt("p") != periodStartMinute) null else BudgetSpendEntry(obj.getString("a"), obj.getString("t"),
+                NotificationPriority.valueOf(obj.getString("pr")), obj.getInt("c"), obj.getLong("ts"), obj.getInt("p"))
         }
     }
 
-    override fun addBudgetSpendEntry(entry: BudgetSpendEntry) {
-        synchronized(ledgerLock) {
-            pendingLedgerEntries.add(entry)
-            if (pendingLedgerEntries.size >= LEDGER_FLUSH_THRESHOLD) {
-                flushPendingLedgerEntries()
+    override fun getBudgetSpendLedgerForState(budget: ly.com.tahaben.notification_filter_domain.delivery.DeliveryBudgetState): List<BudgetSpendEntry> = synchronized(ledgerLock) {
+        val ledger = readBudgetSpendLedgerRaw()
+        (0 until ledger.length()).mapNotNull { index ->
+            val obj = ledger.getJSONObject(index)
+            val timestamp = obj.getLong("ts")
+            val originalIdentity = obj.optString("accounting", "").ifEmpty {
+                java.time.Instant.ofEpochMilli(timestamp).atZone(clock.zone).toLocalDate().toString() + ":" + obj.getInt("p")
             }
+            if (originalIdentity != budget.accountingId) null else BudgetSpendEntry(obj.getString("a"), obj.getString("t"),
+                NotificationPriority.valueOf(obj.getString("pr")), obj.getInt("c"), timestamp, obj.getInt("p"), originalIdentity, obj.optString("effect", ""))
         }
     }
 
-    override fun clearBudgetSpendLedgerBefore(periodStartMinute: Int) {
-        flushPendingLedgerEntries()
-        val existing = readBudgetSpendLedgerRaw()
-        val filtered = JSONArray()
-        for (index in 0 until existing.length()) {
-            val obj = existing.getJSONObject(index)
-            if (obj.getInt("p") >= periodStartMinute) {
-                filtered.put(obj)
-            }
-        }
-        sharedPref.edit().putString(Preferences.KEY_BUDGET_SPEND_LEDGER, filtered.toString()).apply()
+    override fun addBudgetSpendEntry(entry: BudgetSpendEntry) = synchronized(ledgerLock) {
+        val ledger = readBudgetSpendLedgerRaw()
+        if (entry.effectId.isNotEmpty() && (0 until ledger.length()).any { ledger.getJSONObject(it).optString("effect") == entry.effectId }) return@synchronized
+        ledger.put(JSONObject().apply {
+            put("a", entry.appName); put("t", entry.title); put("pr", entry.priority.name); put("c", entry.pointCost)
+            put("ts", entry.timestamp); put("p", entry.periodStartMinute); put("accounting", entry.accountingId); put("effect", entry.effectId)
+        })
+        while (ledger.length() > 100) ledger.remove(0)
+        check(sharedPref.edit().putString(Preferences.KEY_BUDGET_SPEND_LEDGER, ledger.toString()).commit())
     }
+
+    override fun clearBudgetSpendLedgerBefore(periodStartMinute: Int) = Unit
 
     override fun clearAllBudgetSpend() {
-        synchronized(ledgerLock) {
-            pendingLedgerEntries.clear()
-        }
-        sharedPref.edit()
-            .putInt(Preferences.KEY_BUDGET_SPENT, 0)
-            .putInt(Preferences.KEY_BUDGET_PERIOD_START_MINUTE, -1)
-            .putInt(Preferences.KEY_HOURLY_PASSTHROUGH_COUNT, 0)
-            .putInt(Preferences.KEY_PASSTHROUGH_WINDOW_HOUR, -1)
-            .putString(Preferences.KEY_BUDGET_SPEND_LEDGER, "[]")
-            .apply()
-    }
-
-    private fun flushPendingLedgerEntries() {
-        val entriesToFlush = synchronized(ledgerLock) {
-            if (pendingLedgerEntries.isEmpty()) return
-            pendingLedgerEntries.toList().also { pendingLedgerEntries.clear() }
-        }
-        val existing = readBudgetSpendLedgerRaw()
-        entriesToFlush.forEach { entry ->
-            existing.put(JSONObject().apply {
-                put("a", entry.appName)
-                put("t", entry.title)
-                put("pr", entry.priority.name)
-                put("c", entry.pointCost)
-                put("ts", entry.timestamp)
-                put("p", entry.periodStartMinute)
-            })
-        }
-        trimBudgetSpendLedger(existing)
-        sharedPref.edit().putString(Preferences.KEY_BUDGET_SPEND_LEDGER, existing.toString()).apply()
-    }
-
-    private fun readBudgetSpendLedgerRaw(): JSONArray {
-        val json = sharedPref.getString(Preferences.KEY_BUDGET_SPEND_LEDGER, null) ?: return JSONArray()
-        return try {
-            JSONArray(json)
-        } catch (e: Exception) {
-            JSONArray()
+        synchronized(stateLock) {
+            commitScheduleSnapshot(getScheduleSnapshot().copy(budget = ly.com.tahaben.notification_filter_domain.delivery.DeliveryBudgetState()))
+            synchronized(ledgerLock) {
+                check(sharedPref.edit().putString(Preferences.KEY_BUDGET_SPEND_LEDGER, "[]").commit())
+            }
         }
     }
 
-    private fun trimBudgetSpendLedger(ledger: JSONArray) {
-        while (ledger.length() > 100) {
-            ledger.remove(0)
-        }
-    }
+    private fun readBudgetSpendLedgerRaw(): JSONArray = JSONArray(sharedPref.getString(Preferences.KEY_BUDGET_SPEND_LEDGER, "[]")!!)
 
     override fun getHourlyPassthroughCount(): Int =
-        sharedPref.getInt(Preferences.KEY_HOURLY_PASSTHROUGH_COUNT, 0)
+        getScheduleSnapshot().budget.hourlyCount
 
     override fun setHourlyPassthroughCount(count: Int) {
         sharedPref.edit().putInt(Preferences.KEY_HOURLY_PASSTHROUGH_COUNT, count).apply()
     }
 
     override fun getPassthroughWindowHour(): Int =
-        sharedPref.getInt(Preferences.KEY_PASSTHROUGH_WINDOW_HOUR, -1)
+        getScheduleSnapshot().budget.passthroughWindowHour
 
     override fun setPassthroughWindowHour(hour: Int) {
         sharedPref.edit().putInt(Preferences.KEY_PASSTHROUGH_WINDOW_HOUR, hour).apply()
@@ -514,6 +498,8 @@ class DefaultPreferences(
     }
 
     companion object {
-        private const val LEDGER_FLUSH_THRESHOLD = 5
+        private const val SNAPSHOT_KEY = "notification_schedule_snapshot_v1"
+        private const val LEGACY_BACKUP_KEY = "notification_schedule_legacy_backup"
+        private const val QUEUE_KEY = "notification_app_queue_v1"
     }
 }

@@ -7,6 +7,7 @@ import ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePerio
 import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
 
 sealed class NotificationDashboardEvent {
+    data class OnBatchPage(val batchKey: String, val offset: Int) : NotificationDashboardEvent()
     data class OnToggleBatch(val batchKey: String) : NotificationDashboardEvent()
     data class OnOpenNotification(val notificationItem: NotificationItem) : NotificationDashboardEvent()
     data class OnDismissNotification(val notificationItem: NotificationItem) : NotificationDashboardEvent()

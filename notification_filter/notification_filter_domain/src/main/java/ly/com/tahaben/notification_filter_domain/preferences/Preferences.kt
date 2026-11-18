@@ -1,6 +1,17 @@
 package ly.com.tahaben.notification_filter_domain.preferences
 
 interface Preferences {
+    fun getScheduleSnapshot(): ly.com.tahaben.notification_filter_domain.schedule.ScheduleSnapshot =
+        ly.com.tahaben.notification_filter_domain.schedule.ScheduleSnapshot(
+            ly.com.tahaben.notification_filter_domain.schedule.ScheduleBook(getNotificationSchedule()),
+            ly.com.tahaben.notification_filter_domain.delivery.DeliveryBudgetState(getBudgetSpentCurrentPeriod(), getCurrentBudgetPeriodStartMinute(), getHourlyPassthroughCount(), getPassthroughWindowHour()))
+    fun commitScheduleSnapshot(snapshot: ly.com.tahaben.notification_filter_domain.schedule.ScheduleSnapshot) { error("Atomic schedule storage required") }
+    fun getBudgetSpendLedgerForState(budget: ly.com.tahaben.notification_filter_domain.delivery.DeliveryBudgetState): List<ly.com.tahaben.notification_filter_domain.model.BudgetSpendEntry> = getBudgetSpendLedger(budget.periodStartMinute)
+    fun getAppQueuePreferences(): Map<String, ly.com.tahaben.notification_filter_domain.delivery.AppQueuePreference> = emptyMap()
+    fun setAppQueuePreference(packageName: String, preference: ly.com.tahaben.notification_filter_domain.delivery.AppQueuePreference) { error("Queue storage required") }
+    fun isExperimentEnabled(name: String): Boolean = false
+    fun setExperimentEnabled(name: String, enabled: Boolean) { error("Experiment storage required") }
+
 
     fun loadShouldShowOnBoarding(): Boolean
     fun saveShouldShowOnBoarding(shouldShow: Boolean)

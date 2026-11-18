@@ -13,25 +13,16 @@ class OpenNotification(
 ) {
     operator fun invoke(notificationKey: String, packageName: String) {
         val pendingIntent = serviceUtil.getNotificationIntent(notificationKey)
-        Timber.d("notification click $notificationKey")
         if (pendingIntent != null) {
-            pendingIntent.send()
-            Timber.d("notification click send")
+            try { pendingIntent.send(); return }
+            catch (_: android.app.PendingIntent.CanceledException) { serviceUtil.deleteNotificationIntent(notificationKey) }
+        }
+        val intent = context.packageManager.getLaunchIntentForPackage(packageName)
+        if (intent != null) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
         } else {
-            Timber.d("notification click package $packageName")
-            val pm = context.packageManager
-            val intent = pm.getLaunchIntentForPackage(packageName)
-            if (intent != null) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(intent)
-            } else {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.package_not_found_error),
-                    Toast.LENGTH_LONG
-                )
-                    .show()
-            }
+            Toast.makeText(context, context.getString(R.string.package_not_found_error), Toast.LENGTH_LONG).show()
         }
     }
 }

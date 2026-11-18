@@ -9,6 +9,8 @@ import androidx.room.PrimaryKey
     indices = [
         Index(value = ["creatorPackage", "timestamp"]),
         Index(value = ["isDelivered", "isCleared", "priority"]),
+        Index(value = ["isCleared", "timestamp", "id"]),
+        Index(value = ["isCleared", "isRead", "priority", "timestamp"]),
     ]
 )
 data class NotificationItemEntity(
@@ -27,4 +29,7 @@ data class NotificationItemEntity(
     @ColumnInfo(defaultValue = "0") val isCleared: Boolean = false,
     @ColumnInfo(defaultValue = "0") val isDelivered: Boolean = false,
     @ColumnInfo(defaultValue = "NULL") val priorityReason: String? = null,
+    @ColumnInfo(defaultValue = "''") val sourceSession: String = "",
+    @ColumnInfo(defaultValue = "0") val sourceEventOrder: Long = 0,
+    @ColumnInfo(defaultValue = "0") val deliveryInvalidated: Boolean = false,
 )

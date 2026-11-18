@@ -10,6 +10,36 @@ import ly.com.tahaben.notification_filter_data.local.entity.NotificationItemEnti
 
 @Dao
 interface NotificationDao {
+    @Query(NotificationQueries.INVALIDATE)
+    suspend fun invalidateBefore(session: String, order: Long)
+
+    @Query("SELECT creatorPackage AS packageName, priority FROM notificationitementity WHERE isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0 AND priority <= :maxPriority GROUP BY creatorPackage, priority ORDER BY priority ASC, creatorPackage ASC LIMIT 4096")
+    suspend fun pendingGroups(maxPriority: Int): List<PendingGroup>
+    @Query("SELECT * FROM notificationitementity WHERE creatorPackage = :packageName AND priority = :priority AND isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0 ORDER BY CASE WHEN :oldest THEN timestamp END ASC, CASE WHEN NOT :oldest THEN timestamp END DESC, id ASC LIMIT 1")
+    suspend fun pendingHead(packageName: String, priority: Int, oldest: Boolean): NotificationItemEntity?
+
+    @Query(NotificationQueries.INBOX)
+    fun observeInbox(cleared: Boolean, priority: Int?, standingCutoff: Long, search: String, limit: Int, offset: Int): Flow<List<NotificationItemEntity>>
+    @Query(NotificationQueries.COUNTS)
+    fun observeCounts(dayStart: Long, standingCutoff: Long, floodStart: Long): Flow<DashboardCounts>
+    @Query(NotificationQueries.PRIORITIES)
+    fun observePriorities(): Flow<List<PriorityCount>>
+    @Query(NotificationQueries.CATEGORIES)
+    fun observeCategories(): Flow<List<CategoryCount>>
+    @Query(NotificationQueries.CHATTERS)
+    fun observeChatters(): Flow<List<ChatterCount>>
+    @Query(NotificationQueries.BATCHES)
+    fun observeBatchHeaders(windowMillis: Long, limit: Int): Flow<List<BatchHeader>>
+    @Query(NotificationQueries.BATCH_ITEMS)
+    fun observeBatchItems(packageName: String, start: Long, end: Long, limit: Int, offset: Int): Flow<List<NotificationItemEntity>>
+    @Query(NotificationQueries.STANDING)
+    fun observeStanding(cutoff: Long, limit: Int): Flow<List<NotificationItemEntity>>
+    @Query(NotificationQueries.STANDING)
+    suspend fun getStandingPage(cutoff: Long, limit: Int): List<NotificationItemEntity>
+
+    @Query("SELECT * FROM notificationitementity WHERE id = :id LIMIT 1")
+    suspend fun find(id: String): NotificationItemEntity?
+
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNotificationItem(notificationItemEntity: NotificationItemEntity)
@@ -44,9 +74,10 @@ interface NotificationDao {
     @Query("UPDATE notificationitementity SET isDelivered = 1 WHERE id = :id")
     suspend fun markNotificationAsDelivered(id: String)
 
-    @Query("SELECT * FROM notificationitementity WHERE isDelivered = 0 AND isCleared = 0 AND priority <= :priorityLevel ORDER BY priority ASC, timestamp ASC")
+    @Query("SELECT * FROM notificationitementity WHERE isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0 AND priority <= :priorityLevel ORDER BY priority ASC, timestamp ASC")
     suspend fun getUndeliveredNotificationsUpToPriority(priorityLevel: Int): List<NotificationItemEntity>
 
     @Query("SELECT COUNT(*) FROM notificationitementity WHERE creatorPackage = :packageName AND timestamp >= :since AND isCleared = 0")
     suspend fun getPackageNotificationCountSince(packageName: String, since: Long): Int
 }
+data class PendingGroup(val packageName: String, val priority: Int)

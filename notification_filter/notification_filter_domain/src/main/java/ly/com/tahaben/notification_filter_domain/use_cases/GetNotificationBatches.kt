@@ -17,6 +17,7 @@ class GetNotificationBatches(
 ) {
 
     operator fun invoke(): Flow<List<NotificationBatch>> {
+        repository.observeBatchHeaders((preferences.getBatchWindowMinutes().coerceAtLeast(1) * 60_000L), 5)?.let { return it }
         return repository.getNotifications()
             .debounce(DEBOUNCE_MS)
             .map { notifications ->

@@ -14,10 +14,10 @@ data class ScheduleBook(
     val repeating: List<NotificationSchedulePeriod> = NotificationSchedulePeriod.DEFAULT_SCHEDULE,
     val dated: Map<LocalDate, List<NotificationSchedulePeriod>> = emptyMap(),
 ) {
-    fun scheduleFor(date: LocalDate): List<NotificationSchedulePeriod> = repeating
+    fun scheduleFor(date: LocalDate): List<NotificationSchedulePeriod> = dated[date] ?: repeating
 
     /** The schedule in force at [instant] on the phone's wall clock in [zone]. */
-    fun scheduleAt(instant: Instant, zone: ZoneId): List<NotificationSchedulePeriod> = repeating
+    fun scheduleAt(instant: Instant, zone: ZoneId): List<NotificationSchedulePeriod> = scheduleFor(instant.atZone(zone).toLocalDate())
 }
 
 /** Schedule and spend are committed together so an edit can never expose zero spend in between. */
@@ -36,7 +36,7 @@ data class ScheduleWrite(
     val date: LocalDate? = null,
 )
 
-enum class ScheduleWriteError { INVALID_SCHEDULE, DATE_REQUIRED }
+enum class ScheduleWriteError { INVALID_SCHEDULE, DATE_REQUIRED, DATE_NOT_ALLOWED, STORAGE_REPAIR_REQUIRED }
 
 sealed interface ScheduleWriteResult {
     data object Accepted : ScheduleWriteResult
@@ -46,10 +46,32 @@ sealed interface ScheduleWriteResult {
     ) : ScheduleWriteResult
 }
 
-/**
- * RED-PHASE STUB. The one write path for manual Apply and automation: validate, resolve
- * scope, rebase spend onto the new windows, commit once. Last accepted write wins.
- */
-class ScheduleWriter(private val store: ScheduleBookStore, private val clock: Clock) {
-    suspend fun write(write: ScheduleWrite): ScheduleWriteResult = ScheduleWriteResult.Accepted
+/** CLAIM(edit-preserves-spend): rebase current spend at acceptance, not on drag frames [ScheduleWriteTest]. */
+class ScheduleWriter(
+    private val store: ScheduleBookStore,
+    private val clock: Clock,
+    private val gate: ly.com.tahaben.notification_filter_domain.delivery.DeliveryGate = ly.com.tahaben.notification_filter_domain.delivery.DeliveryGate(),
+    private val minuteNow: (() -> Int)? = null,
+) {
+    suspend fun write(write: ScheduleWrite): ScheduleWriteResult = gate.run {
+        val violations = DaySchedule.validate(write.schedule)
+        if (violations.isNotEmpty()) return@run ScheduleWriteResult.Rejected(ScheduleWriteError.INVALID_SCHEDULE, violations)
+        if (write.mode == ScheduleMode.DATED && write.date == null) return@run ScheduleWriteResult.Rejected(ScheduleWriteError.DATE_REQUIRED)
+        if (write.mode == ScheduleMode.REPEATING && write.date != null) return@run ScheduleWriteResult.Rejected(ScheduleWriteError.DATE_NOT_ALLOWED)
+        val now = clock.instant().atZone(clock.zone)
+        val today = now.toLocalDate()
+        val minute = minuteNow?.invoke() ?: (now.hour * 60 + now.minute)
+        val previous = try { store.read() } catch (_: ScheduleReadException) {
+            return@run ScheduleWriteResult.Rejected(ScheduleWriteError.STORAGE_REPAIR_REQUIRED)
+        }
+        val policy = ly.com.tahaben.notification_filter_domain.delivery.NotificationDeliveryPolicy
+        val activeBudget = policy.normalizeBudget(previous.budget, previous.book.scheduleFor(today), minute, today.toString())
+        val book = when (write.mode) {
+            ScheduleMode.REPEATING -> previous.book.copy(repeating = write.schedule.toList(), dated = previous.book.dated - today)
+            ScheduleMode.DATED -> previous.book.copy(dated = previous.book.dated + (write.date!! to write.schedule.toList()))
+        }
+        val newActive = policy.findActivePeriod(book.scheduleFor(today), minute)
+        store.commit(ScheduleSnapshot(book, activeBudget.copy(periodStartMinute = newActive?.startMinuteOfDay ?: -1)))
+        ScheduleWriteResult.Accepted
+    }
 }

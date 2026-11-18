@@ -29,6 +29,7 @@ import javax.inject.Inject
 class NotificationFilterViewModel @Inject constructor(
     private val notificationFilterUseCases: NotificationFilterUseCases,
     private val sharedPref: Preferences,
+    private val repository: ly.com.tahaben.notification_filter_domain.repository.NotificationRepository,
     private val serviceUtil: ServiceUtil
 ) : ViewModel() {
 
@@ -40,8 +41,6 @@ class NotificationFilterViewModel @Inject constructor(
 
     init {
         checkServiceStats()
-        getNotifications()
-        getClearedNotifications()
         isFirstTimeOpened()
     }
 
@@ -66,16 +65,23 @@ class NotificationFilterViewModel @Inject constructor(
         setServiceEnabled()
     }
 
+    fun startObserving() { getNotifications() }
+    fun stopObserving() { getNotificationsJob?.cancel() }
+    fun nextPage() { state = state.copy(page = state.page + 1); getNotifications() }
+    fun previousPage() { state = state.copy(page = (state.page - 1).coerceAtLeast(0)); getNotifications() }
+
     private fun getNotifications() {
         getNotificationsJob?.cancel()
-        getNotificationsJob =
-            notificationFilterUseCases.getNotificationsFromDB()
-                .debounce(NOTIFICATION_LIST_DEBOUNCE_MS)
-                .flowOn(Dispatchers.Default)
-                .onEach { notifications ->
-                    applyNotificationList(notifications)
-                }
-                .launchIn(viewModelScope)
+        val query = ly.com.tahaben.notification_filter_domain.inbox.InboxQuery(
+            cleared = state.showCleared, priority = state.priorityFilter,
+            standingCutoff = System.currentTimeMillis() - sharedPref.getStandingThresholdHours() * 3_600_000L,
+            offset = state.page * 100, limit = 101)
+        getNotificationsJob = repository.observeInbox(query).onEach { rows ->
+            val page = rows.take(100)
+            state = state.copy(hasNextPage = rows.size > 100)
+            if (query.cleared) state = state.copy(clearedNotifications = page)
+            else applyNotificationList(page)
+        }.launchIn(viewModelScope)
     }
 
     private fun applyNotificationList(notifications: List<NotificationItem>) {
@@ -106,14 +112,6 @@ class NotificationFilterViewModel @Inject constructor(
         )
     }
 
-    private fun getClearedNotifications() {
-        notificationFilterUseCases.getClearedNotifications()
-            .onEach { cleared ->
-                state = state.copy(clearedNotifications = cleared)
-            }
-            .launchIn(viewModelScope)
-    }
-
     fun onEvent(event: NotificationFilterEvent) {
         when (event) {
             is NotificationFilterEvent.OnOpenNotification -> {
@@ -130,7 +128,6 @@ class NotificationFilterViewModel @Inject constructor(
                 deleteNotificationData(event.notificationItem)
             }
             is NotificationFilterEvent.OnDismissNotification -> {
-                Timber.d("dismissed: ${event.notificationItem}")
                 deleteNotificationData(event.notificationItem)
             }
             is NotificationFilterEvent.OnDeleteAllNotifications -> {
@@ -151,11 +148,13 @@ class NotificationFilterViewModel @Inject constructor(
 
             is NotificationFilterEvent.OnSetPriorityFilter -> {
                 state = state.copy(priorityFilter = event.priority)
-                applyNotificationList(state.allNotifications)
+                state = state.copy(page = 0)
+                getNotifications()
             }
 
             NotificationFilterEvent.OnToggleClearedView -> {
-                state = state.copy(showCleared = !state.showCleared)
+                state = state.copy(showCleared = !state.showCleared, page = 0)
+                getNotifications()
             }
 
             is NotificationFilterEvent.OnFireNotificationAction -> {

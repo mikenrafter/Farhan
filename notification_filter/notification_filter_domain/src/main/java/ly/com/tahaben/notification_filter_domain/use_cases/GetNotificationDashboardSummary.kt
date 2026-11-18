@@ -20,6 +20,11 @@ class GetNotificationDashboardSummary(
 ) {
 
     operator fun invoke(): Flow<NotificationDashboardSummary> {
+        val now = java.time.ZonedDateTime.now()
+        repository.observeDashboard(ly.com.tahaben.notification_filter_domain.inbox.DashboardQuery(
+            now.toLocalDate().atStartOfDay(now.zone).toInstant().toEpochMilli(), now.toInstant().toEpochMilli() - 600_000,
+            now.toInstant().toEpochMilli() - preferences.getStandingThresholdHours() * 3_600_000L,
+            preferences.getFloodThreshold()))?.let { return it }
         return repository.getNotifications()
             .debounce(DEBOUNCE_MS)
             .map { notifications ->

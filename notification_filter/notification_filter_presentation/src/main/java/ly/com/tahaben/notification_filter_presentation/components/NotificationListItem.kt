@@ -172,6 +172,11 @@ fun NotificationListItem(
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Normal,
             )
+            if (notification.deliveryInvalidated) Text(
+                text = "Not proxied after intake overflow. Open the source app.",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Spacer(modifier = Modifier.height(4.dp))
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),

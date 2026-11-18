@@ -20,7 +20,7 @@ import javax.inject.Inject
 @HiltViewModel
 class NotificationDashboardViewModel @Inject constructor(
     private val useCases: NotificationFilterUseCases,
-    private val serviceUtil: ServiceUtil
+    private val repository: ly.com.tahaben.notification_filter_domain.repository.NotificationRepository,
 ) : ViewModel() {
 
     var state by mutableStateOf(NotificationDashboardState())
@@ -28,15 +28,15 @@ class NotificationDashboardViewModel @Inject constructor(
 
     private var summaryJob: Job? = null
     private var batchesJob: Job? = null
+    private var standingJob: Job? = null
+    private val batchItemJobs = mutableMapOf<String, Job>()
 
     init {
         loadSettings()
-        observeSummary()
-        observeBatches()
     }
 
     private fun loadSettings() {
-        state = state.copy(
+        try { state = state.copy(
             batchWindowMinutes = useCases.getDashboardSettings.getBatchWindowMinutes(),
             standingThresholdHours = useCases.getDashboardSettings.getStandingThresholdHours(),
             floodThreshold = useCases.getDashboardSettings.getFloodThreshold(),
@@ -44,11 +44,29 @@ class NotificationDashboardViewModel @Inject constructor(
             budgetStatus = useCases.getCurrentBudgetStatus(),
             priorityDeliverySettings = useCases.getPriorityDeliverySettings(),
             deliveryTestingMode = useCases.isDeliveryTestingMode(),
-        )
+            scheduleError = null,
+        ) } catch (_: ly.com.tahaben.notification_filter_domain.schedule.ScheduleReadException) {
+            state = state.copy(scheduleError = "Saved schedule needs repair. Original data has been kept.")
+        }
     }
 
-    fun reloadSettings() {
-        loadSettings()
+    fun reloadSettings() { loadSettings() }
+    fun startObserving() {
+        loadSettings(); observeSummary(); observeBatches()
+        standingJob?.cancel()
+        standingJob = repository.observeStanding(System.currentTimeMillis() - state.standingThresholdHours * 3_600_000L, 3)
+            .onEach { state = state.copy(standingItems = it) }.launchIn(viewModelScope)
+    }
+    fun stopObserving() {
+        summaryJob?.cancel(); batchesJob?.cancel(); standingJob?.cancel()
+        batchItemJobs.values.forEach { it.cancel() }; batchItemJobs.clear()
+    }
+    private fun observeBatchItems(key: String, offset: Int = 0) {
+        val batch = state.batches.find { it.key == key } ?: return
+        batchItemJobs.remove(key)?.cancel()
+        batchItemJobs[key] = repository.observeBatchItems(batch, offset).onEach { items ->
+            state = state.copy(batches = state.batches.map { if (it.key == key) it.copy(items = items, itemsOffset = offset) else it })
+        }.launchIn(viewModelScope)
     }
 
     private fun observeSummary() {
@@ -64,18 +82,38 @@ class NotificationDashboardViewModel @Inject constructor(
         batchesJob?.cancel()
         batchesJob = useCases.getNotificationBatches()
             .onEach { batches ->
-                state = state.copy(batches = batches)
+                val previous = state.batches.associateBy { it.key }
+                val liveKeys = batches.take(5).map { it.key }.toSet()
+                val expanded = state.expandedBatchKeys.intersect(liveKeys)
+                state = state.copy(expandedBatchKeys = expanded, batches = batches.map {
+                    it.copy(items = if (it.key in expanded) previous[it.key]?.items.orEmpty() else emptyList(), itemsOffset = previous[it.key]?.itemsOffset ?: 0)
+                })
+                batchItemJobs.keys.toList().filter { it !in liveKeys }.forEach { batchItemJobs.remove(it)?.cancel() }
+                state.expandedBatchKeys.intersect(liveKeys).forEach { if (batchItemJobs[it]?.isActive != true) observeBatchItems(it) }
             }
             .launchIn(viewModelScope)
     }
 
+    private fun applySchedule(schedule: List<NotificationSchedulePeriod>) {
+        viewModelScope.launch {
+            val accepted = withContext(Dispatchers.IO) { useCases.setNotificationSchedule(schedule) }
+            if (accepted == ly.com.tahaben.notification_filter_domain.schedule.ScheduleWriteResult.Accepted) loadSettings()
+        }
+    }
+
     fun onEvent(event: NotificationDashboardEvent) {
         when (event) {
+            is NotificationDashboardEvent.OnBatchPage -> observeBatchItems(event.batchKey, event.offset.coerceAtLeast(0))
             is NotificationDashboardEvent.OnToggleBatch -> {
                 val expanded = state.expandedBatchKeys.toMutableSet()
                 if (expanded.contains(event.batchKey)) expanded.remove(event.batchKey)
                 else expanded.add(event.batchKey)
                 state = state.copy(expandedBatchKeys = expanded)
+                if (event.batchKey in expanded) observeBatchItems(event.batchKey)
+                else {
+                    batchItemJobs.remove(event.batchKey)?.cancel()
+                    state = state.copy(batches = state.batches.map { if (it.key == event.batchKey) it.copy(items = emptyList()) else it })
+                }
             }
 
             is NotificationDashboardEvent.OnOpenNotification -> {
@@ -129,11 +167,7 @@ class NotificationDashboardViewModel @Inject constructor(
                 val updatedSchedule = state.schedule.toMutableList()
                 if (event.index in updatedSchedule.indices) {
                     updatedSchedule[event.index] = event.period
-                    useCases.setNotificationSchedule(updatedSchedule)
-                    state = state.copy(
-                        schedule = updatedSchedule,
-                        budgetStatus = useCases.getCurrentBudgetStatus(),
-                    )
+                    applySchedule(updatedSchedule)
                 }
             }
 
@@ -145,11 +179,7 @@ class NotificationDashboardViewModel @Inject constructor(
                     newMinute = event.minute,
                 )
                 if (updatedSchedule != null) {
-                    useCases.setNotificationSchedule(updatedSchedule)
-                    state = state.copy(
-                        schedule = updatedSchedule,
-                        budgetStatus = useCases.getCurrentBudgetStatus(),
-                    )
+                    applySchedule(updatedSchedule)
                 }
             }
 
@@ -171,23 +201,22 @@ class NotificationDashboardViewModel @Inject constructor(
             is NotificationDashboardEvent.OnSetStandingThreshold -> {
                 useCases.setDashboardSettings.setStandingThresholdHours(event.hours)
                 state = state.copy(standingThresholdHours = event.hours)
+                startObserving()
             }
 
             is NotificationDashboardEvent.OnSetFloodThreshold -> {
                 useCases.setDashboardSettings.setFloodThreshold(event.count)
                 state = state.copy(floodThreshold = event.count)
+                observeSummary()
             }
 
             NotificationDashboardEvent.OnClearAllStanding -> {
-                val standing = state.batches
-                    .flatMap { it.items }
-                    .filter { !it.isRead }
-                viewModelScope.launch {
-                    withContext(Dispatchers.IO) {
-                        standing.forEach { item ->
-                            useCases.deleteNotificationFromDB(item)
-                            useCases.deleteNotificationIntentFromHashmap(item.id)
-                        }
+                val cutoff = System.currentTimeMillis() - state.standingThresholdHours * 3_600_000L
+                viewModelScope.launch(Dispatchers.IO) {
+                    while (true) {
+                        val page = repository.getStandingPage(cutoff)
+                        if (page.isEmpty()) break
+                        page.forEach { useCases.deleteNotificationFromDB(it) }
                     }
                 }
             }

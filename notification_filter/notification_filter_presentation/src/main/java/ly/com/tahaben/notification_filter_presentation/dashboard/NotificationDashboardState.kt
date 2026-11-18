@@ -9,6 +9,7 @@ import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
 
 data class NotificationDashboardState(
     val summary: NotificationDashboardSummary = NotificationDashboardSummary(),
+    val standingItems: List<ly.com.tahaben.notification_filter_domain.model.NotificationItem> = emptyList(),
     val batches: List<NotificationBatch> = emptyList(),
     val expandedBatchKeys: Set<String> = emptySet(),
     val batchWindowMinutes: Int = 30,
@@ -19,4 +20,5 @@ data class NotificationDashboardState(
     val priorityDeliverySettings: Map<NotificationPriority, PriorityDeliverySetting> = PriorityDeliverySetting.DEFAULTS,
     val deliveryTestingMode: Boolean = false,
     val isLoading: Boolean = true,
+    val scheduleError: String? = null,
 )

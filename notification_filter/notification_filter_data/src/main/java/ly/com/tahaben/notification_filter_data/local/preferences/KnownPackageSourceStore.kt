@@ -15,6 +15,11 @@ class KnownPackageSourceStore @Inject constructor(
     private val lock = Any()
     private var cache: MutableMap<String, KnownPackageSource>? = null
 
+    override fun get(packageName: String): KnownPackageSource? = synchronized(lock) {
+        ensureLoadedLocked()
+        cache!![packageName]
+    }
+
     override fun getAll(): Map<String, KnownPackageSource> = synchronized(lock) {
         ensureLoadedLocked()
         cache!!.toMap()
@@ -52,7 +57,9 @@ class KnownPackageSourceStore @Inject constructor(
     }
 
     private fun persistLocked() {
-        preferences.setKnownPackageSources(cache!!.values.toList())
+        ly.com.tahaben.notification_filter_data.service.NotificationDiagnostics.trace("farhan.catalog.persist") {
+            preferences.setKnownPackageSources(cache!!.values.toList())
+        }
     }
 
     private fun mergeSource(

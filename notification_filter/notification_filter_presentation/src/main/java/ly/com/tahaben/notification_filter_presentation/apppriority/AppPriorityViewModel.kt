@@ -18,17 +18,35 @@ class AppPriorityViewModel @Inject constructor(
     private val useCases: NotificationFilterUseCases,
 ) : ViewModel() {
 
-    var state by mutableStateOf(AppPriorityState())
+    private val rows = androidx.compose.runtime.mutableStateListOf<ly.com.tahaben.notification_filter_domain.model.AppPriorityInfo>()
+    private val rowIndices = mutableMapOf<String, Int>()
+    var state by mutableStateOf(AppPriorityState(apps = rows))
         private set
 
-    init {
-        loadData(showLoading = true)
-    }
+    private var refreshJob: kotlinx.coroutines.Job? = null
+    private var revision = 0L
 
+    init { refresh() }
+
+    private fun cachedApps(): List<ly.com.tahaben.notification_filter_domain.model.AppPriorityInfo> {
+        android.os.Trace.beginSection("farhan.catalog.assemble")
+        return try { useCases.getAppPriorityInfoList.cached() } finally { android.os.Trace.endSection() }
+    }
+    private fun publish(apps: List<ly.com.tahaben.notification_filter_domain.model.AppPriorityInfo>) {
+        rows.clear(); rows.addAll(apps)
+        rowIndices.clear()
+        apps.forEachIndexed { index, app -> rowIndices[app.packageName] = index }
+        state = state.copy(apps = rows, isLoading = false)
+    }
     fun refresh() {
-        viewModelScope.launch(Dispatchers.Default) {
-            val apps = useCases.getAppPriorityInfoList(forceRescan = false)
-            state = state.copy(apps = apps)
+        if (refreshJob?.isActive == true) return
+        refreshJob = viewModelScope.launch {
+            val capturedRevision = revision
+            val cached = withContext(Dispatchers.Default) { cachedApps() }
+            if (revision == capturedRevision) publish(cached)
+            withContext(Dispatchers.IO) { useCases.getAppPriorityInfoList(forceRescan = false) }
+            // Rebuild from the latest preferences after discovery; edits during discovery cannot be overwritten.
+            publish(cachedApps())
         }
     }
 
@@ -60,26 +78,10 @@ class AppPriorityViewModel @Inject constructor(
         }
     }
 
-    private fun loadData(showLoading: Boolean) {
-        viewModelScope.launch {
-            if (showLoading) {
-                state = state.copy(isLoading = true)
-            }
-            val apps = withContext(Dispatchers.Default) {
-                useCases.getAppPriorityInfoList(forceRescan = false)
-            }
-            state = state.copy(apps = apps, isLoading = false)
-        }
-    }
-
     private fun patchApp(packageName: String) {
-        viewModelScope.launch(Dispatchers.Default) {
-            val updated = useCases.getAppPriorityInfoList.forPackage(packageName) ?: return@launch
-            state = state.copy(
-                apps = state.apps.map { app ->
-                    if (app.packageName == packageName) updated else app
-                }
-            )
-        }
+        revision++
+        val updated = useCases.getAppPriorityInfoList.forPackage(packageName) ?: return
+        val index = rowIndices[packageName] ?: return
+        rows[index] = updated
     }
 }
