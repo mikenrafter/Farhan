@@ -19,6 +19,12 @@ enum class FailureReason {
 
     /** A journal exists but cannot be decoded. Only [StartupResult.RecoveryRequired] carries this. */
     JOURNAL_UNREADABLE,
+
+    /**
+     * A journal write or clear failed, so the next phase is not durable. The last durable phase stays on disk
+     * and a later startup converges from it. Only [StartupResult.RecoveryRequired] carries this.
+     */
+    JOURNAL_WRITE_FAILED,
 }
 
 /** [component] is set for STORE_FAILED. Carries no exception text, which could include values. */
@@ -39,6 +45,7 @@ data class ImportPreview(
  *
  * Staged -> Applying -> Applied
  *                   \-> RollingBack -> RolledBack
+ * Staged -> RolledBack(PREVIOUS_UNREADABLE) when the current settings cannot be read, since no store was touched.
  * Applied and RolledBack stay until [ImportCoordinator.acknowledge], so a crash after the work still shows the
  * outcome. That is at-least-once reporting; there is no exactly-once promise.
  */

@@ -41,9 +41,41 @@ interface SqlTransactionRunner {
  * CLAIM(config-sql-only): no statement names any other table, so history survives a replace [SqlConfigurationRowsStoreTest].
  * CLAIM(rows-atomic): delete and insert commit together or not at all [SqlConfigurationRowsStoreTest].
  *
- * STUB: red phase. No behavior yet.
+ * Reads are ordered by primary key so the result does not depend on rowid order. A column that is not the
+ * expected Long or String throws [IllegalStateException]: the store never coerces or defaults a value.
  */
 class SqlConfigurationRowsStore(private val runner: SqlTransactionRunner) : ConfigurationRowsStore {
-    override fun read(): ConfigurationRows = ConfigurationRows()
-    override fun replace(rows: ConfigurationRows) = Unit
+    override fun read(): ConfigurationRows = runner.inTransaction { session ->
+        ConfigurationRows(
+            apps = session.query(
+                "SELECT `app_name`, `package_name`, `activity_name`, `user_serial` FROM `apps_db` ORDER BY `app_name`, `package_name`",
+            ).map { AppActivityRow(text(it, 0), text(it, 1), text(it, 2), long(it, 3)) },
+            timeLimits = session.query(
+                "SELECT `packageName`, `timeLimitInMilli`, `timeAtAddingInMilli` FROM `TimeLimitEntity` ORDER BY `packageName`",
+            ).map { TimeLimitRow(text(it, 0), long(it, 1), long(it, 2)) },
+        )
+    }
+
+    override fun replace(rows: ConfigurationRows) = runner.inTransaction { session ->
+        session.execute("DELETE FROM `apps_db`")
+        session.execute("DELETE FROM `TimeLimitEntity`")
+        for (row in rows.apps) {
+            session.execute(
+                "INSERT INTO `apps_db` (`app_name`, `package_name`, `activity_name`, `user_serial`) VALUES (?, ?, ?, ?)",
+                listOf(row.appName, row.packageName, row.activityName, row.userSerial),
+            )
+        }
+        for (row in rows.timeLimits) {
+            session.execute(
+                "INSERT INTO `TimeLimitEntity` (`packageName`, `timeLimitInMilli`, `timeAtAddingInMilli`) VALUES (?, ?, ?)",
+                listOf(row.packageName, row.timeLimitInMilli, row.timeAtAddingInMilli),
+            )
+        }
+    }
+
+    private fun text(row: List<Any?>, column: Int): String =
+        row[column] as? String ?: throw IllegalStateException("configuration column $column is not text")
+
+    private fun long(row: List<Any?>, column: Int): Long =
+        row[column] as? Long ?: throw IllegalStateException("configuration column $column is not an integer")
 }

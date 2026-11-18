@@ -71,6 +71,8 @@ class FakeJournalStorage(private val faults: Faults) : ImportJournalStorage {
     var current: ImportJournal? = null
         private set
     var unreadable = false
+    /** Fails a write of a record this matches, after counting it as an attempted mutation. */
+    var failWriteWhen: (ImportJournal) -> Boolean = { false }
 
     override fun read(): ImportJournal? {
         if (unreadable) throw JournalUnreadableException()
@@ -79,6 +81,7 @@ class FakeJournalStorage(private val faults: Faults) : ImportJournalStorage {
 
     override fun write(journal: ImportJournal) {
         faults.beforeMutation { }
+        if (failWriteWhen(journal)) throw IOException("injected journal write failure")
         current = journal
     }
 

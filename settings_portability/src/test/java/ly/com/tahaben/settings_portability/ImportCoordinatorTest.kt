@@ -485,6 +485,30 @@ class ImportCoordinatorTest {
         assertThat(rig.rows.contents).isEqualTo(previousRows)
     }
 
+    // why: a pre-write failure leaves a wrong-typed old value untouched and cannot prove it was journaled.
+    //      Crash after the forward commit overwrites it, then require recovery to restore its exact old type.
+    // proves: CLAIM(all-or-previous), CLAIM(rollback-on-doubt)
+    // catches: filtering previous values through today's catalog types, which the earlier pre-write case misses.
+    @Test
+    fun `interrupted committed preferences restore the older raw type from the journal`() {
+        val original = Int64(9_007_199_254_740_993L)
+        val rawShared = previousShared + ("notification_flood_threshold" to original)
+        val rig = Rig(rawShared, previousDataStore, previousRows)
+        assertThat(rig.coordinator().stage(desiredFile.toByteArray())).isEqualTo(StageResult.Staged(expectedPreview))
+        // Applying, rows, DataStore and SharedPreferences commit; death before publishing Applied.
+        rig.faults.crashAtOperation = rig.faults.operations + 5
+        assertThrows(SimulatedProcessDeath::class.java) { rig.coordinator().startup() }
+        // This fixture omits the key, so replace removes it before recovery restores its old raw value.
+        assertThat(rig.shared.contents).doesNotContainKey("notification_flood_threshold")
+        assertThat(rig.journal.current).isInstanceOf(ImportJournal.Applying::class.java)
+        rig.faults.crashAtOperation = null
+        assertThat(rig.coordinator().startup())
+            .isEqualTo(StartupResult.RolledBack(ImportFailure(FailureReason.INTERRUPTED)))
+        assertThat(rig.shared.contents).isEqualTo(rawShared)
+        assertThat(rig.dataStore.contents).isEqualTo(previousDataStore)
+        assertThat(rig.rows.contents).isEqualTo(previousRows)
+    }
+
     // why: the owner may edit settings after staging; rollback must not discard those edits.
     // proves: CLAIM(all-or-previous), CLAIM(journal-first)
     // catches: capturing previous at staging instead of immediately before the cold-start apply.
