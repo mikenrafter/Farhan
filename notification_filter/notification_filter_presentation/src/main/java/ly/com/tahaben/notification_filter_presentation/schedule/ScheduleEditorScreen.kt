@@ -5,9 +5,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
@@ -86,7 +90,7 @@ fun ScheduleEditorScreen(
     LaunchedEffect(state?.isFineDrag) { if (state?.isFineDrag == true) haptic.performHapticFeedback(HapticFeedbackType.LongPress) }
     BackHandler(enabled = state?.isDirty == true) { confirmDiscard = true }
 
-    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().navigationBarsPadding().imePadding()) {
         TopAppBar(
             title = { Text("Notification schedule") },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
@@ -246,8 +250,9 @@ private fun TargetHeader(screen: ScheduleScreenState, locked: Boolean, onEveryDa
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun ZoomRow(state: EditorState, onZoomIn: () -> Unit, onZoomOut: () -> Unit, onReset: () -> Unit, onPanLeft: () -> Unit, onPanRight: () -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), maxItemsInEachRow = 3) {
         OutlinedButton(onClick = onZoomIn, enabled = state.view.span > 30f) { Text("Zoom in") }
         OutlinedButton(onClick = onZoomOut, enabled = !state.view.isFullDay) { Text("Zoom out") }
         TextButton(onClick = onReset, enabled = !state.view.isFullDay) { Text("Full day") }
@@ -259,6 +264,7 @@ private fun ZoomRow(state: EditorState, onZoomIn: () -> Unit, onZoomOut: () -> U
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun SelectionPanel(state: EditorState, viewModel: ScheduleEditorViewModel, onPickTime: () -> Unit) {
     val editor = viewModel.editor
     val spacing = LocalSpacing.current
@@ -286,7 +292,7 @@ private fun SelectionPanel(state: EditorState, viewModel: ScheduleEditorViewMode
                             else -> "Between ${clockLabel(before.startMinuteOfDay)} – ${clockLabel(before.endMinuteOfDay)} and ${clockLabel(after.startMinuteOfDay)} – ${clockLabel(after.endMinuteOfDay)}. Drag it on the timeline, or use the buttons."
                         },
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), maxItemsInEachRow = 2) {
                         listOf(-5 to "−5 min", -1 to "−1 min", 1 to "+1 min", 5 to "+5 min").forEach { (delta, label) ->
                             OutlinedButton(onClick = { editor.nudgeSelectedBoundary(delta) }, enabled = !state.isDragging) { Text(label) }
                         }
@@ -311,7 +317,12 @@ private fun BudgetField(zoneIndex: Int, points: Int, onCommit: (Int) -> Unit) {
         OutlinedButton(onClick = { onCommit((points - 1).coerceAtLeast(0)) }, enabled = points > 0) { Text("−") }
         OutlinedTextField(
             value = text,
-            onValueChange = { if (it.length <= 9 && it.all(Char::isDigit)) text = it },
+            onValueChange = {
+                if (it.length <= 9 && it.all(Char::isDigit)) {
+                    text = it
+                    it.toIntOrNull()?.let(onCommit)
+                }
+            },
             label = { Text("Points") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),

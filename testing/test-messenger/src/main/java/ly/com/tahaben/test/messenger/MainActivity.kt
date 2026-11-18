@@ -19,6 +19,8 @@ class MainActivity : AppCompatActivity() {
 
     private val CHANNEL_ID = "test_messages"
     private var notifId = 100
+    private var lastNotifId: Int? = null
+    private var revision = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,6 +57,17 @@ class MainActivity : AppCompatActivity() {
             notify("Your boss", "Please review the attached report before the meeting.",
                 Notification.CATEGORY_EMAIL)
         })
+        root.addView(btn("Update / repost latest message (same ID)") {
+            lastNotifId?.let { id ->
+                notify("Alice — update ${++revision}", "Updated synthetic message", Notification.CATEGORY_MESSAGE, id)
+            }
+        })
+        root.addView(btn("Cancel latest notification in source app") {
+            lastNotifId?.let { NotificationManagerCompat.from(this).cancel(it) }
+        })
+        root.addView(btn("Cancel all source notifications") {
+            NotificationManagerCompat.from(this).cancelAll()
+        })
 
         root.addView(space())
         root.addView(header("Pass-through (NOT intercepted — stays in status bar)"))
@@ -68,7 +81,7 @@ class MainActivity : AppCompatActivity() {
         return ScrollView(this).apply { addView(root) }
     }
 
-    private fun notify(title: String, text: String, category: String?) {
+    private fun notify(title: String, text: String, category: String?, id: Int = notifId++) {
         val n = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_email)
             .setContentTitle(title)
@@ -77,7 +90,8 @@ class MainActivity : AppCompatActivity() {
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .build()
-        NotificationManagerCompat.from(this).notify(notifId++, n)
+        NotificationManagerCompat.from(this).notify(id, n)
+        lastNotifId = id
     }
 
     private fun createChannel() {
