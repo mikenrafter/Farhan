@@ -181,6 +181,7 @@ class UsageOverviewE2E {
                                 isNotificationFilterEnabled = false,
                                 navController = navController,
                                 isLauncherEnabled = false,
+                                isDelayedLaunchEnabled = false,
                                 snackbarHostState = snackbarHostState,
                                 state = mainState,
                                 onEvent = mainScreenViewModel::onEvent,
