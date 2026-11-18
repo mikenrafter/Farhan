@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.11.5",
+  "checkpoint_id": "f758dcd0174d",
+  "session_id": "f37008d1-6333-44b3-93ca-f37188d7ef65",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-18T07:09:26.809124183Z",
+  "branch": "pilot/settings-portability",
+  "checkpoints_count": 2,
+  "save_step_count": 1,
+  "files_touched": [
+    "app/src/main/java/ly/com/tahaben/farhan/MainActivity.kt",
+    "app/src/main/java/ly/com/tahaben/farhan/di/AppModule.kt"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-5-5",
+  "turn_id": "d11dd3e3645a",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 2
+  }
+}
