@@ -1,0 +1,32 @@
+{
+  "cli_version": "0.11.5",
+  "checkpoint_id": "a78205980db4",
+  "strategy": "manual-commit",
+  "branch": "rework",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "notification_filter/notification_filter_data/src/main/java/ly/com/tahaben/notification_filter_data/di/NotificationFilterDataModule.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ScheduleAutomation.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ScheduleBook.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ScheduleDraft.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/use_cases/GetAppPriorityInfoList.kt",
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/dashboard/NotificationDashboardViewModel.kt",
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/settings/NotificationSettingsViewModel.kt"
+  ],
+  "sessions": [
+    {
+      "metadata": "/a7/8205980db4/0/metadata.json",
+      "transcript": "/a7/8205980db4/0/full.jsonl",
+      "compact_transcript": "/a7/8205980db4/0/transcript.jsonl",
+      "content_hash": "/a7/8205980db4/0/content_hash.txt",
+      "prompt": "/a7/8205980db4/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 14,
+    "cache_creation_tokens": 53816,
+    "cache_read_tokens": 332254,
+    "output_tokens": 21709,
+    "api_call_count": 6
+  }
+}
