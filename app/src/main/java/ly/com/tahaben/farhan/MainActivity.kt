@@ -53,6 +53,7 @@ import ly.com.tahaben.notification_filter_presentation.NotificationFilterScreen
 import ly.com.tahaben.notification_filter_presentation.apppriority.AppPriorityScreen
 import ly.com.tahaben.notification_filter_presentation.dashboard.NotificationDashboardScreen
 import ly.com.tahaben.notification_filter_presentation.onboarding.NotificationFilterOnBoardingScreen
+import ly.com.tahaben.notification_filter_presentation.schedule.ScheduleEditorScreen
 import ly.com.tahaben.notification_filter_presentation.settings.NotificationFilterSettingsScreen
 import ly.com.tahaben.onboarding_presentaion.OnBoardingScreen
 import ly.com.tahaben.onboarding_presentaion.SelectAppearanceScreen
@@ -332,8 +333,14 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onNavigateToAppPriority = {
                                     navController.navigate(Routes.APP_PRIORITY)
+                                },
+                                onNavigateToScheduleEditor = {
+                                    navController.navigate(Routes.NOTIFICATION_SCHEDULE_EDITOR)
                                 }
                             )
+                        }
+                        composable(Routes.NOTIFICATION_SCHEDULE_EDITOR) {
+                            ScheduleEditorScreen(onNavigateUp = { navController.navigateUp() })
                         }
                         composable(Routes.APP_PRIORITY) {
                             AppPriorityScreen(

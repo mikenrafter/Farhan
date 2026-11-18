@@ -15,7 +15,9 @@ data class NotificationDashboardState(
     val batchWindowMinutes: Int = 30,
     val standingThresholdHours: Int = 3,
     val floodThreshold: Int = 10,
+    /** The schedule in force today: today's one-date schedule when it has one, else the every-day schedule. */
     val schedule: List<NotificationSchedulePeriod> = NotificationSchedulePeriod.DEFAULT_SCHEDULE,
+    val isScheduleDatedToday: Boolean = false,
     val budgetStatus: CurrentBudgetStatus = CurrentBudgetStatus(),
     val priorityDeliverySettings: Map<NotificationPriority, PriorityDeliverySetting> = PriorityDeliverySetting.DEFAULTS,
     val deliveryTestingMode: Boolean = false,

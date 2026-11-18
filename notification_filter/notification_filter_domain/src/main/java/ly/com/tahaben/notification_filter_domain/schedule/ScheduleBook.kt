@@ -66,9 +66,12 @@ class ScheduleWriter(
         }
         val policy = ly.com.tahaben.notification_filter_domain.delivery.NotificationDeliveryPolicy
         val activeBudget = policy.normalizeBudget(previous.budget, previous.book.scheduleFor(today), minute, today.toString())
+        // CLAIM(dated-bounded): a date before today can never apply again, so each write drops them; the date being
+        // written is kept even if it is past, so an accepted write is always visible [ScheduleWriteTest].
+        val keptDated = previous.book.dated.filterKeys { it >= today }
         val book = when (write.mode) {
-            ScheduleMode.REPEATING -> previous.book.copy(repeating = write.schedule.toList(), dated = previous.book.dated - today)
-            ScheduleMode.DATED -> previous.book.copy(dated = previous.book.dated + (write.date!! to write.schedule.toList()))
+            ScheduleMode.REPEATING -> previous.book.copy(repeating = write.schedule.toList(), dated = keptDated - today)
+            ScheduleMode.DATED -> previous.book.copy(dated = keptDated + (write.date!! to write.schedule.toList()))
         }
         val newActive = policy.findActivePeriod(book.scheduleFor(today), minute)
         store.commit(ScheduleSnapshot(book, activeBudget.copy(periodStartMinute = newActive?.startMinuteOfDay ?: -1)))

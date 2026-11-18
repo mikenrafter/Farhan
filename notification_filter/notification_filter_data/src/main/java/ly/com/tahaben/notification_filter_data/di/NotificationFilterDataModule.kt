@@ -57,9 +57,11 @@ object NotificationFilterDataModule {
         }
         val poster = object : ly.com.tahaben.notification_filter_domain.delivery.ProxyNotificationPoster {
             override suspend fun post(item: ly.com.tahaben.notification_filter_domain.model.NotificationItem) =
-                ly.com.tahaben.notification_filter_data.service.NotificationService.postProxyNotification(context, item, silent = false)
+                ly.com.tahaben.notification_filter_data.service.NotificationService.postProxyNotification(context, item, silent = false,
+                    useSourceIcon = preferences.isExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SOURCE_ICON))
             override suspend fun refresh(item: ly.com.tahaben.notification_filter_domain.model.NotificationItem) =
-                ly.com.tahaben.notification_filter_data.service.NotificationService.postProxyNotification(context, item, silent = true)
+                ly.com.tahaben.notification_filter_data.service.NotificationService.postProxyNotification(context, item, silent = true,
+                    useSourceIcon = preferences.isExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SOURCE_ICON))
         }
         val environment = object : ly.com.tahaben.notification_filter_domain.delivery.DeliveryEnvironment {
             override fun schedule() = preferences.getNotificationSchedule()
@@ -76,6 +78,18 @@ object NotificationFilterDataModule {
     fun provideScheduleAutomation(core: ly.com.tahaben.notification_filter_domain.delivery.NotificationCore,
         credentials: ly.com.tahaben.notification_filter_data.local.preferences.ScheduleAutomationCredentials) =
         ly.com.tahaben.notification_filter_domain.schedule.ScheduleAutomation(core.writer, credentials)
+
+    @Provides @Singleton
+    fun provideAutomationCredentialOwner(credentials: ly.com.tahaben.notification_filter_data.local.preferences.ScheduleAutomationCredentials):
+        ly.com.tahaben.notification_filter_domain.schedule.AutomationCredentialOwner = credentials
+
+    @Provides @Singleton
+    fun provideAutomationReceiptStore(store: ly.com.tahaben.notification_filter_data.automation.SharedPreferencesReceiptStore):
+        ly.com.tahaben.notification_filter_domain.schedule.AutomationReceiptStore = store
+
+    @Provides @Singleton
+    fun provideExperimentEventLog(): ly.com.tahaben.notification_filter_domain.delivery.ExperimentEventLog =
+        ly.com.tahaben.notification_filter_domain.delivery.InMemoryExperimentEventLog()
 
     @Provides @Singleton
     fun provideCoordinator(core: ly.com.tahaben.notification_filter_domain.delivery.NotificationCore) = core.coordinator

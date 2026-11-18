@@ -23,6 +23,12 @@ enum class AutomationError {
     INVALID_SCHEDULE,
     DATE_NOT_ALLOWED,
     PAYLOAD_TOO_LARGE,
+    /** The payload was not the documented JSON: wrong shape, a non-integer number, an unknown field. */
+    MALFORMED_PAYLOAD,
+    /** The schedule was valid but could not be saved. Nothing changed. */
+    STORAGE_FAILED,
+    /** Too many requests were already being handled. Nothing was read or changed; send it again in a few seconds. */
+    BUSY,
 }
 
 sealed interface AutomationAck {
@@ -35,15 +41,51 @@ interface AutomationCredentials {
     fun matches(presented: String?): Boolean
 }
 
+/**
+ * The owner's side of the credential: show/copy, rotate, revoke, switch on/off. Mated part of the receiving side
+ * ([AutomationCredentials]); one class implements both so a rotate is visible to the next intent immediately.
+ */
+interface AutomationCredentialOwner : AutomationCredentials {
+    fun credential(): String?
+    fun rotate(): String
+    fun setEnabled(enabled: Boolean)
+    fun revoke()
+}
+
+/**
+ * The last automation outcome, for the settings screen. Only fields that are safe to show: no credential,
+ * no notification content. [error] is null when the schedule was accepted.
+ */
+data class AutomationReceipt(val atEpochMillis: Long, val mode: ScheduleMode?, val error: AutomationError?)
+
+interface AutomationReceiptStore {
+    fun last(): AutomationReceipt?
+    fun record(receipt: AutomationReceipt)
+}
+
 /** Auth, parse, then the common [ScheduleWriter]. Supported version: 1. */
 class ScheduleAutomation(
     private val writer: ScheduleWriter,
     private val credentials: AutomationCredentials,
 ) {
+    companion object {
+        /** The contract's window limit. A 1440-minute day with one-hour windows could hold 24. */
+        const val MAX_WINDOWS = 24
+    }
+
+    /**
+     * The error for a request that is not allowed in, or null when it may proceed. Callers run this before parsing
+     * a payload so an unauthenticated sender costs nothing.
+     */
+    fun authenticate(presentedCredential: String?): AutomationError? = when {
+        !credentials.isEnabled() -> AutomationError.DISABLED
+        !credentials.matches(presentedCredential) -> AutomationError.BAD_CREDENTIAL
+        else -> null
+    }
+
     suspend fun handle(intent: ScheduleIntent): AutomationAck {
         fun reject(error: AutomationError) = AutomationAck.Rejected(error)
-        if (!credentials.isEnabled()) return reject(AutomationError.DISABLED)
-        if (!credentials.matches(intent.credential)) return reject(AutomationError.BAD_CREDENTIAL)
+        authenticate(intent.credential)?.let { return reject(it) }
         if (intent.version != 1) return reject(AutomationError.UNSUPPORTED_VERSION)
         val mode = when (intent.mode) {
             null, "repeating" -> ScheduleMode.REPEATING
@@ -55,7 +97,7 @@ class ScheduleAutomation(
         val date = try { intent.localDate?.let(java.time.LocalDate::parse) }
             catch (_: java.time.DateTimeException) { return reject(AutomationError.MALFORMED_DATE) }
         val windows = intent.windows ?: return reject(AutomationError.MALFORMED_WINDOW)
-        if (windows.size > 24) return reject(AutomationError.PAYLOAD_TOO_LARGE)
+        if (windows.size > MAX_WINDOWS) return reject(AutomationError.PAYLOAD_TOO_LARGE)
         val schedule = windows.map {
             val start = it.startMinute ?: return reject(AutomationError.MALFORMED_WINDOW)
             val end = it.endMinute ?: return reject(AutomationError.MALFORMED_WINDOW)
@@ -63,9 +105,13 @@ class ScheduleAutomation(
             if (start !in 0..1439 || end !in 1..1440) return reject(AutomationError.INVALID_SCHEDULE)
             ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod(start / 60, start % 60, end / 60, end % 60, budget)
         }
-        return when (writer.write(ScheduleWrite(schedule, mode, date))) {
+        val result = try { writer.write(ScheduleWrite(schedule, mode, date)) }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { return reject(AutomationError.STORAGE_FAILED) }
+        return when (result) {
             ScheduleWriteResult.Accepted -> AutomationAck.Accepted
-            is ScheduleWriteResult.Rejected -> reject(AutomationError.INVALID_SCHEDULE)
+            is ScheduleWriteResult.Rejected ->
+                reject(if (result.error == ScheduleWriteError.STORAGE_REPAIR_REQUIRED) AutomationError.STORAGE_FAILED else AutomationError.INVALID_SCHEDULE)
         }
     }
 }

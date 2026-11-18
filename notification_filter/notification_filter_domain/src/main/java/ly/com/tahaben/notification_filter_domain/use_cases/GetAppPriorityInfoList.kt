@@ -1,5 +1,6 @@
 package ly.com.tahaben.notification_filter_domain.use_cases
 
+import ly.com.tahaben.notification_filter_domain.delivery.AppQueuePreference
 import ly.com.tahaben.notification_filter_domain.model.AppPriorityInfo
 import ly.com.tahaben.notification_filter_domain.model.AppStoreCategory
 import ly.com.tahaben.notification_filter_domain.model.ChannelPriorityInfo
@@ -32,7 +33,7 @@ class GetAppPriorityInfoList(
 
     fun forPackage(packageName: String): AppPriorityInfo? {
         val source = knownPackageSourceRegistry.get(packageName) ?: return null
-        return buildInfo(source)
+        return buildInfo(source, preferences.getAppQueuePreferences()[packageName] ?: AppQueuePreference())
     }
 
     private fun buildList(): List<AppPriorityInfo> {
@@ -47,15 +48,16 @@ class GetAppPriorityInfoList(
             }
         }
 
+        val queuePreferences = preferences.getAppQueuePreferences()
         return knownPackages.values
-            .map(::buildInfo)
+            .map { buildInfo(it, queuePreferences[it.packageName] ?: AppQueuePreference()) }
             .sortedWith(
                 compareByDescending<AppPriorityInfo> { it.notificationsEnabled }
                     .thenBy { it.appName.lowercase() }
             )
     }
 
-    private fun buildInfo(source: KnownPackageSource): AppPriorityInfo {
+    private fun buildInfo(source: KnownPackageSource, queuePreference: AppQueuePreference): AppPriorityInfo {
         val userOverride = preferences.getAppPriorityOverride(source.packageName)
         val appCategoryCode = source.appCategoryCode?.takeIf { it != AppStoreCategory.UNDEFINED }
         val appCategoryLabel = source.appCategoryLabel?.takeIf { it.isNotBlank() }
@@ -97,6 +99,7 @@ class GetAppPriorityInfoList(
             userOverride = userOverride,
             channels = channels,
             notificationsEnabled = enabledCache[source.packageName] ?: true,
+            queuePreference = queuePreference,
         )
     }
 }

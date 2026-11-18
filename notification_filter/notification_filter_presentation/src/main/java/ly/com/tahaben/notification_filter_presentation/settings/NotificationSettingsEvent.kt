@@ -12,4 +12,12 @@ sealed class NotificationSettingsEvent {
     data class OnShouldShowcase(val showcase: Boolean): NotificationSettingsEvent()
     data class OnSetDeliveryTestingMode(val enabled: Boolean) : NotificationSettingsEvent()
     object ClearBudgetSpend : NotificationSettingsEvent()
+    data class SetAutomationEnabled(val enabled: Boolean) : NotificationSettingsEvent()
+    object ShowAutomationCredential : NotificationSettingsEvent()
+    object HideAutomationCredential : NotificationSettingsEvent()
+    object RotateAutomationCredential : NotificationSettingsEvent()
+    object RevokeAutomationCredential : NotificationSettingsEvent()
+    object RefreshAutomation : NotificationSettingsEvent()
+    data class SetSourceIconExperiment(val enabled: Boolean) : NotificationSettingsEvent()
+    data class SetSnoozeDemoExperiment(val enabled: Boolean) : NotificationSettingsEvent()
 }

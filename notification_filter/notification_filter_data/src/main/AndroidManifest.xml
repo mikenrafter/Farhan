@@ -14,6 +14,15 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+        <!-- Opt-in automation. Exported so Tasker or adb can send it; it does nothing unless the owner enabled it
+             and the sender presents the credential. See notification_filter/AUTOMATION.md. -->
+        <receiver
+            android:name=".automation.ScheduleAutomationReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="ly.com.tahaben.notification_filter.action.SET_SCHEDULE" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

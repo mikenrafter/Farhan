@@ -13,6 +13,8 @@ data class AppPriorityInfo(
     val userOverride: NotificationPriority?,
     val channels: List<ChannelPriorityInfo>,
     val notificationsEnabled: Boolean = true,
+    /** Order and rank among apps of the same notification priority. Never overrides priority. */
+    val queuePreference: ly.com.tahaben.notification_filter_domain.delivery.AppQueuePreference = ly.com.tahaben.notification_filter_domain.delivery.AppQueuePreference(),
 )
 
 data class ChannelPriorityInfo(

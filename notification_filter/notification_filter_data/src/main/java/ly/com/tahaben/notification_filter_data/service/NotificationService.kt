@@ -55,10 +55,17 @@ class NotificationService : NotificationListenerService() {
 
     @Inject lateinit var coordinator: NotificationDeliveryCoordinator
 
+    @Inject lateinit var experimentLog: ExperimentEventLog
+
+    /** Demo keys Android is holding for us. Bounded; main-thread callbacks only. */
+    private val snoozedDemoKeys = LinkedHashSet<String>()
+
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private data class PostedFields(
         val item: NotificationItem, val androidCategory: String?, val systemExempt: Boolean,
         val contentIntent: PendingIntent?, val actions: List<CapturedAction>, val order: Long,
+        /** Only captured while the source-icon experiment is on. */
+        val smallIcon: android.graphics.drawable.Icon? = null,
     )
     private sealed interface Work {
         data class Posted(val fields: PostedFields) : Work
@@ -85,7 +92,7 @@ class NotificationService : NotificationListenerService() {
     }
 
     companion object {
-        private data class Actions(val tap: PendingIntent?, val replies: List<CapturedAction>)
+        private data class Actions(val tap: PendingIntent?, val replies: List<CapturedAction>, val smallIcon: android.graphics.drawable.Icon? = null)
         private val actionStore = NotificationActionStore<Actions>()
         private const val PROXY_TAG = "farhan:"
 
@@ -114,14 +121,16 @@ class NotificationService : NotificationListenerService() {
         }
         fun clearActions() { actionStore.clear(); NotificationDiagnostics.counter("farhan.actions.retained", 0) }
 
-        fun postProxyNotification(context: Context, item: NotificationItem, silent: Boolean): PostResult = NotificationDiagnostics.trace("farhan.delivery.post") {
+        fun postProxyNotification(context: Context, item: NotificationItem, silent: Boolean, useSourceIcon: Boolean = false): PostResult = NotificationDiagnostics.trace("farhan.delivery.post") {
             val capabilities = actionStore.get(item.id)
             val builder = NotificationCompat.Builder(context, PROXY_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_farhan_transparent)
                 .setContentTitle("Farhan · " + (item.title?.takeIf { it.isNotBlank() } ?: item.appName ?: "Notification"))
                 .setContentText(item.text).setSubText(item.appName).setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH).setOnlyAlertOnce(true).setSilent(silent)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE).setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            // The source icon is an opt-in experiment; Farhan's icon is the fallback. Identity and channel stay Farhan's.
+            val sourceIcon = if (useSourceIcon) usableSourceIcon(context, capabilities?.smallIcon) else null
+            if (sourceIcon != null) builder.setSmallIcon(sourceIcon) else builder.setSmallIcon(R.drawable.ic_farhan_transparent)
             if (!silent) builder.setDefaults(NotificationCompat.DEFAULT_ALL)
             val tap = capabilities?.tap ?: context.packageManager.getLaunchIntentForPackage(item.packageName)?.let {
                 PendingIntent.getActivity(context, item.id.hashCode(), it, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
@@ -147,6 +156,15 @@ class NotificationService : NotificationListenerService() {
                     else { manager.notify(PROXY_TAG + item.id, 1, builder.build()); PostResult.Posted }
                 }
             }
+        }
+
+        /** A resource-type icon that loads, or null. Bitmap and URI icons are not trusted; the caller falls back to Farhan's. */
+        private fun usableSourceIcon(context: Context, icon: android.graphics.drawable.Icon?): androidx.core.graphics.drawable.IconCompat? {
+            if (icon == null || Build.VERSION.SDK_INT < 28) return null
+            return try {
+                if (icon.type == android.graphics.drawable.Icon.TYPE_RESOURCE && icon.loadDrawable(context) != null)
+                    androidx.core.graphics.drawable.IconCompat.createFromIcon(context, icon) else null
+            } catch (_: Exception) { null }
         }
 
         fun getVisibleNotificationSources(): List<VisibleNotificationSource> {
@@ -221,6 +239,7 @@ class NotificationService : NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         if (!preferences.isNotificationServiceStatsEnabled() || sbn == null || sbn.packageName == packageName) return
         val notification = sbn.notification ?: return
+        if (handleSnoozeDemo(sbn)) return
         val order = coordinator.captureEvent(sbn.key)
         // Copy only relevant fields. The bounded mailbox never retains StatusBarNotification/Notification.
         val item = NotificationItem(sbn.key, null,
@@ -232,13 +251,36 @@ class NotificationService : NotificationListenerService() {
             val intent = action.actionIntent ?: return@mapNotNull null
             CapturedAction(action.title?.toString()?.take(128).orEmpty(), intent, action.remoteInputs?.take(8)?.toTypedArray())
         }
-        val fields = PostedFields(item, notification.category, isSystemExemptCategory(notification.category), notification.contentIntent, actions, order)
+        val smallIcon = if (preferences.isExperimentEnabled(Experiments.SOURCE_ICON)) notification.smallIcon else null
+        val fields = PostedFields(item, notification.category, isSystemExemptCategory(notification.category), notification.contentIntent, actions, order, smallIcon)
         if (!intake.offer(Work.Posted(fields))) {
             // Invalidate older queued updates to this key; this new notification remains in the source tray.
             coordinator.captureEvent(item.id, bypassed = true)
             actionStore.remove(item.id)
             NotificationDiagnostics.increment("farhan.intake.overflow")
         }
+    }
+
+    /**
+     * The snooze demo, for Farhan's own test apps only. Outside the budget path: a demo notification is handed to
+     * Android's timed snooze and, when Android returns it, left alone. Returns true when the callback is consumed.
+     * There is no unsnooze and no claim that Farhan can restore or cancel a snoozed notification.
+     */
+    private fun handleSnoozeDemo(sbn: StatusBarNotification): Boolean {
+        if (Build.VERSION.SDK_INT < 26 || !Experiments.maySnoozeInDemo(sbn.packageName) ||
+            !preferences.isExperimentEnabled(Experiments.SNOOZE_DEMO)) return false
+        val now = System.currentTimeMillis()
+        if (snoozedDemoKeys.remove(sbn.key)) {
+            experimentLog.record(ExperimentEvent(now, ExperimentEventKind.RETURNED))
+            NotificationDiagnostics.increment("farhan.experiment.snooze.returned")
+            return true
+        }
+        if (snoozedDemoKeys.size >= 64) snoozedDemoKeys.remove(snoozedDemoKeys.first())
+        snoozedDemoKeys.add(sbn.key)
+        snoozeNotification(sbn.key, Experiments.SNOOZE_MILLIS)
+        experimentLog.record(ExperimentEvent(now, ExperimentEventKind.SNOOZED))
+        NotificationDiagnostics.increment("farhan.experiment.snooze.started")
+        return true
     }
 
     private suspend fun processNotificationPosted(fields: PostedFields) {
@@ -262,7 +304,7 @@ class NotificationService : NotificationListenerService() {
         val passThrough = fields.systemExempt || preferences.isPackageInNotificationExceptions(pkg) || priority == NotificationPriority.CRITICAL
         val item = fields.item.copy(appName = name, priority = priority, category = category, priorityReason = reason)
         val outcome = coordinator.onArrival(item, priority, fields.order, passThrough, captureActions = {
-            actionStore.put(item.id, Actions(fields.contentIntent, fields.actions))
+            actionStore.put(item.id, Actions(fields.contentIntent, fields.actions, fields.smallIcon))
             NotificationDiagnostics.counter("farhan.actions.retained", actionStore.size())
         }, sourceStillCurrent = { activeSourcePostTimes()[item.id] == item.timestamp })
         if (!passThrough && outcome !is DeliveryOutcome.Cleared && activeSourcePostTimes()[item.id] == item.timestamp) cancelNotification(item.id)
@@ -284,6 +326,10 @@ class NotificationService : NotificationListenerService() {
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?, rankingMap: RankingMap?, reason: Int) {
+        if (sbn != null && Experiments.maySnoozeInDemo(sbn.packageName) && preferences.isExperimentEnabled(Experiments.SNOOZE_DEMO)) {
+            experimentLog.record(ExperimentEvent(System.currentTimeMillis(), ExperimentEventKind.REMOVED, reason))
+            NotificationDiagnostics.increment("farhan.experiment.snooze.removed")
+        }
         if (sbn != null) {
             val ownProxy = sbn.packageName == packageName && sbn.tag?.startsWith(PROXY_TAG) == true
             val originalId = if (ownProxy) sbn.tag!!.removePrefix(PROXY_TAG) else sbn.key

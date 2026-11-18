@@ -48,6 +48,7 @@ fun NotificationDashboardScreen(
     onNavigateToInbox: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToAppPriority: () -> Unit = {},
+    onNavigateToScheduleEditor: () -> Unit = {},
 ) {
     val spacing = LocalSpacing.current
     val state = viewModel.state
@@ -192,20 +193,8 @@ fun NotificationDashboardScreen(
                     } else item {
                         NotificationScheduleWidget(
                             schedule = state.schedule,
-                            onPeriodChanged = { index, period ->
-                                viewModel.onEvent(
-                                    NotificationDashboardEvent.OnSetSchedulePeriod(index, period)
-                                )
-                            },
-                            onBoundaryAdjusted = { boundaryIndex, hour, minute ->
-                                viewModel.onEvent(
-                                    NotificationDashboardEvent.OnAdjustScheduleBoundary(
-                                        boundaryIndex,
-                                        hour,
-                                        minute,
-                                    )
-                                )
-                            },
+                            isDatedToday = state.isScheduleDatedToday,
+                            onEdit = onNavigateToScheduleEditor,
                         )
                     }
 

@@ -102,12 +102,18 @@ object AppModule {
         return DatabaseCombineHelper(context, farhanDatabase, preferences)
     }
 
+    /** The delivery core (NotificationCore) reads and writes rows through this same DAO as the repository. */
+    @Provides
+    @Singleton
+    fun provideNotificationDao(db: FarhanDatabase): ly.com.tahaben.notification_filter_data.local.NotificationDao =
+        db.notificationDao
+
     @Provides
     @Singleton
     fun provideNotificationRepository(
-        db: FarhanDatabase
+        dao: ly.com.tahaben.notification_filter_data.local.NotificationDao
     ): NotificationRepository {
-        return NotificationRepositoryImpl(db.notificationDao)
+        return NotificationRepositoryImpl(dao)
     }
 
     @Provides

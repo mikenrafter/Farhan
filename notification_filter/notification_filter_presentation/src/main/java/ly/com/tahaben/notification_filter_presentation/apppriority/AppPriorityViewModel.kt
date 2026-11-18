@@ -16,6 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AppPriorityViewModel @Inject constructor(
     private val useCases: NotificationFilterUseCases,
+    private val preferences: ly.com.tahaben.notification_filter_domain.preferences.Preferences,
 ) : ViewModel() {
 
     private val rows = androidx.compose.runtime.mutableStateListOf<ly.com.tahaben.notification_filter_domain.model.AppPriorityInfo>()
@@ -66,6 +67,11 @@ class AppPriorityViewModel @Inject constructor(
             }
             is AppPriorityEvent.OnSetAppLocked -> {
                 useCases.setAppPriorityLocked(event.packageName, event.locked)
+                patchApp(event.packageName)
+            }
+            is AppPriorityEvent.OnSetQueuePreference -> viewModelScope.launch {
+                // The write is off the main thread; the one row is patched afterwards. No discovery, no catalog copy.
+                withContext(Dispatchers.IO) { preferences.setAppQueuePreference(event.packageName, event.preference) }
                 patchApp(event.packageName)
             }
             is AppPriorityEvent.OnSetChannelPriority -> {

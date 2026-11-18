@@ -35,7 +35,19 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -46,6 +58,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import ly.com.tahaben.core_ui.LocalSpacing
 import ly.com.tahaben.core_ui.mirror
+import ly.com.tahaben.notification_filter_domain.delivery.AppQueuePreference
+import ly.com.tahaben.notification_filter_domain.delivery.QueueOrder
 import ly.com.tahaben.notification_filter_domain.model.AppPriorityInfo
 import ly.com.tahaben.notification_filter_domain.model.ChannelPriorityInfo
 import ly.com.tahaben.notification_filter_domain.model.NotificationCategory
@@ -127,6 +141,9 @@ fun AppPriorityScreen(
                             onSetLocked = { locked ->
                                 viewModel.onEvent(AppPriorityEvent.OnSetAppLocked(appInfo.packageName, locked))
                             },
+                            onSetQueuePreference = { preference ->
+                                viewModel.onEvent(AppPriorityEvent.OnSetQueuePreference(appInfo.packageName, preference))
+                            },
                             onSetChannelPriority = { channelId, priority ->
                                 viewModel.onEvent(
                                     AppPriorityEvent.OnSetChannelPriority(appInfo.packageName, channelId, priority)
@@ -147,6 +164,7 @@ private fun AppPriorityCard(
     onToggleExpanded: () -> Unit,
     onSetPriority: (NotificationPriority?) -> Unit,
     onSetLocked: (Boolean) -> Unit,
+    onSetQueuePreference: (AppQueuePreference) -> Unit,
     onSetChannelPriority: (channelId: String, priority: NotificationPriority?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -266,6 +284,8 @@ private fun AppPriorityCard(
                         onCheckedChange = onSetLocked
                     )
                 }
+
+                QueuePreferenceControls(appInfo.queuePreference, onSetQueuePreference)
 
                 if (appInfo.channels.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(4.dp))
@@ -404,3 +424,50 @@ private fun PriorityChipRow(
         }
     }
 }
+
+/** Newest/oldest first and a rank, for apps that share a priority. The explanation says priority still wins. */
+@Composable
+private fun QueuePreferenceControls(preference: AppQueuePreference, onChange: (AppQueuePreference) -> Unit) {
+    Spacer(modifier = Modifier.height(4.dp))
+    HorizontalDivider()
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(
+        text = "Queue order",
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+        FilterChip(
+            selected = preference.order == QueueOrder.NEWEST_FIRST,
+            onClick = { onChange(preference.copy(order = QueueOrder.NEWEST_FIRST)) },
+            label = { Text("Newest first", fontSize = 12.sp) },
+        )
+        FilterChip(
+            selected = preference.order == QueueOrder.OLDEST_FIRST,
+            onClick = { onChange(preference.copy(order = QueueOrder.OLDEST_FIRST)) },
+            label = { Text("Oldest first", fontSize = 12.sp) },
+        )
+    }
+    var rankText by remember(preference.rank) { mutableStateOf(preference.rank.toString()) }
+    fun commitRank() { rankText.toIntOrNull()?.takeIf { it != preference.rank }?.let { onChange(preference.copy(rank = it)) } }
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+        OutlinedButton(onClick = { onChange(preference.copy(rank = preference.rank - 1)) }, enabled = preference.rank > -MAX_RANK) { Text("−") }
+        OutlinedTextField(
+            value = rankText,
+            onValueChange = { if (it.length <= 5 && it.all { c -> c.isDigit() || c == '-' }) rankText = it },
+            label = { Text("Rank") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { commitRank() }),
+            modifier = Modifier.width(110.dp).onFocusChanged { if (!it.isFocused) commitRank() },
+        )
+        OutlinedButton(onClick = { onChange(preference.copy(rank = preference.rank + 1)) }, enabled = preference.rank < MAX_RANK) { Text("+") }
+    }
+    Text(
+        text = "Notification priority always comes first. Rank and order only decide between apps and notifications of the same priority: a higher rank goes first, and the order chooses newest or oldest within an app.",
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+private const val MAX_RANK = 9999

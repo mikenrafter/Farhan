@@ -14,4 +14,13 @@ data class NotificationFilterSettingsState(
     val isWarningDialogVisible: Boolean = false,
     val isShowcaseOn: Boolean = false,
     val isDeliveryTestingMode: Boolean = false,
+    val automationEnabled: Boolean = false,
+    val hasAutomationCredential: Boolean = false,
+    /** Set only while the owner has chosen to show it; cleared on hide, rotate, revoke and when the screen closes. */
+    val revealedCredential: String? = null,
+    val lastAutomationReceipt: ly.com.tahaben.notification_filter_domain.schedule.AutomationReceipt? = null,
+    val automationError: String? = null,
+    val sourceIconExperiment: Boolean = false,
+    val snoozeDemoExperiment: Boolean = false,
+    val snoozeDemoEvents: List<ly.com.tahaben.notification_filter_domain.delivery.ExperimentEvent> = emptyList(),
 )

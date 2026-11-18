@@ -3,7 +3,6 @@ package ly.com.tahaben.notification_filter_presentation.dashboard
 import ly.com.tahaben.notification_filter_domain.model.NotificationCategory
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
-import ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod
 import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
 
 sealed class NotificationDashboardEvent {
@@ -19,8 +18,6 @@ sealed class NotificationDashboardEvent {
     data class OnSetBatchWindow(val minutes: Int) : NotificationDashboardEvent()
     data class OnSetStandingThreshold(val hours: Int) : NotificationDashboardEvent()
     data class OnSetFloodThreshold(val count: Int) : NotificationDashboardEvent()
-    data class OnSetSchedulePeriod(val index: Int, val period: NotificationSchedulePeriod) : NotificationDashboardEvent()
-    data class OnAdjustScheduleBoundary(val boundaryIndex: Int, val hour: Int, val minute: Int) : NotificationDashboardEvent()
     data class OnSetPriorityDeliverySetting(
         val priority: NotificationPriority,
         val setting: PriorityDeliverySetting,

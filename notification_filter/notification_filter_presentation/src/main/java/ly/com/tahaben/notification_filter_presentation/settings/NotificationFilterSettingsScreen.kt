@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.AlertDialogDefaults
@@ -192,6 +194,8 @@ fun NotificationFilterSettingsScreen(
             )
             Column(
                 modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = spacing.spaceMedium)
             ) {
                 Row(
@@ -362,6 +366,11 @@ fun NotificationFilterSettingsScreen(
                     }
                 }
                 Divider()
+                AutomationAndExperimentsSection(
+                    state = state,
+                    onEvent = viewModel::onEvent,
+                    credentialForCopy = viewModel::credentialForCopy,
+                )
             }
 
         }

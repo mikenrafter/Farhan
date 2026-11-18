@@ -27,5 +27,6 @@ object Routes {
     const val DELAYED_LAUNCH_WHITELIST = "mindful_launch_whitelist"
     const val NOTIFICATION_DASHBOARD = "notification_dashboard"
     const val APP_PRIORITY = "app_priority"
+    const val NOTIFICATION_SCHEDULE_EDITOR = "notification_schedule_editor"
 
 }

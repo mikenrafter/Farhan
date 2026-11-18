@@ -19,7 +19,10 @@ import javax.inject.Inject
 @HiltViewModel
 class NotificationSettingsViewModel @Inject constructor(
     private val notificationFilterUseCases: NotificationFilterUseCases,
-    private val preferences: Preferences
+    private val preferences: Preferences,
+    private val credentials: ly.com.tahaben.notification_filter_domain.schedule.AutomationCredentialOwner,
+    private val receipts: ly.com.tahaben.notification_filter_domain.schedule.AutomationReceiptStore,
+    private val experimentLog: ly.com.tahaben.notification_filter_domain.delivery.ExperimentEventLog,
 ) : ViewModel() {
 
     var _state = MutableStateFlow(NotificationFilterSettingsState())
@@ -36,6 +39,7 @@ class NotificationSettingsViewModel @Inject constructor(
         loadDeliveryTestingMode()
         performPermissionSilentChecks()
         shouldShowWarningDialog()
+        refreshAutomation()
     }
 
 
@@ -192,11 +196,62 @@ class NotificationSettingsViewModel @Inject constructor(
                 }
             }
 
+            is NotificationSettingsEvent.SetAutomationEnabled -> changeAutomation {
+                // First enable creates the credential; the owner then reveals or copies it.
+                if (event.enabled && credentials.credential() == null) credentials.rotate()
+                credentials.setEnabled(event.enabled)
+            }
+            NotificationSettingsEvent.ShowAutomationCredential ->
+                _state.update { it.copy(revealedCredential = credentials.credential()) }
+            NotificationSettingsEvent.HideAutomationCredential -> _state.update { it.copy(revealedCredential = null) }
+            NotificationSettingsEvent.RotateAutomationCredential -> changeAutomation { credentials.rotate() }
+            NotificationSettingsEvent.RevokeAutomationCredential -> changeAutomation { credentials.revoke() }
+            NotificationSettingsEvent.RefreshAutomation -> refreshAutomation()
+            is NotificationSettingsEvent.SetSourceIconExperiment -> {
+                preferences.setExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SOURCE_ICON, event.enabled)
+                _state.update { it.copy(sourceIconExperiment = event.enabled) }
+            }
+            is NotificationSettingsEvent.SetSnoozeDemoExperiment -> {
+                preferences.setExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SNOOZE_DEMO, event.enabled)
+                _state.update { it.copy(snoozeDemoExperiment = event.enabled) }
+            }
+
             NotificationSettingsEvent.ClearBudgetSpend -> {
                 viewModelScope.launch(Dispatchers.IO) { notificationFilterUseCases.clearBudgetSpend() }
             }
 
         }
+    }
+
+    /** Runs a credential change off the main thread (it commits to disk), then reloads what the screen shows. */
+    private fun changeAutomation(change: () -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val failed = try { change(); false } catch (_: Exception) { true }
+            _state.update { it.copy(revealedCredential = null) }
+            refreshAutomation(if (failed) "Could not save the change. Nothing was changed." else null)
+        }
+    }
+
+    private fun refreshAutomation(error: String? = null) {
+        _state.update {
+            it.copy(
+                automationEnabled = credentials.isEnabled(),
+                hasAutomationCredential = credentials.credential() != null,
+                lastAutomationReceipt = receipts.last(),
+                automationError = error,
+                sourceIconExperiment = preferences.isExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SOURCE_ICON),
+                snoozeDemoExperiment = preferences.isExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SNOOZE_DEMO),
+                snoozeDemoEvents = experimentLog.recent(),
+            )
+        }
+    }
+
+    /** For the copy button only. The value goes to the clipboard and is never stored in state or logged. */
+    fun credentialForCopy(): String? = credentials.credential()
+
+    override fun onCleared() {
+        _state.update { it.copy(revealedCredential = null) }
+        super.onCleared()
     }
 
     fun onPermissionResult(

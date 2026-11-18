@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ly.com.tahaben.notification_filter_domain.use_cases.NotificationFilterUseCases
-import ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod
 import ly.com.tahaben.notification_filter_domain.util.ServiceUtil
 import javax.inject.Inject
 
@@ -21,6 +20,7 @@ import javax.inject.Inject
 class NotificationDashboardViewModel @Inject constructor(
     private val useCases: NotificationFilterUseCases,
     private val repository: ly.com.tahaben.notification_filter_domain.repository.NotificationRepository,
+    private val preferences: ly.com.tahaben.notification_filter_domain.preferences.Preferences,
 ) : ViewModel() {
 
     var state by mutableStateOf(NotificationDashboardState())
@@ -36,11 +36,15 @@ class NotificationDashboardViewModel @Inject constructor(
     }
 
     private fun loadSettings() {
-        try { state = state.copy(
+        try {
+            val book = preferences.getScheduleSnapshot().book
+            val today = java.time.LocalDate.now(ly.com.tahaben.notification_filter_domain.delivery.DeliveryClock.systemClock)
+            state = state.copy(
             batchWindowMinutes = useCases.getDashboardSettings.getBatchWindowMinutes(),
             standingThresholdHours = useCases.getDashboardSettings.getStandingThresholdHours(),
             floodThreshold = useCases.getDashboardSettings.getFloodThreshold(),
-            schedule = useCases.getNotificationSchedule(),
+            schedule = book.scheduleFor(today),
+            isScheduleDatedToday = today in book.dated,
             budgetStatus = useCases.getCurrentBudgetStatus(),
             priorityDeliverySettings = useCases.getPriorityDeliverySettings(),
             deliveryTestingMode = useCases.isDeliveryTestingMode(),
@@ -92,13 +96,6 @@ class NotificationDashboardViewModel @Inject constructor(
                 state.expandedBatchKeys.intersect(liveKeys).forEach { if (batchItemJobs[it]?.isActive != true) observeBatchItems(it) }
             }
             .launchIn(viewModelScope)
-    }
-
-    private fun applySchedule(schedule: List<NotificationSchedulePeriod>) {
-        viewModelScope.launch {
-            val accepted = withContext(Dispatchers.IO) { useCases.setNotificationSchedule(schedule) }
-            if (accepted == ly.com.tahaben.notification_filter_domain.schedule.ScheduleWriteResult.Accepted) loadSettings()
-        }
     }
 
     fun onEvent(event: NotificationDashboardEvent) {
@@ -161,26 +158,6 @@ class NotificationDashboardViewModel @Inject constructor(
 
             is NotificationDashboardEvent.OnSetCategoryPriority -> {
                 useCases.setCategoryPriorityOverride(event.category, event.priority)
-            }
-
-            is NotificationDashboardEvent.OnSetSchedulePeriod -> {
-                val updatedSchedule = state.schedule.toMutableList()
-                if (event.index in updatedSchedule.indices) {
-                    updatedSchedule[event.index] = event.period
-                    applySchedule(updatedSchedule)
-                }
-            }
-
-            is NotificationDashboardEvent.OnAdjustScheduleBoundary -> {
-                val updatedSchedule = NotificationSchedulePeriod.adjustBoundary(
-                    schedule = state.schedule,
-                    boundaryIndex = event.boundaryIndex,
-                    newHour = event.hour,
-                    newMinute = event.minute,
-                )
-                if (updatedSchedule != null) {
-                    applySchedule(updatedSchedule)
-                }
             }
 
             is NotificationDashboardEvent.OnSetPriorityDeliverySetting -> {
