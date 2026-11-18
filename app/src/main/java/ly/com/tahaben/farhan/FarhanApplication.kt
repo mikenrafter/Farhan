@@ -9,6 +9,7 @@ import androidx.work.Configuration
 import androidx.work.WorkManager
 import dagger.hilt.android.HiltAndroidApp
 import ly.com.tahaben.core.R
+import org.acra.ACRA
 import org.acra.ReportField
 import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
@@ -28,6 +29,9 @@ class FarhanApplication : Application() {
     }
 
     override fun onCreate() {
+        // CLAIM(recovery-single-process): the merged :acra services must not replay the settings journal
+        // or enter Hilt store injection [ACRA 5.12.0 ACRA.isACRASenderServiceProcess; settings-portability-review-fixes.md].
+        if (ACRA.isACRASenderServiceProcess()) return
         if (!ly.com.tahaben.farhan.settings.SettingsStartup.run(this)) return
         super.onCreate()
         initAcra {

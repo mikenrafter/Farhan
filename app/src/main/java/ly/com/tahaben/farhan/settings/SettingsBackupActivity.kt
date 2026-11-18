@@ -88,7 +88,7 @@ class SettingsBackupActivity : ComponentActivity() {
                                 status.text = if (unknown.isEmpty()) "Choose where to save your settings backup."
                                     else "The following settings are not supported and will be omitted:\n" + unknown.joinToString("\n") { it.key }
                                 if (unknown.isEmpty()) createDocument.launch("farhan-settings.json")
-                                else AlertDialog.Builder(this).setTitle("Some settings will be omitted")
+                                else AlertDialog.Builder(this@SettingsBackupActivity).setTitle("Some settings will be omitted")
                                     .setMessage(status.text).setNegativeButton("Cancel") { _, _ -> discardPreparedExport() }
                                     .setOnCancelListener { discardPreparedExport() }
                                     .setPositiveButton("Choose file") { _, _ -> createDocument.launch("farhan-settings.json") }.show()
