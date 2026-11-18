@@ -18,8 +18,8 @@ import org.junit.Test
  * (classifier and both scanners are real). Only the registry, device services and preferences are fakes, and
  * they count calls so "did not rescan / did not copy the catalog" is observable.
  *
- * NOT covered (missing seam, see report): AppPriorityViewModel's refresh-vs-edit race. It needs a
- * dispatcher and a narrower dependency than the 60-member NotificationFilterUseCases.
+ * Refresh ordering and refresh-vs-edit races are covered through the production refresh owner in
+ * RefreshAppPriorityCatalogTest; these cases pin the loader's direct access and discovery boundaries.
  *
  * proves: CLAIM(catalog-first), CLAIM(single-row-edit)
  */
@@ -41,7 +41,10 @@ class GetAppPriorityInfoListTest {
         override fun register(sources: List<VisibleNotificationSource>) = Unit
     }
 
-    private class Rig(overrides: Map<String, NotificationPriority> = emptyMap()) {
+    private class Rig(
+        overrides: Map<String, NotificationPriority> = emptyMap(),
+        exceptions: Set<String> = emptySet(),
+    ) {
         val registry = CountingRegistry(
             mapOf(
                 "com.b" to KnownPackageSource("com.b", "Beta", channelIds = setOf("c1")),
@@ -64,9 +67,14 @@ class GetAppPriorityInfoListTest {
                 return listOf(AppItem(name = "Gamma", packageName = "com.g"))
             }
         }
+        val preferenceCalls = mutableListOf<String>()
         private val preferences = recordingProxy(
             Preferences::class.java,
-            answers = mapOf("getAppPriorityOverride" to { args: Array<Any?> -> overrides[args[0] as String] }),
+            preferenceCalls,
+            answers = mapOf(
+                "getAppPriorityOverride" to { args: Array<Any?> -> overrides[args[0] as String] },
+                "getNotificationFilterExceptionsList" to { _: Array<Any?> -> exceptions },
+            ),
         )
         private val register = RegisterKnownNotificationSources(registry)
         val useCase = GetAppPriorityInfoList(
@@ -113,5 +121,41 @@ class GetAppPriorityInfoListTest {
         assertThat(rig.registry.getCalls).containsExactly("com.b")
         assertThat(rig.registry.getAllCalls).isEqualTo(0)
         assertThat(rig.scanCalls()).isEqualTo(0)
+    }
+
+    // WHY: CLAIM(catalog-refresh-edits) also covers legacy exception rows synthesized by cached().
+    // catches: returning null for an exception missing from the source registry, so reconciliation keeps stale values.
+    @Test
+    fun `an exception row without a registered source can still be refreshed directly`() {
+        val overrides = mutableMapOf("com.legacy" to NotificationPriority.HIGH)
+        val rig = Rig(overrides, exceptions = setOf("com.legacy"))
+        val cached = rig.useCase.cached().single { it.packageName == "com.legacy" }
+        assertThat(cached.currentPriority).isEqualTo(NotificationPriority.HIGH)
+        val bulkReads = rig.registry.getAllCalls
+
+        overrides["com.legacy"] = NotificationPriority.LOW
+        val updated = rig.useCase.forPackage("com.legacy")
+
+        assertThat(updated?.currentPriority).isEqualTo(NotificationPriority.LOW)
+        assertThat(updated?.appName).isEqualTo("com.legacy")
+        assertThat(rig.registry.getCalls).containsExactly("com.legacy")
+        assertThat(rig.registry.getAllCalls).isEqualTo(bulkReads)
+        assertThat(rig.scanCalls()).isEqualTo(0)
+    }
+
+    // WHY: CLAIM(catalog-discovery-only) lets the refresh owner assemble once on its background dispatcher.
+    // catches: discover delegates to invoke, doing a discarded bulk assembly after the scan.
+    @Test
+    fun `discovery scans without classifying or assembling the catalog`() = runBlocking {
+        val rig = Rig()
+
+        rig.useCase.discover(forceRescan = true)
+
+        assertThat(rig.scanCalls()).isGreaterThan(0)
+        assertThat(rig.preferenceCalls).doesNotContain("getAppQueuePreferences")
+        assertThat(rig.preferenceCalls).doesNotContain("getAppPriorityOverride")
+        rig.useCase.cached()
+        assertThat(rig.preferenceCalls).contains("getAppQueuePreferences")
+        assertThat(rig.preferenceCalls).contains("getAppPriorityOverride")
     }
 }

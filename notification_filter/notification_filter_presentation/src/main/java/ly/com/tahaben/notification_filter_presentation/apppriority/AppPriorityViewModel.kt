@@ -10,7 +10,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
+import ly.com.tahaben.notification_filter_domain.use_cases.AppPriorityCatalog
 import ly.com.tahaben.notification_filter_domain.use_cases.NotificationFilterUseCases
+import ly.com.tahaben.notification_filter_domain.use_cases.RefreshAppPriorityCatalog
 import javax.inject.Inject
 
 @HiltViewModel
@@ -20,12 +22,16 @@ class AppPriorityViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val rows = androidx.compose.runtime.mutableStateListOf<ly.com.tahaben.notification_filter_domain.model.AppPriorityInfo>()
-    private val rowIndices = mutableMapOf<String, Int>()
+    private var rowIndices: Map<String, Int> = emptyMap()
     var state by mutableStateOf(AppPriorityState(apps = rows))
         private set
 
     private var refreshJob: kotlinx.coroutines.Job? = null
-    private var revision = 0L
+    private val catalogRefresh = RefreshAppPriorityCatalog(
+        loadCached = { cachedApps() },
+        discover = { useCases.getAppPriorityInfoList.discover(forceRescan = false) },
+        loadPackage = useCases.getAppPriorityInfoList::forPackage,
+    )
 
     init { refresh() }
 
@@ -33,21 +39,15 @@ class AppPriorityViewModel @Inject constructor(
         android.os.Trace.beginSection("farhan.catalog.assemble")
         return try { useCases.getAppPriorityInfoList.cached() } finally { android.os.Trace.endSection() }
     }
-    private fun publish(apps: List<ly.com.tahaben.notification_filter_domain.model.AppPriorityInfo>) {
-        rows.clear(); rows.addAll(apps)
-        rowIndices.clear()
-        apps.forEachIndexed { index, app -> rowIndices[app.packageName] = index }
+    private fun publish(catalog: AppPriorityCatalog) {
+        rows.clear(); rows.addAll(catalog.apps)
+        rowIndices = catalog.indices
         state = state.copy(apps = rows, isLoading = false)
     }
     fun refresh() {
         if (refreshJob?.isActive == true) return
         refreshJob = viewModelScope.launch {
-            val capturedRevision = revision
-            val cached = withContext(Dispatchers.Default) { cachedApps() }
-            if (revision == capturedRevision) publish(cached)
-            withContext(Dispatchers.IO) { useCases.getAppPriorityInfoList(forceRescan = false) }
-            // Rebuild from the latest preferences after discovery; edits during discovery cannot be overwritten.
-            publish(cachedApps())
+            catalogRefresh.refresh(::publish)
         }
     }
 
@@ -85,7 +85,7 @@ class AppPriorityViewModel @Inject constructor(
     }
 
     private fun patchApp(packageName: String) {
-        revision++
+        catalogRefresh.packageEdited(packageName)
         val updated = useCases.getAppPriorityInfoList.forPackage(packageName) ?: return
         val index = rowIndices[packageName] ?: return
         rows[index] = updated
