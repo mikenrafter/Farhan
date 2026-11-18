@@ -3,17 +3,28 @@
   "checkpoint_id": "fd6d910a0893",
   "strategy": "manual-commit",
   "branch": "pilot/settings-portability",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "gradle/libs.versions.toml",
+    "research/settings-portability-red-report.md",
     "research/settings-portability-spec-reply.md",
     "research/settings-portability-spec.md",
     "settings.gradle.kts",
     "settings_portability/build.gradle.kts",
     "settings_portability/src/main/java/ly/com/tahaben/settings_portability/ImportCoordinator.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/ImportJournal.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/LegacySettingsConverter.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/PortableSettings.kt",
     "settings_portability/src/main/java/ly/com/tahaben/settings_portability/PortableSettingsCodec.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/SettingValue.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/SettingsCatalog.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/SettingsStores.kt",
     "settings_portability/src/test/java/ly/com/tahaben/settings_portability/ImportCoordinatorTest.kt",
-    "settings_portability/src/test/java/ly/com/tahaben/settings_portability/SettingsExporterTest.kt"
+    "settings_portability/src/test/java/ly/com/tahaben/settings_portability/LegacySettingsConverterTest.kt",
+    "settings_portability/src/test/java/ly/com/tahaben/settings_portability/PortableSettingsCodecTest.kt",
+    "settings_portability/src/test/java/ly/com/tahaben/settings_portability/SettingsExporterTest.kt",
+    "settings_portability/src/test/java/ly/com/tahaben/settings_portability/SqlConfigurationRowsStoreTest.kt",
+    "settings_portability/src/test/java/ly/com/tahaben/settings_portability/TestSupport.kt"
   ],
   "sessions": [
     {
@@ -22,13 +33,20 @@
       "compact_transcript": "/fd/6d910a0893/0/transcript.jsonl",
       "content_hash": "/fd/6d910a0893/0/content_hash.txt",
       "prompt": "/fd/6d910a0893/0/prompt.txt"
+    },
+    {
+      "metadata": "/fd/6d910a0893/1/metadata.json",
+      "transcript": "/fd/6d910a0893/1/full.jsonl",
+      "compact_transcript": "/fd/6d910a0893/1/transcript.jsonl",
+      "content_hash": "/fd/6d910a0893/1/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
-    "input_tokens": 18,
-    "cache_creation_tokens": 46335,
-    "cache_read_tokens": 379005,
-    "output_tokens": 14950,
-    "api_call_count": 7
+    "input_tokens": 54,
+    "cache_creation_tokens": 158010,
+    "cache_read_tokens": 4075771,
+    "output_tokens": 119139,
+    "api_call_count": 25
   }
 }

@@ -1,0 +1,46 @@
+{
+  "cli_version": "0.11.5",
+  "checkpoint_id": "fd6d910a0893",
+  "session_id": "8c4dff24-41a4-47f2-8d11-5e02b1d6248e",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-18T05:42:11.850590142Z",
+  "branch": "pilot/settings-portability",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "gradle/libs.versions.toml",
+    "research/settings-portability-red-report.md",
+    "settings.gradle.kts",
+    "settings_portability/build.gradle.kts",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/ImportCoordinator.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/ImportJournal.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/LegacySettingsConverter.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/PortableSettings.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/PortableSettingsCodec.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/SettingValue.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/SettingsCatalog.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/SettingsStores.kt",
+    "settings_portability/src/test/java/ly/com/tahaben/settings_portability/ImportCoordinatorTest.kt",
+    "settings_portability/src/test/java/ly/com/tahaben/settings_portability/LegacySettingsConverterTest.kt",
+    "settings_portability/src/test/java/ly/com/tahaben/settings_portability/PortableSettingsCodecTest.kt",
+    "settings_portability/src/test/java/ly/com/tahaben/settings_portability/SettingsExporterTest.kt",
+    "settings_portability/src/test/java/ly/com/tahaben/settings_portability/SqlConfigurationRowsStoreTest.kt",
+    "settings_portability/src/test/java/ly/com/tahaben/settings_portability/TestSupport.kt"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-5-5",
+  "turn_id": "4f3642e79567",
+  "checkpoint_transcript_start": 251,
+  "transcript_lines_at_start": 251,
+  "compact_transcript_start": 27,
+  "token_usage": {
+    "input_tokens": 36,
+    "cache_creation_tokens": 111675,
+    "cache_read_tokens": 3696766,
+    "output_tokens": 104189,
+    "api_call_count": 18
+  },
+  "session_metrics": {
+    "turn_count": 1
+  }
+}
