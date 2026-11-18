@@ -126,6 +126,7 @@ object NotificationDeliveryPolicy {
         schedule: List<NotificationSchedulePeriod>,
         timeContext: DeliveryTimeContext,
         budget: DeliveryBudgetState,
+        queuePreferences: Map<String, AppQueuePreference> = emptyMap(),
     ): Pair<List<NotificationItem>, DeliveryBudgetState> {
         val eligible = candidates.filter { item ->
             shouldDeliverOnBatchTick(item.priority, settings, timeContext)

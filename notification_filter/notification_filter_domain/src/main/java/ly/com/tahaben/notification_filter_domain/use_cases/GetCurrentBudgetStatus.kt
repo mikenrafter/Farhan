@@ -38,4 +38,25 @@ class GetCurrentBudgetStatus(private val preferences: Preferences) {
             spendEntries = spendEntries,
         )
     }
+
+    companion object {
+        /**
+         * Pure form of [invoke] with an explicit minute and budget state, so tests need no
+         * Calendar or Preferences. RED STUB: same logic as [invoke], which keys spend by the
+         * stored period start.
+         */
+        fun statusAt(
+            schedule: List<ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod>,
+            budget: ly.com.tahaben.notification_filter_domain.delivery.DeliveryBudgetState,
+            minuteOfDay: Int,
+        ): CurrentBudgetStatus {
+            val active = NotificationDeliveryPolicy.findActivePeriod(schedule, minuteOfDay)
+            val spent = if (active != null && budget.periodStartMinute == active.startMinuteOfDay) {
+                budget.spentPoints
+            } else {
+                0
+            }
+            return CurrentBudgetStatus(activePeriod = active, spentPoints = spent)
+        }
+    }
 }

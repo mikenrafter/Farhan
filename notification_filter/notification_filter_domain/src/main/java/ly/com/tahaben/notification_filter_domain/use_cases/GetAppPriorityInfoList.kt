@@ -24,6 +24,9 @@ class GetAppPriorityInfoList(
         return buildList()
     }
 
+    /** The catalog as already known, with no discovery scan. RED STUB: returns nothing. */
+    fun cached(): List<AppPriorityInfo> = emptyList()
+
     fun forPackage(packageName: String): AppPriorityInfo? {
         val source = knownPackageSourceRegistry.getAll()[packageName] ?: return null
         return buildInfo(source)
