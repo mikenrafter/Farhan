@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.11.5",
+  "checkpoint_id": "bffe6dd47d6c",
+  "strategy": "manual-commit",
+  "branch": "pilot/settings-portability",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "research/settings-portability-core-green-report.md",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/ImportCoordinator.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/ImportJournal.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/LegacySettingsConverter.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/PortableSettingsCodec.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/SettingsCatalog.kt",
+    "settings_portability/src/main/java/ly/com/tahaben/settings_portability/SettingsStores.kt",
+    "settings_portability/src/test/java/ly/com/tahaben/settings_portability/TestSupport.kt"
+  ],
+  "sessions": [
+    {
+      "metadata": "/bf/fe6dd47d6c/0/metadata.json",
+      "transcript": "/bf/fe6dd47d6c/0/full.jsonl",
+      "compact_transcript": "/bf/fe6dd47d6c/0/transcript.jsonl",
+      "content_hash": "/bf/fe6dd47d6c/0/content_hash.txt",
+      "prompt": "/bf/fe6dd47d6c/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 86,
+    "cache_creation_tokens": 257684,
+    "cache_read_tokens": 8139556,
+    "output_tokens": 115492,
+    "api_call_count": 39
+  }
+}
