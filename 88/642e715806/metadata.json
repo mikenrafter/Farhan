@@ -3,7 +3,7 @@
   "checkpoint_id": "88642e715806",
   "strategy": "manual-commit",
   "branch": "pilot/settings-portability",
-  "checkpoints_count": 3,
+  "checkpoints_count": 4,
   "files_touched": [
     "research/TIMINGS.md",
     "research/settings-portability-review-round2-exchange-a.md",
@@ -30,6 +30,13 @@
       "compact_transcript": "/88/642e715806/2/transcript.jsonl",
       "content_hash": "/88/642e715806/2/content_hash.txt",
       "prompt": "/88/642e715806/2/prompt.txt"
+    },
+    {
+      "metadata": "/88/642e715806/3/metadata.json",
+      "transcript": "/88/642e715806/3/full.jsonl",
+      "compact_transcript": "/88/642e715806/3/transcript.jsonl",
+      "content_hash": "/88/642e715806/3/content_hash.txt",
+      "prompt": "/88/642e715806/3/prompt.txt"
     }
   ],
   "token_usage": {
