@@ -42,7 +42,7 @@ object AppModule {
     fun provideSharedPreferences(
         app: Application
     ): SharedPreferences {
-        return app.getSharedPreferences("shared_pref", MODE_PRIVATE)
+        return ly.com.tahaben.farhan.settings.ProcessStores.sharedPreferences()
     }
 
     @Provides
@@ -50,9 +50,7 @@ object AppModule {
     fun provideDataStore(
         @ApplicationContext context: Context
     ): DataStore<androidx.datastore.preferences.core.Preferences>{
-        return PreferenceDataStoreFactory.create(
-            produceFile = {context.preferencesDataStoreFile("farhan_data_store")}
-        )
+        return ly.com.tahaben.farhan.settings.ProcessStores.dataStore()
     }
 
     @Provides
@@ -84,12 +82,7 @@ object AppModule {
     fun provideAppDatabase(
         @ApplicationContext context: Context
         ): FarhanDatabase{
-        Timber.d("database path: ${ context.getDatabasePath("farhan_db") }")
-        val farhanDatabase = Room
-            .databaseBuilder(context, FarhanDatabase::class.java, "farhan_db")
-            .allowMainThreadQueries()
-            .build()
-        return farhanDatabase
+        return ly.com.tahaben.farhan.settings.ProcessStores.database()
     }
 
     @Provides

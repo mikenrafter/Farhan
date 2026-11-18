@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Farhan settings rescue</string>
+    <string name="intro">Saves the settings of your installed Farhan to a file, so you can reinstall Farhan with a new signing key and load them back. It reads settings only, never notification or usage history. Farhan is not changed or uninstalled. It is stopped once, when you tap Stop Farhan and export.</string>
+
+    <string name="step_source">1. Which Farhan</string>
+    <string name="hint_package">Package name</string>
+    <string name="hint_user">Android user (0 is your main profile)</string>
+    <string name="error_package">Enter a package name such as ly.com.tahaben.farhan_alpha.</string>
+    <string name="error_package_helper">This is the rescue app itself. Enter the package of the Farhan to read.</string>
+    <string name="error_user">Enter the user number, for example 0.</string>
+
+    <string name="step_pair">2. Pair this phone with itself</string>
+    <string name="pair_body">Open Wireless debugging, turn it on, and tap Pair device with pairing code. That dialog closes if you leave the screen, so show this app beside Settings (split screen or a floating window), then type the pairing port and the six-digit code here.</string>
+    <string name="open_wireless_settings">Open Wireless debugging settings</string>
+    <string name="hint_pairing_port">Pairing port</string>
+    <string name="hint_pairing_code">Pairing code (6 digits)</string>
+    <string name="pair">Pair</string>
+    <string name="error_port">Enter a port from 1 to 65535.</string>
+    <string name="error_code">The pairing code is 6 digits.</string>
+
+    <string name="step_check">3. Check access</string>
+    <string name="check_body">On the Wireless debugging screen, use the port shown next to the IP address. It is not the pairing port. This step changes nothing.</string>
+    <string name="hint_connect_port">Connection port</string>
+    <string name="check">Check access</string>
+
+    <string name="step_export">4. Stop Farhan and export</string>
+    <string name="export_body">This stops Farhan now so its files are consistent. Do not open Farhan again until the backup is saved.</string>
+    <string name="confirm_stop">Stop Farhan now and export its settings</string>
+    <string name="export">Stop Farhan and export</string>
+
+    <string name="working">Working…</string>
+    <string name="cancel">Cancel</string>
+    <string name="reset">Cancel and erase pairing key</string>
+    <string name="licenses">Licenses</string>
+    <string name="close">Close</string>
+
+    <string name="bridge_starting">Starting the ADB helper…</string>
+    <string name="progress_probing">Checking that Farhan can be read…</string>
+    <string name="progress_reading_version">Reading the Farhan version…</string>
+    <string name="progress_listing">Looking for settings files…</string>
+    <string name="progress_stopping">Stopping Farhan…</string>
+    <string name="progress_copying">Copying settings file %1$d of %2$d…</string>
+    <string name="progress_verifying">Checking that Farhan did not change…</string>
+    <string name="progress_converting">Converting settings…</string>
+    <string name="progress_saving">Saving and checking the file…</string>
+
+    <string name="paired_ok">Paired. Next, enter the connection port and check access.</string>
+    <string name="checked_ok">Farhan %1$s can be read. Settings files found: %2$d (%3$s).</string>
+    <string name="checked_database_yes">includes the database</string>
+    <string name="checked_database_no">no database yet</string>
+    <string name="checked_version_unknown">(version unknown)</string>
+
+    <string name="review_title">Backup ready</string>
+    <string name="review_body">From %1$s (version %2$s, user %3$d).\n\nSettings: %4$d preference values, %5$d app rows, %6$d time limits, %7$d widget styles.</string>
+    <string name="review_version_unknown">unknown</string>
+    <string name="review_size_only">This phone could not provide file checksums. File sizes and modification metadata matched before and after copying.</string>
+    <string name="review_unsupported">These %1$d names were in Farhan but are not known settings. Their values were NOT transferred: %2$s</string>
+    <string name="review_omitted">Left out on purpose (secrets, internal state, history): %1$d names.</string>
+    <string name="review_widgets">Widgets cannot be moved. After import, add each widget again and choose one of the saved styles.</string>
+    <string name="review_launcher_rows">Launcher rows only restore on this same phone and user.</string>
+    <string name="save_file">Save backup file</string>
+    <string name="finish">Finish and clear helper data</string>
+    <string name="save_cancelled">No file was chosen. The backup is still ready: tap Save backup file to try again.</string>
+    <string name="save_failed">The file could not be saved or did not read back the same. The backup is still ready: try again, or choose another place.</string>
+    <string name="saved_title">Backup saved and checked</string>
+    <string name="saved_next">Before you uninstall Farhan:\n\n1. If Farhan was holding notifications for you, open the old Farhan once now so it releases them.\n2. In Developer options, Wireless debugging, Paired devices, remove \"Farhan settings rescue\".\n3. Turn Wireless debugging off.\n\nThen install the new Farhan and import this file from Settings backup.</string>
+    <string name="pending_found">A converted backup from an earlier run is waiting.</string>
+
+    <string name="failure_prefix">Stopped: %1$s</string>
+    <string name="failure_bad_request">The helper refused the request. Check the package, user and ports.</string>
+    <string name="failure_busy">Another step is still running.</string>
+    <string name="failure_pair">Pairing failed. Check the pairing port and code, keep the pairing dialog open, and try again.</string>
+    <string name="failure_connect">Could not connect or the connection dropped. Check Wireless debugging is on, you are on Wi-Fi, and the connection port is the one beside the IP address.</string>
+    <string name="failure_pairing_required">This phone is not paired, or the pairing expired. Pair again.</string>
+    <string name="failure_identity">The helper could not prepare its temporary key.</string>
+    <string name="failure_not_debuggable">That Farhan is not a debuggable build, so it cannot be read this way.</string>
+    <string name="failure_not_found">No such app for that user. Check the package name and user.</string>
+    <string name="failure_user_rejected">Android refused that user number.</string>
+    <string name="failure_run_as_unavailable">This phone does not allow reading debuggable apps over ADB.</string>
+    <string name="failure_run_as_unknown">Android gave an answer the helper does not recognise, so it stopped.</string>
+    <string name="failure_uid_mismatch">The app belongs to a different Android user than the one you entered.</string>
+    <string name="failure_force_stop">Farhan could not be stopped, so nothing was copied.</string>
+    <string name="failure_listing">Could not list Farhan\'s files, so nothing was exported.</string>
+    <string name="failure_stat">Could not read a file\'s details, so nothing was exported.</string>
+    <string name="failure_nothing">Farhan has no settings files for that user. Check the package and user.</string>
+    <string name="failure_sidecar">The database has leftover files but no database. Open Farhan once, close it, and try again.</string>
+    <string name="failure_too_many_widgets">Farhan has more widget files than the helper accepts.</string>
+    <string name="failure_too_large">A file is larger than the helper accepts, so nothing was exported.</string>
+    <string name="failure_output_budget">The phone sent more text than the helper accepts, so it stopped.</string>
+    <string name="failure_copy_incomplete">A copy came out shorter than the original. Try again.</string>
+    <string name="failure_digest">A copy did not match the original. Try again.</string>
+    <string name="failure_source_changed">Farhan changed while it was being read. Make sure it is closed, then try again.</string>
+    <string name="failure_storage">The helper could not write its private working files.</string>
+    <string name="failure_conversion">The copied settings could not be converted: %1$s</string>
+    <string name="failure_timeout">That step took too long and was stopped. The pairing key was erased.</string>
+    <string name="failure_bridge_died">The ADB helper process stopped. Try the step again.</string>
+    <string name="failure_cancelled">Cancelled. The pairing key and all copies were erased.</string>
+    <string name="failure_internal">Something unexpected went wrong.</string>
+
+    <string name="conversion_files_missing">a copied file is missing</string>
+    <string name="conversion_unreadable">a copied file could not be read</string>
+    <string name="conversion_not_utf8">the preferences file is not valid text</string>
+    <string name="conversion_datastore_corrupt">the DataStore file is damaged</string>
+    <string name="conversion_datastore_type">the DataStore holds a value type the helper cannot carry</string>
+    <string name="conversion_db_corrupt">the database is damaged</string>
+    <string name="conversion_db_tables">the database has no settings tables</string>
+    <string name="conversion_db_unreadable">the database could not be opened</string>
+    <string name="conversion_too_large">a copied file is too large</string>
+    <string name="conversion_widget">a widget style is malformed</string>
+    <string name="conversion_rejected">a setting is not valid (%1$s)</string>
+    <string name="conversion_self_check">the finished file did not pass its own check</string>
+</resources>

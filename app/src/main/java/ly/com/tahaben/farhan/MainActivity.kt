@@ -7,6 +7,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -17,6 +20,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -128,10 +132,19 @@ class MainActivity : ComponentActivity() {
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+                    topBar = {
+                        if (navController.currentBackStackEntryAsState().value?.destination?.route == Routes.MAIN) {
+                            TextButton(onClick = { startActivity(Intent(this@MainActivity,
+                                ly.com.tahaben.farhan.settings.SettingsBackupActivity::class.java)) }) {
+                                Text("Settings backup")
+                            }
+                        }
+                    },
                     snackbarHost = { SnackbarHost(snackbarHostState) }
                 ) {
                     it.calculateBottomPadding()
                     NavHost(
+                        modifier = Modifier.padding(top = it.calculateTopPadding()),
                         navController = navController,
                         startDestination = if (shouldShowOnBoarding) {
                             Routes.WELCOME

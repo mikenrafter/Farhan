@@ -81,6 +81,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import ly.com.tahaben.farhan.settings.ProcessStores
+import ly.com.tahaben.farhan.settings.widgetUserValues
+import ly.com.tahaben.settings_android.WidgetProfiles
+import ly.com.tahaben.settings_android.WidgetProfile
 import ly.com.tahaben.core.R
 import ly.com.tahaben.core.model.ThemeColors
 import ly.com.tahaben.core.model.UIModeAppearance
@@ -121,7 +126,8 @@ class WidgetConfigActivity : ComponentActivity() {
         val resultValue = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         setResult(Activity.RESULT_CANCELED, resultValue)
        configCoroutineScope.launch {
-           val oldConfig = getWidgetConfiguration()
+           val savedProfiles = withContext(Dispatchers.IO) { ProcessStores.importedWidgetProfiles() }
+           val oldConfig = getWidgetConfiguration() ?: savedProfiles.firstOrNull()?.previewState()
            setContent {
                val mainScreenViewModel= hiltViewModel<MainScreenViewModel>()
                val mainState = mainScreenViewModel.mainScreenState.collectAsState().value
@@ -140,6 +146,7 @@ class WidgetConfigActivity : ComponentActivity() {
                                .fillMaxSize()
                                .padding(innerPadding),
                            oldConfig = oldConfig,
+                           savedProfiles = savedProfiles,
                            saveConfig = ::updateConfiguration
                        )
                    }
@@ -185,19 +192,12 @@ class WidgetConfigActivity : ComponentActivity() {
         val glanceId = GlanceAppWidgetManager(this).getGlanceIdBy(appWidgetId)
         //var oldState: WidgetPreviewState? = null
         val state: MutablePreferences = UsageWidget.getAppWidgetState(this@WidgetConfigActivity, glanceId)
-        val oldConfig = WidgetPreviewState(
-            themeColors = ThemeColors.valueOf(state[UsageWidget.themeColors] ?: ThemeColors.Classic.name),
-            uiModeAppearance = UIModeAppearance.valueOf(state[UsageWidget.uiMode] ?: UIModeAppearance.FOLLOW_SYSTEM.name),
-            style = UsageWidget.Style.valueOf(state[UsageWidget.style] ?: UsageWidget.Style.VERTICAL.name),
-            compareWithYesterday = state[UsageWidget.vsYesterday] ?: false,
-            textSize = state[UsageWidget.textSize] ?: 32
-        )
-        return oldConfig
+        return WidgetProfiles.fromLegacy(listOf(widgetUserValues(state))).firstOrNull()?.previewState()
     }
 }
 
 @Composable
-fun WidgetConfigScreen(modifier: Modifier = Modifier,oldConfig: WidgetPreviewState? = null, saveConfig: (WidgetPreviewState)-> Unit) {
+fun WidgetConfigScreen(modifier: Modifier = Modifier,oldConfig: WidgetPreviewState? = null, savedProfiles: List<WidgetProfile> = emptyList(), saveConfig: (WidgetPreviewState)-> Unit) {
 
     var state by remember {
         mutableStateOf<WidgetPreviewState>(oldConfig ?: WidgetPreviewState())
@@ -219,7 +219,17 @@ fun WidgetConfigScreen(modifier: Modifier = Modifier,oldConfig: WidgetPreviewSta
     )
     val scrollState = rememberScrollState()
     Column(modifier = modifier.verticalScroll(scrollState), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-Spacer(modifier = Modifier.height(32.dp))
+        if (savedProfiles.isNotEmpty()) {
+            Text("Saved widget styles")
+            savedProfiles.forEachIndexed { index, profile ->
+                Button(onClick = { state = profile.previewState().copy(updateInterval = state.updateInterval) }) {
+                    Text("Style ${index + 1}: ${profile.themeColors.name}, ${profile.style.name}, ${profile.textSize}")
+                }
+            }
+            Text("Choosing a saved style replaces this preview. Save to apply it to this widget.")
+            Spacer(Modifier.height(8.dp))
+        }
+        Spacer(modifier = Modifier.height(32.dp))
         Text(text = stringResource(id = R.string.customize_your_widget))
         Spacer(modifier = Modifier.height(8.dp))
         FarhanTheme(darkMode = isDarkMode, colorStyle = state.themeColors) {
@@ -497,3 +507,10 @@ fun WidgetConfigScreenPreview() {
         WidgetConfigScreen(saveConfig = { _->})
     }
 }
+private fun WidgetProfile.previewState() = WidgetPreviewState(
+    themeColors = themeColors,
+    uiModeAppearance = uiModeAppearance,
+    style = UsageWidget.Style.valueOf(style.name),
+    compareWithYesterday = compareWithYesterday,
+    textSize = textSize,
+)

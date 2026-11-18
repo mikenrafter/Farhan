@@ -19,6 +19,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://jitpack.io") {
+            content { includeGroupByRegex("com\\.github\\.MuntashirAkon.*") }
+        }
     }
 }
 rootProject.name = "Farhan"
@@ -50,3 +53,7 @@ include(":launcher")
 include(":launcher:launcher_domain")
 include(":launcher:launcher_data")
 include(":launcher:launcher_presentation")
+
+include(":settings_android")
+
+include(":settings_rescue")

@@ -89,6 +89,8 @@ dependencies {
     implementation(libs.timber)
 //    debugImplementation(libs.leakCanary)
 
+    implementation(project(":settings_portability"))
+    implementation(project(":settings_android"))
     implementation(project(Modules.core))
     implementation(project(Modules.coreUi))
     implementation(project(Modules.infiniteScrollBlockerData))

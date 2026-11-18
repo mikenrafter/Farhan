@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Loopback sockets to the on-device wireless-debugging daemon only. No other network use. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Merged in through :settings_android -> notification_filter_data and :core. The helper uses none of them. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" tools:node="remove" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:node="remove" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
+
+    <application
+        android:name=".RescueApplication"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.DeviceDefault.DayNight"
+        tools:targetApi="35">
+
+        <!-- notification_filter_data's two Hilt receivers must not exist in the helper. -->
+        <receiver
+            android:name="ly.com.tahaben.notification_filter_data.service.NotificationDeliveryReceiver"
+            tools:node="remove" />
+        <receiver
+            android:name="ly.com.tahaben.notification_filter_data.automation.ScheduleAutomationReceiver"
+            tools:node="remove" />
+
+        <!-- Keep WorkManager (pulled in transitively) from initializing at startup. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
+        <activity
+            android:name=".ui.RescueActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|density|uiMode|locale|layoutDirection|fontScale"
+            android:exported="true"
+            android:resizeableActivity="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- CLAIM(bridge-private): not exported, so only this app's own UID can bind it. -->
+        <service
+            android:name=".bridge.AdbBridgeService"
+            android:exported="false"
+            android:process=":adb_bridge" />
+    </application>
+</manifest>

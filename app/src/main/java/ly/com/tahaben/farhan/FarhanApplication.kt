@@ -28,6 +28,7 @@ class FarhanApplication : Application() {
     }
 
     override fun onCreate() {
+        if (!ly.com.tahaben.farhan.settings.SettingsStartup.run(this)) return
         super.onCreate()
         initAcra {
             buildConfigClass = BuildConfig::class.java

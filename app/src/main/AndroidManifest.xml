@@ -36,6 +36,20 @@
         android:theme="@style/Theme.Farhan"
         tools:targetApi="31">
         <activity
+            android:name=".settings.SettingsBackupActivity"
+            android:exported="false"
+            android:label="Settings backup" />
+        <activity
+            android:name=".settings.RecoveryActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:label="Farhan settings recovery">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".CrashDetailsActivity"
             android:exported="false"
             android:label="@string/title_activity_crash_details"
