@@ -3,7 +3,7 @@
   "checkpoint_id": "a78205980db4",
   "strategy": "manual-commit",
   "branch": "rework",
-  "checkpoints_count": 3,
+  "checkpoints_count": 4,
   "files_touched": [
     "app/src/main/java/ly/com/tahaben/farhan/MainActivity.kt",
     "app/src/main/java/ly/com/tahaben/farhan/di/AppModule.kt",
@@ -49,13 +49,20 @@
       "compact_transcript": "/a7/8205980db4/1/transcript.jsonl",
       "content_hash": "/a7/8205980db4/1/content_hash.txt",
       "prompt": "/a7/8205980db4/1/prompt.txt"
+    },
+    {
+      "metadata": "/a7/8205980db4/2/metadata.json",
+      "transcript": "/a7/8205980db4/2/full.jsonl",
+      "compact_transcript": "/a7/8205980db4/2/transcript.jsonl",
+      "content_hash": "/a7/8205980db4/2/content_hash.txt",
+      "prompt": "/a7/8205980db4/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 190,
-    "cache_creation_tokens": 409909,
-    "cache_read_tokens": 22826445,
-    "output_tokens": 183905,
-    "api_call_count": 90
+    "input_tokens": 238,
+    "cache_creation_tokens": 529967,
+    "cache_read_tokens": 24870892,
+    "output_tokens": 221630,
+    "api_call_count": 112
   }
 }
