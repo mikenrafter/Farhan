@@ -26,7 +26,8 @@ class SnoozeCustodyVouchTest {
 
     // why: after an inbox row clear the coordinator holds a removal newer than the admission order (removalApplied
     //      does not move `accepted`), so the return needs its fields and must leave the flag route.
-    // catches: the old rule (every owned key is flagged), or reading appliedRemoval instead of lastRemoval.
+    // catches: the old rule (every owned key is flagged). Reading appliedRemoval instead of lastRemoval passes here, because
+    //          clearInbox applies its removal; the native-removal test below catches that.
     @Test
     fun `a key cleared from the inbox after admission is not vouched`() = runTest {
         val order = coordinator.captureEvent("K")
