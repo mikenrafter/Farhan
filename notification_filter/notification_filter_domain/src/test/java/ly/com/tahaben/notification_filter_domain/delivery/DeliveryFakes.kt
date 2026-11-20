@@ -111,6 +111,7 @@ class FakeEnvironment(
     var schedulesByDate: ly.com.tahaben.notification_filter_domain.schedule.ScheduleBook? = null
 
     override fun schedule() = schedule
+    override fun zone() = java.time.ZoneOffset.UTC
     override fun scheduleAt(instant: java.time.Instant, zone: java.time.ZoneId) =
         schedulesByDate?.scheduleAt(instant, zone) ?: schedule
     override fun settings() = settings
