@@ -21,6 +21,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -119,7 +120,7 @@ class UsageOverviewE2E {
             setCachingEnabled = SetCachingEnabled(usagePreferences),
         )
         usageOverviewViewModel =
-            UsageOverviewViewModel(usageOverviewUseCases, usageSettingsUseCases, usagePreferences)
+            UsageOverviewViewModel(usageOverviewUseCases, usageSettingsUseCases, usagePreferences, InstrumentationRegistry.getInstrumentation().targetContext)
         repositoryFake.usageItems.add(
             UsageDataItem(
                 appName = "Farhan",

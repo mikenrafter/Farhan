@@ -29,7 +29,8 @@ import kotlin.time.Duration.Companion.milliseconds
 class UsageOverviewViewModel @Inject constructor(
     private val usageOverviewUseCases: UsageOverviewUseCases,
     private val usageSettingsUseCases: UsageSettingsUseCases,
-    private val preferences: Preferences
+    private val preferences: Preferences,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val appContext: android.content.Context,
 ) : ViewModel() {
 
 
@@ -142,12 +143,12 @@ class UsageOverviewViewModel @Inject constructor(
             val filteredList = if (state.isDateToday) {
                 usageOverviewUseCases.filterUsageEvents(usageDataList).dropLast(1).filterNot {
                     (filterLaunchers && it.appCategory == UsageDataItem.Category.LAUNCHER) ||
-                            (filterFarhan && it.packageName == "ly.com.tahaben.farhan")
+                            (filterFarhan && it.packageName == appContext.packageName)
                 }
             } else {
                 usageOverviewUseCases.filterUsageEvents(usageDataList).filterNot {
                     (filterLaunchers && it.appCategory == UsageDataItem.Category.LAUNCHER) ||
-                            (filterFarhan && it.packageName == "ly.com.tahaben.farhan")
+                            (filterFarhan && it.packageName == appContext.packageName)
                 }
             }
             Timber.d("filtered data size: ${filteredList.size}")
@@ -368,12 +369,12 @@ class UsageOverviewViewModel @Inject constructor(
                     val filteredList = if (usageOverviewUseCases.isDateToDay(date)){
                         usageOverviewUseCases.filterUsageEvents(usageDataList).dropLast(1).filterNot {
                             (filterLaunchers && it.appCategory == UsageDataItem.Category.LAUNCHER) ||
-                                    (filterFarhan && it.packageName == "ly.com.tahaben.farhan")
+                                    (filterFarhan && it.packageName == appContext.packageName)
                         }
                     } else {
                         usageOverviewUseCases.filterUsageEvents(usageDataList).filterNot {
                             (filterLaunchers && it.appCategory == UsageDataItem.Category.LAUNCHER) ||
-                                    (filterFarhan && it.packageName == "ly.com.tahaben.farhan")
+                                    (filterFarhan && it.packageName == appContext.packageName)
                         }
                     }
                     val filteredListWithDuration =

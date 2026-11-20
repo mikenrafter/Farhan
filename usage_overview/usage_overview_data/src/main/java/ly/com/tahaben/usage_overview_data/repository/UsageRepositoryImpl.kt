@@ -182,6 +182,11 @@ class UsageRepositoryImpl(
         return usageDataItems
     }
 
+    /**
+     * CLAIM(own-package): AppOps resolves the op by (uid, package) and refuses a package that is not this app's,
+     * so the name must be the installed application id, which is `farhan_alpha` for the alpha build and not the
+     * Kotlin namespace. A hardcoded name made this always false, whatever the user granted.
+     */
     override fun checkUsagePermission(): Boolean {
         val appOpsManager =
             context.getSystemService(AppCompatActivity.APP_OPS_SERVICE) as AppOpsManager
@@ -189,12 +194,12 @@ class UsageRepositoryImpl(
         val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             appOpsManager.unsafeCheckOpNoThrow(
                 "android:get_usage_stats",
-                Process.myUid(), "ly.com.tahaben.farhan"
+                Process.myUid(), context.packageName
             )
         } else {
             appOpsManager.checkOpNoThrow(
                 "android:get_usage_stats",
-                Process.myUid(), "ly.com.tahaben.farhan"
+                Process.myUid(), context.packageName
             )
         }
         return mode == AppOpsManager.MODE_ALLOWED
