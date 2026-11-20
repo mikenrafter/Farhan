@@ -2,7 +2,6 @@ package ly.com.tahaben.farhan.settings
 
 import android.os.Build
 import androidx.annotation.StringRes
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -31,10 +29,14 @@ import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -47,7 +49,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ly.com.tahaben.core.R
 import ly.com.tahaben.core.model.ThemeColors
@@ -198,39 +199,28 @@ private fun SettingsRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppearanceOptions(
     selectedMode: UIModeAppearance,
     onSelect: (UIModeAppearance) -> Unit,
 ) {
-    val colors = MaterialTheme.colorScheme
-    val shape = RoundedCornerShape(20.dp)
     val modes = listOf(UIModeAppearance.LIGHT_MODE, UIModeAppearance.DARK_MODE, UIModeAppearance.FOLLOW_SYSTEM)
-    Row(
-        modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()
-            .clip(shape).border(1.dp, colors.outlineVariant, shape).selectableGroup(),
+    SingleChoiceSegmentedButtonRow(
+        modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
     ) {
-        modes.forEach { mode ->
-            val selected = mode == selectedMode
+        modes.forEachIndexed { index, mode ->
             val label = when (mode) {
                 UIModeAppearance.LIGHT_MODE -> R.string.light
                 UIModeAppearance.DARK_MODE -> R.string.appearance_dark
                 UIModeAppearance.FOLLOW_SYSTEM -> R.string.appearance_system
             }
-            Box(
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp)
-                    .background(if (selected) colors.primaryContainer else Color.Transparent)
-                    .selectable(selected, role = Role.RadioButton, onClick = { onSelect(mode) })
-                    .padding(6.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    stringResource(label),
-                    color = if (selected) colors.onPrimaryContainer else colors.onSurface,
-                    style = MaterialTheme.typography.labelLarge,
-                    textAlign = TextAlign.Center,
-                )
-            }
+            SegmentedButton(
+                selected = mode == selectedMode,
+                onClick = { onSelect(mode) },
+                shape = SegmentedButtonDefaults.itemShape(index, modes.size),
+                label = { Text(stringResource(label)) },
+            )
         }
     }
 }
