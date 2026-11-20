@@ -48,6 +48,8 @@ interface DeliveryRowStore {
     suspend fun find(id: String): NotificationItem?
     suspend fun markCleared(id: String)
     suspend fun markDelivered(id: String)
+    suspend fun completeSnoozeReturn(id: String)
+    suspend fun liveSnoozes(): List<NotificationItem> = emptyList()
     suspend fun pending(maxPriorityLevel: Int): List<NotificationItem>
     suspend fun invalidateBefore(session: String, order: Long)
     suspend fun nextHead(after: NotificationItem): NotificationItem? = null
@@ -68,7 +70,7 @@ interface ProxyNotificationPoster {
 /** Reads of settings that can change between calls. */
 interface DeliveryEnvironment {
     fun schedule(): List<NotificationSchedulePeriod>
-    fun scheduleAt(instant: Instant, zone: ZoneId): List<NotificationSchedulePeriod> = schedule()
+    fun scheduleAt(instant: Instant, zone: ZoneId): List<NotificationSchedulePeriod>
     fun settings(): Map<NotificationPriority, PriorityDeliverySetting>
     fun timeContext(): DeliveryTimeContext
     fun queuePreferences(): Map<String, AppQueuePreference>
@@ -95,7 +97,7 @@ class NotificationDeliveryCoordinator(
     private var discardedBefore = 0L
     private val sourceSession = java.util.UUID.randomUUID().toString()
     private var persistedInvalidation = 0L
-    private data class Completion(val id: String?, val state: DeliveryBudgetState, val entry: BudgetSpendEntry?,
+    private data class Completion(val id: String, val state: DeliveryBudgetState, val entry: BudgetSpendEntry?,
         var rowSaved: Boolean = false, var budgetSaved: Boolean = false)
     private var completion: Completion? = null
 
@@ -114,7 +116,7 @@ class NotificationDeliveryCoordinator(
 
     private suspend fun finishCompletion() {
         val pending = completion ?: return
-        if (!pending.rowSaved) { pending.id?.let { rows.markDelivered(it) }; pending.rowSaved = true }
+        if (!pending.rowSaved) { rows.markDelivered(pending.id); pending.rowSaved = true }
         if (!pending.budgetSaved) { budget.write(pending.state); pending.budgetSaved = true }
         pending.entry?.let { budget.appendSpend(it) }
         completion = null
@@ -188,7 +190,8 @@ class NotificationDeliveryCoordinator(
         else if (sourceStillCurrent?.invoke() == false) DeliveryOutcome.Deferred(item.id) else deliver(updated)
     }
 
-    // CLAIM(snooze-return-budget): settle against the stored snooze priority under DeliveryGate [Snooze pilot spec V4].
+    // CLAIM(snooze-return-crash): may undercharge one return after a crash, never double charge [Snooze pilot spec W2].
+    // The return row step, budget state and spend entry are committed in that order.
     suspend fun settleSnoozeReturn(key: String, postTime: Long, now: Instant): SnoozeReturnDecision =
         SnoozeReturnDecision.NoFundedMoment
 
@@ -216,7 +219,7 @@ class NotificationDeliveryCoordinator(
         gate.run { delete() }
     }
 
-    suspend fun onBatchTick(): List<DeliveryOutcome> = gate.run {
+    suspend fun onBatchTick(now: Instant = Instant.now()): List<DeliveryOutcome> = gate.run {
         val removals = synchronized(this) { events.filterValues { it.lastRemoval > it.accepted && it.appliedRemoval < it.lastRemoval }.map { it.key to it.value.lastRemoval } }
         removals.forEach { (id, order) -> rows.markCleared(id); removalApplied(id, order) }
         val settings = environment.settings()

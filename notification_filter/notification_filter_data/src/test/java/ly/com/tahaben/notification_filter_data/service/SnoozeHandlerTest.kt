@@ -1,6 +1,5 @@
 package ly.com.tahaben.notification_filter_data.service
 
-import android.service.notification.NotificationListenerService.REASON_APP_CANCEL
 import android.service.notification.NotificationListenerService.REASON_SNOOZED
 import com.google.common.truth.Truth.assertThat
 import java.time.Clock
@@ -23,6 +22,9 @@ import ly.com.tahaben.notification_filter_domain.delivery.NotificationDeliveryPo
 import ly.com.tahaben.notification_filter_domain.delivery.SnoozeExclusionFlags
 import ly.com.tahaben.notification_filter_domain.delivery.SnoozeInput
 import ly.com.tahaben.notification_filter_domain.delivery.SnoozeReturnDecision
+import ly.com.tahaben.notification_filter_domain.delivery.SnoozeReturn
+import ly.com.tahaben.notification_filter_domain.delivery.SnoozeFallbackReason
+import ly.com.tahaben.notification_filter_domain.delivery.SnoozeFallbackReason.*
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.DeliveryCadence
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
@@ -55,15 +57,21 @@ class SnoozeHandlerTest {
         alreadyDelivered = false,
         liveSnoozes = 0,
     )
-    private val platform = FakeSnoozePlatform()
+    private val platform = FakeSnoozePlatform { fallbackOrder += "cancel:$it" }
     private val events = InMemoryExperimentEventLog()
     private val ledger = FakeLedger()
     private val budget = FakeReturnBudget(nextPeriod, ledger)
     private val fallback = mutableListOf<NotificationItem>()
+    private val refreshed = mutableListOf<NotificationItem>()
+    private val fallbackOrder = mutableListOf<String>()
     private val handler = newHandler()
 
     private fun newHandler(bootCount: Int = 10) =
-        SnoozeHandler(platform, events, budget, ledger, { bootCount }) { fallback += it }
+        SnoozeHandler(platform, events, budget, ledger, { bootCount },
+            proxyArrival = { fallback += it; fallbackOrder += "arrive:${it.id}" },
+            refreshProxy = { refreshed += it },
+            inputAt = { input.copy(now = it) },
+        )
 
     private fun item(key: String, input: SnoozeInput) = NotificationItem(
         id = key, appName = "WhatsApp", title = "A title", text = "A body", time = "",
@@ -71,8 +79,13 @@ class SnoozeHandlerTest {
     )
 
     private suspend fun post(key: String, input: SnoozeInput, target: SnoozeHandler = handler): Boolean {
-        platform.returned(key)
         return target.onPosted(item(key, input), input)
+    }
+
+    private suspend fun returnPost(key: String, input: SnoozeInput, target: SnoozeHandler = handler): Boolean {
+        platform.returned(key)
+        platform.active[key] = input.now.toEpochMilli()
+        return target.settle(SnoozeReturn(key, input.now.toEpochMilli()), input)
     }
 
     // why: a fresh eligible arrival hands off to Android until its cadence tick with no charge before delivery.
@@ -99,7 +112,7 @@ class SnoozeHandlerTest {
     fun `allowed return charges exactly once and leaves the original alone`() = runTest {
         startSnooze()
 
-        assertThat(post(key, input.copy(now = boundary))).isTrue()
+        assertThat(returnPost(key, input.copy(now = boundary))).isTrue()
         assertThat(post(key, input.copy(now = boundary.plusSeconds(1), snoozeEnabled = false))).isFalse()
 
         assertThat(budget.checked).containsExactly(returnAt(boundary))
@@ -123,7 +136,7 @@ class SnoozeHandlerTest {
             setting = input.setting.copy(cadence = DeliveryCadence.IMMEDIATELY),
         )
 
-        assertThat(post(key, changed)).isTrue()
+        assertThat(returnPost(key, changed)).isTrue()
         assertThat(budget.charges).containsExactly(returnAt(boundary))
         assertThat(platform.attempts).containsExactly(SnoozeAttempt(key, 300_000L))
         assertThat(events.recent().first()).isEqualTo(event(RETURNED, boundary))
@@ -188,7 +201,7 @@ class SnoozeHandlerTest {
         budget.state = DeliveryBudgetState(spentPoints = 8, periodStartMinute = 9 * 60)
         assertDeniedReturn(delayMillis = 10_800_000L)
 
-        assertFallback(boundary.plusSeconds(30), nativeCalls = 2)
+        assertFallback(boundary.plusSeconds(30), nativeCalls = 2, reason = SAME_BOUNDARY)
     }
 
     // why: multiple original notifications can return on the same cadence boundary.
@@ -201,8 +214,8 @@ class SnoozeHandlerTest {
         startSnooze()
         assertThat(post(otherKey, input)).isTrue()
 
-        assertThat(post(key, input.copy(now = boundary))).isTrue()
-        assertThat(post(otherKey, input.copy(now = boundary))).isTrue()
+        assertThat(returnPost(key, input.copy(now = boundary))).isTrue()
+        assertThat(returnPost(otherKey, input.copy(now = boundary))).isTrue()
         assertThat(platform.attempts).containsExactly(
             SnoozeAttempt(key, 300_000L),
             SnoozeAttempt(otherKey, 300_000L),
@@ -244,13 +257,13 @@ class SnoozeHandlerTest {
     // proves: CLAIM(snooze-return-budget)
     // catches: skipping rehydration or intercepting a return as a new snooze after restart.
     @Test
-    fun `new handler rehydrates from Android before charging the return`() = runTest {
+    fun `new handler rehydrates ledger ownership before charging the return`() = runTest {
         startSnooze()
         assertThat(platform.snoozedKeys()).containsExactly(key)
         val replacement = newHandler()
-        replacement.onListenerConnected(arrival.plusSeconds(1), arrival.minusSeconds(3600))
+        replacement.onListenerConnected(arrival.plusSeconds(1), boundary.minusSeconds(3600))
 
-        assertThat(post(key, input.copy(now = boundary), replacement)).isTrue()
+        assertThat(returnPost(key, input.copy(now = boundary), replacement)).isTrue()
         assertThat(platform.snoozedKeys()).isEmpty()
         assertThat(budget.charges).containsExactly(returnAt(boundary))
         assertThat(events.recent()).containsExactly(event(RETURNED, boundary), event(SNOOZED, arrival)).inOrder()
@@ -265,30 +278,30 @@ class SnoozeHandlerTest {
         startSnooze()
         val removedAt = arrival.plusSeconds(1)
         assertThat(handler.onRemoved(key, packageName, REASON_SNOOZED, removedAt.toEpochMilli())).isTrue()
-        assertThat(post(key, input.copy(now = boundary))).isTrue()
+        assertThat(returnPost(key, input.copy(now = boundary))).isTrue()
 
         assertThat(budget.charges).containsExactly(returnAt(boundary))
         assertThat(platform.attempts).containsExactly(SnoozeAttempt(key, 300_000L))
         assertThat(events.recent()).containsExactly(event(RETURNED, boundary), event(SNOOZED, arrival)).inOrder()
     }
 
-    // why: a source cancellation ends a tracked snooze and a subsequent post with that key is fresh.
-    // proves: CLAIM(snooze-removal)
-    // catches: ignoring a source cancellation or treating its key as a chargeable return.
+    // why: source cancellation while Android owns the snooze sends no removal callback.
+    // catches: clearing at the expiry tick during an Android snapshot gap, or never clearing on the same boot.
     @Test
-    fun `app cancellation logs removal and drops the key`() = runTest {
+    fun `scan waits a full tick before clearing an absent cancelled source`() = runTest {
         startSnooze()
-        val removedAt = arrival.plusSeconds(1)
-        handler.onRemoved(key, packageName, REASON_APP_CANCEL, removedAt.toEpochMilli())
+        platform.keys.remove(key)
 
-        assertThat(events.recent()).containsExactly(
-            event(REMOVED, removedAt).copy(removalReason = REASON_APP_CANCEL),
-            event(SNOOZED, arrival),
-        ).inOrder()
-        assertThat(post(key, input.copy(now = boundary))).isTrue()
-        assertThat(platform.attempts).containsExactly(SnoozeAttempt(key, 300_000L), SnoozeAttempt(key, 3_600_000L)).inOrder()
+        handler.onBatchTick(boundary.plusMillis(1), boundary.minusSeconds(3600))
+        assertThat(ledger.rows[key]?.snoozeDeadline).isEqualTo(boundary.toEpochMilli())
+        assertThat(ledger.rows[key]?.isCleared).isFalse()
+        assertThat(events.recent()).containsExactly(event(SNOOZED, arrival))
+
+        handler.onBatchTick(nextPeriod, nextHour)
+        assertThat(ledger.rows[key]?.isCleared).isTrue()
+        assertThat(ledger.rows[key]?.snoozeDeadline).isNull()
         assertThat(budget.checked).isEmpty()
-        assertThat(events.recent().first()).isEqualTo(event(SNOOZED, boundary))
+        assertThat(fallback).isEmpty()
     }
 
     // why: fresh posts use ordinary delivery when snooze is off (I4).
@@ -328,8 +341,7 @@ class SnoozeHandlerTest {
         budget.forceDecision = { SnoozeReturnDecision.RetryAt(nextPeriod) }
         platform.rejectSnooze = true
 
-        assertFallback(boundary, nativeCalls = 2)
-        assertThat(events.recent().first()).isEqualTo(event(FAILED, boundary))
+        assertFallback(boundary, nativeCalls = 2, reason = NATIVE_FAILURE)
     }
 
     // why: a nonpositive retry would break I7 and could keep returning immediately.
@@ -341,7 +353,7 @@ class SnoozeHandlerTest {
             assertThat(post(sourceKey, input)).isTrue()
             budget.forceDecision = { SnoozeReturnDecision.RetryAt(invalidRetry) }
 
-            assertFallback(boundary, nativeCalls = index + 1, sourceKey = sourceKey)
+            assertFallback(boundary, nativeCalls = index + 1, reason = INVALID_RETRY, sourceKey = sourceKey)
         }
     }
 
@@ -352,7 +364,7 @@ class SnoozeHandlerTest {
         startSnooze()
         budget.forceDecision = { SnoozeReturnDecision.NoFundedMoment }
 
-        assertFallback(boundary, nativeCalls = 1)
+        assertFallback(boundary, nativeCalls = 1, reason = NO_FUNDED_MOMENT)
     }
 
     // why: the three-snooze limit repeats per local day, then hands the next denial to ordinary delivery.
@@ -368,11 +380,11 @@ class SnoozeHandlerTest {
         budget.forceDecision = { SnoozeReturnDecision.RetryAt(it.plusSeconds(3600)) }
         assertThat(post(key, localInput)).isTrue()
         repeat(3) { hour ->
-            assertThat(post(key, localInput.copy(now = midnight.plusSeconds(hour * 3600L)))).isTrue()
+            assertThat(returnPost(key, localInput.copy(now = midnight.plusSeconds(hour * 3600L)))).isTrue()
         }
         assertThat(events.recent().count { it.kind == RESNOOZED }).isEqualTo(3)
 
-        assertFallback(midnight.plusSeconds(3 * 3600L), nativeCalls = 4, returnInput = localInput)
+        assertFallback(midnight.plusSeconds(3 * 3600L), nativeCalls = 4, reason = DAILY_LIMIT, returnInput = localInput)
     }
 
     // why: Android's snoozed list contains other listeners' keys and cannot confer ownership.
@@ -383,12 +395,12 @@ class SnoozeHandlerTest {
         val foreignKey = "foreign"
         platform.keys += foreignKey
         val replacement = newHandler()
-        replacement.onListenerConnected(arrival.plusSeconds(1), arrival.minusSeconds(3600))
+        replacement.onListenerConnected(arrival.plusSeconds(1), boundary.minusSeconds(3600))
 
         assertThat(post(foreignKey, input.copy(snoozeEnabled = false, now = boundary), replacement)).isFalse()
         assertThat(budget.checked).isEmpty()
         assertThat(ledger.rows.keys).containsExactly(key)
-        assertThat(post(key, input.copy(snoozeEnabled = false, now = boundary), replacement)).isTrue()
+        assertThat(returnPost(key, input.copy(snoozeEnabled = false, now = boundary), replacement)).isTrue()
         assertThat(budget.charges).containsExactly(returnAt(boundary))
         assertThat(platform.attempts).containsExactly(SnoozeAttempt(key, 300_000L))
     }
@@ -398,8 +410,8 @@ class SnoozeHandlerTest {
     @Test
     fun `reboot loss restores the saved text as pending and records lost`() = runTest {
         ledger.upsert(snoozedRow())
-        val now = boundary.plusSeconds(1)
-        newHandler(bootCount = 11).onListenerConnected(now, boundary)
+        val now = nextPeriod
+        newHandler(bootCount = 11).onListenerConnected(now, nextHour)
 
         val row = ledger.rows.getValue(key)
         assertThat(row.snoozeDeadline).isNull()
@@ -417,7 +429,7 @@ class SnoozeHandlerTest {
     fun `expired missing snooze on the same boot clears the saved row`() = runTest {
         ledger.upsert(snoozedRow())
 
-        newHandler().onListenerConnected(boundary.plusSeconds(1), boundary)
+        newHandler().onListenerConnected(nextPeriod, nextHour)
 
         val row = ledger.rows.getValue(key)
         assertThat(row.isCleared).isTrue()
@@ -435,20 +447,157 @@ class SnoozeHandlerTest {
         startSnooze()
         val updatedKey = "0|com.whatsapp|44"
         assertThat(post(updatedKey, input)).isTrue()
-        platform.active[updatedKey] = arrival.plusMillis(1).toEpochMilli()
-
-        handler.onBatchTick(boundary, arrival.minusSeconds(3600))
+        handler.onBatchTick(boundary, boundary.minusSeconds(3600))
         assertThat(fallback).isEmpty()
+        platform.active[updatedKey] = boundary.plusMillis(1).toEpochMilli()
         handler.onBatchTick(nextHour, boundary)
         assertThat(fallback.map { it.id }).containsExactly(key)
         assertThat(ledger.rows[key]?.snoozeDeadline).isNull()
-        assertThat(events.recent().first().kind).isEqualTo(FAILED)
+        assertThat(events.recent().any { it.fallbackReason == UNCONFIRMED }).isTrue()
 
         handler.onRemoved(key, packageName, REASON_SNOOZED, nextHour.plusSeconds(1).toEpochMilli())
         handler.onBatchTick(nextHour.plusSeconds(3600), nextHour)
         assertThat(fallback.map { it.id }).containsExactly(key)
         assertThat(ledger.rows[key]?.snoozeDeadline).isNull()
+        assertThat(budget.charges).containsExactly(Return(updatedKey, boundary.plusMillis(1).toEpochMilli(), nextHour))
+        assertThat(fallbackOrder).containsExactly("cancel:$key", "arrive:$key").inOrder()
+    }
+
+    // why: a return still visible under a different post time is settled even if the binder offer was lost.
+    // catches: treating the return as a failed native snooze or charging it during both connect and the next tick.
+    @Test
+    fun `rescan settles a changed active post time exactly once`() = runTest {
+        ledger.upsert(snoozedRow())
+        platform.active[key] = boundary.toEpochMilli()
+        val now = boundary.plusSeconds(1)
+        handler.onListenerConnected(now, boundary.minusSeconds(3600))
+        handler.onBatchTick(nextHour, boundary)
+
+        assertThat(budget.charges).containsExactly(Return(key, boundary.toEpochMilli(), now))
+        assertThat(ledger.rows[key]?.isDelivered).isTrue()
+        assertThat(fallbackOrder).isEmpty()
+        assertThat(platform.attempts).isEmpty()
+    }
+
+    // why: ownership can persist past the deadline if Android still lists the key as snoozed.
+    // catches: declaring loss from a passed time alone, including after reboot.
+    @Test
+    fun `rescan keeps an expired row that Android still reports snoozed`() = runTest {
+        val held = snoozedRow()
+        ledger.upsert(held)
+        platform.keys += key
+        ledger.upsert(held.copy(id = "missing"))
+        val replacement = newHandler(bootCount = 11)
+        replacement.onListenerConnected(nextPeriod, nextHour)
+
+        assertThat(ledger.rows[key]).isEqualTo(held)
+        assertThat(ledger.rows["missing"]?.snoozeDeadline).isNull() // Scan positive control.
         assertThat(budget.checked).isEmpty()
+        assertThat(fallback).isEmpty()
+    }
+
+    // why: disabling the filter releases a visible return without snoozing, charging, or creating a proxy.
+    // catches: dropping the callback before ending custody or invoking the ordinary fallback while filtering is off.
+    @Test
+    fun `filter off releases the visible return and closes custody`() = runTest {
+        startSnooze()
+        assertThat(returnPost(key, input.copy(now = boundary, filterEnabled = false))).isTrue()
+        assertThat(ledger.rows[key]?.snoozeDeadline).isNull()
+        assertThat(ledger.rows[key]?.isDelivered).isTrue()
+        assertThat(platform.active).containsEntry(key, boundary.toEpochMilli())
+        assertThat(platform.attempts).hasSize(1)
+        assertThat(budget.checked).isEmpty()
+        assertThat(fallbackOrder).isEmpty()
+    }
+
+    // why: disabling snooze must stop further native requests when an owned return is denied.
+    // catches: issuing a new snooze after opting out or leaving the denied source visible while filtering is on.
+    @Test
+    fun `snooze off and budget denial cancel the original and use proxy arrival`() = runTest {
+        startSnooze()
+        budget.forceDecision = { SnoozeReturnDecision.RetryAt(nextPeriod) }
+
+        assertFallback(boundary, nativeCalls = 1, reason = SNOOZE_OFF, returnInput = input.copy(snoozeEnabled = false))
+        assertThat(budget.checked).containsExactly(returnAt(boundary))
+        assertThat(platform.active).doesNotContainKey(key)
+        assertThat(fallback.single().text).isEqualTo("A body")
+    }
+
+    // why: the worker can see an old flag after custody has already closed.
+    // catches: treating a rejected ownership check as a retry or omitting its diagnostic reason.
+    @Test
+    fun `not owned decision records the exact not a return fallback`() = runTest {
+        startSnooze()
+        budget.forceDecision = { SnoozeReturnDecision.NotOwned }
+
+        assertFallback(boundary, nativeCalls = 1, reason = NOT_A_RETURN)
+    }
+
+    // why: an owned key posted before its deadline is not an authorized native return.
+    // catches: charging a premature callback or replacing the saved payload with an update to the hidden record.
+    @Test
+    fun `owned callback before deadline falls back with the saved original`() = runTest {
+        startSnooze()
+        assertFallback(arrival.plusSeconds(1), nativeCalls = 1, reason = BEFORE_DEADLINE)
+        assertThat(fallback.single().timestamp).isEqualTo(arrival.toEpochMilli())
+        assertThat(budget.checked).isEmpty()
+    }
+
+    // why: cancelling a summary can cascade to its children, so the snooze route must leave it in Android's tray.
+    // catches: treating the summary as an ordinary proxy arrival or storing it in the ledger.
+    @Test
+    fun `snooze on leaves a group summary visible without saving a row`() = runTest {
+        val grouped = input.copy(
+            exclusionFlags = input.exclusionFlags.copy(isGroupSummary = true, hasGroupKey = true),
+        )
+        platform.active[key] = arrival.toEpochMilli()
+        assertThat(post(key, grouped.copy(snoozeEnabled = false))).isFalse()
+        assertThat(post(key, grouped)).isTrue()
+        assertThat(platform.active).containsEntry(key, arrival.toEpochMilli())
+        assertThat(ledger.rows).isEmpty()
+        assertThat(fallbackOrder).isEmpty()
+        assertThat(platform.attempts).isEmpty()
+    }
+
+    // why: group-summary cancellation can collateral-remove an owned child without ending its logical delivery.
+    // catches: clearing the child or charging it during recovery.
+    @Test
+    fun `reason twelve restores an uncharged grouped child as pending`() = runTest {
+        ledger.upsert(snoozedRow().copy(snoozeGroupKey = "group"))
+        val at = boundary.toEpochMilli()
+        assertThat(handler.onRemoved(key, packageName, 12, at)).isTrue()
+        val row = ledger.rows.getValue(key)
+        assertThat(row.snoozeDeadline).isNull()
+        assertThat(row.isDelivered).isFalse()
+        assertThat(row.isCleared).isFalse()
+        assertThat(budget.checked).isEmpty()
+        assertThat(refreshed).isEmpty()
+    }
+
+    // why: collateral removal of an already charged return needs a refresh with no second spend.
+    // catches: sending the child to normal accounting or dropping the saved notification.
+    @Test
+    fun `reason twelve refreshes an already charged grouped child without spending again`() = runTest {
+        val row = snoozedRow().copy(snoozeGroupKey = "group", isDelivered = true,
+            snoozeDeadline = null, snoozePriority = null, snoozeBootCount = null)
+        ledger.upsert(row)
+        assertThat(handler.onRemoved(key, packageName, 12, boundary.toEpochMilli())).isTrue()
+        assertThat(refreshed).containsExactly(row)
+        assertThat(budget.checked).isEmpty()
+        assertThat(fallback).isEmpty()
+    }
+
+    // why: a missing grouped child on the same boot can be a cascade and keeps its saved pending copy.
+    // catches: applying the ordinary same-boot cancellation rule to grouped children.
+    @Test
+    fun `missing grouped child on the same boot returns to pending after the guard`() = runTest {
+        ledger.upsert(snoozedRow().copy(snoozeGroupKey = "group"))
+        handler.onBatchTick(nextPeriod, nextHour)
+        val row = ledger.rows.getValue(key)
+        assertThat(row.snoozeDeadline).isNull()
+        assertThat(row.isCleared).isFalse()
+        assertThat(row.isDelivered).isFalse()
+        assertThat(row.text).isEqualTo("A body")
     }
 
     private fun snoozedRow() = item(key, input).copy(
@@ -458,16 +607,18 @@ class SnoozeHandlerTest {
     private suspend fun assertFallback(
         now: Instant,
         nativeCalls: Int,
+        reason: SnoozeFallbackReason,
         sourceKey: String = key,
         returnInput: SnoozeInput = input,
     ) {
-        assertThat(post(sourceKey, returnInput.copy(now = now))).isFalse()
+        assertThat(returnPost(sourceKey, returnInput.copy(now = now))).isFalse()
         assertThat(platform.attempts).hasSize(nativeCalls)
         assertThat(budget.charges).isEmpty()
         assertThat(ledger.rows[sourceKey]?.snoozeDeadline).isNull()
         val event = events.recent().first()
         assertThat(event.atEpochMillis).isEqualTo(now.toEpochMilli())
-        assertThat(event.kind == FAILED || event.skipReason != null).isTrue()
+        assertThat(event.fallbackReason).isEqualTo(reason)
+        assertThat(fallbackOrder.takeLast(2)).containsExactly("cancel:$sourceKey", "arrive:$sourceKey").inOrder()
     }
 
     private suspend fun startSnooze() {
@@ -480,7 +631,7 @@ class SnoozeHandlerTest {
         assertThat(budget.canDeliver(HIGH, budget.retryAt)).isTrue()
         startSnooze()
 
-        assertThat(post(key, input.copy(now = boundary))).isTrue()
+        assertThat(returnPost(key, input.copy(now = boundary))).isTrue()
         assertThat(budget.checked).containsExactly(returnAt(boundary))
         assertThat(budget.charges).isEmpty()
         assertThat(platform.attempts).containsExactly(SnoozeAttempt(key, 300_000L), SnoozeAttempt(key, delayMillis)).inOrder()
@@ -533,7 +684,7 @@ class SnoozeHandlerTest {
 
     private data class SnoozeAttempt(val key: String, val millis: Long)
 
-    private class FakeSnoozePlatform : SnoozePlatform {
+    private class FakeSnoozePlatform(private val onCancel: (String) -> Unit) : SnoozePlatform {
         val attempts = mutableListOf<SnoozeAttempt>()
         val keys = mutableSetOf<String>()
         val active = mutableMapOf<String, Long>()
@@ -549,6 +700,7 @@ class SnoozeHandlerTest {
 
         override fun snoozedKeys(): Set<String> = keys.toSet()
         override fun activePostTimes(): Map<String, Long> = active.toMap()
+        override fun cancelVisible(key: String) { active.remove(key); onCancel(key) }
     }
 
     private companion object {

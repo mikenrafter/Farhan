@@ -5,6 +5,7 @@ import com.google.common.truth.Truth.assertWithMessage
 import java.time.Instant
 import java.time.ZoneOffset
 import ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod
+import ly.com.tahaben.notification_filter_domain.testsupport.item
 import ly.com.tahaben.notification_filter_domain.model.DeliveryCadence
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
@@ -50,6 +51,10 @@ class SnoozePolicyTest {
         ),
         SnoozeSkipReason.ALREADY_DELIVERED to eligible.copy(alreadyDelivered = true),
         SnoozeSkipReason.AT_CAPACITY to eligible.copy(liveSnoozes = 400),
+        SnoozeSkipReason.NO_CAPACITY to eligible.copy(
+            budget = DeliveryBudgetState(spentPoints = 8, periodStartMinute = 9 * 60),
+            now = Instant.parse("2026-11-20T09:30:00Z"),
+        ),
         SnoozeSkipReason.NO_FUNDED_MOMENT to eligible.copy(
             priority = NotificationPriority.LOW,
             setting = PriorityDeliverySetting.defaultFor(NotificationPriority.LOW),
@@ -176,6 +181,87 @@ class SnoozePolicyTest {
         assertThat(exclusions.keys).containsExactlyElementsIn(SnoozeSkipReason.entries)
         exclusions.keys.forEach(::assertSkip)
     }
+
+    // why: the repeating schedule gives midnight 2 points, enough for only one HIGH return.
+    // catches: looking only at total live snoozes or scheduling both originals into the same funded tick.
+    @Test
+    fun `at twenty two thirty only one high fits the next midnight`() {
+        val night = eligible.copy(now = Instant.parse("2026-11-20T22:30:00Z"))
+        assertThat(SnoozePolicy.decide(night)).isEqualTo(SnoozeDecision.Snooze(5_400_000L))
+        val first = owned("first", "2026-11-21T00:00:00Z", NotificationPriority.HIGH)
+        assertThat(SnoozePolicy.decide(night.copy(ownedRows = listOf(first))))
+            .isEqualTo(SnoozeDecision.Skip(SnoozeSkipReason.NO_CAPACITY))
+    }
+
+    // why: the 09:00 boundary opens a fresh allocation, and 10:00 shares it with 09:00.
+    // catches: carrying 08:30 spend into the following period or reserving per tick instead of per period.
+    @Test
+    fun `eight thirty and nine thirty use spend and snoozes from the target period`() {
+        val before = eligible.copy(
+            now = Instant.parse("2026-11-20T08:30:00Z"),
+            budget = DeliveryBudgetState(spentPoints = 2, periodStartMinute = 0, localDay = "2026-11-20"),
+            ownedRows = listOf(owned("old", "2026-11-20T08:00:00Z", NotificationPriority.HIGH)),
+        )
+        assertThat(SnoozePolicy.decide(before)).isEqualTo(SnoozeDecision.Snooze(1_800_000L))
+
+        val after = before.copy(
+            now = Instant.parse("2026-11-20T09:30:00Z"),
+            budget = DeliveryBudgetState(spentPoints = 4, periodStartMinute = 9 * 60, localDay = "2026-11-20"),
+            ownedRows = before.ownedRows + owned("reserved", "2026-11-20T11:00:00Z", NotificationPriority.MEDIUM),
+        )
+        assertThat(SnoozePolicy.decide(after)).isEqualTo(SnoozeDecision.Skip(SnoozeSkipReason.NO_CAPACITY))
+    }
+
+    // why: return cost is the priority at snooze time, even if a saved row later has another priority.
+    // catches: counting rows, weighting their display priority, or rejecting an exact fit.
+    @Test
+    fun `mixed stored medium and high reservations consume six of eight points`() {
+        val candidate = eligible.copy(
+            now = Instant.parse("2026-11-20T09:30:00Z"),
+            ownedRows = listOf(
+                owned("medium", "2026-11-20T10:00:00Z", NotificationPriority.MEDIUM),
+                owned("high", "2026-11-20T11:00:00Z", NotificationPriority.HIGH),
+            ),
+        )
+        assertThat(SnoozePolicy.decide(candidate)).isEqualTo(SnoozeDecision.Snooze(1_800_000L))
+        assertThat(SnoozePolicy.decide(candidate.copy(budget = DeliveryBudgetState(
+            spentPoints = 1, periodStartMinute = 9 * 60, localDay = "2026-11-20",
+        )))).isEqualTo(SnoozeDecision.Skip(SnoozeSkipReason.NO_CAPACITY))
+    }
+
+    // why: the hourly cap looks only at returns in the target window, even if period points remain.
+    // catches: using period-wide count, ignoring outstanding returns, or leaking the current hour count into the next hour.
+    @Test
+    fun `ten returns fill only the target hourly window`() {
+        val due = (1..10).map { owned("due-$it", "2026-11-20T10:00:00Z", NotificationPriority.HIGH) }
+        val anotherHour = owned("next", "2026-11-20T11:00:00Z", NotificationPriority.HIGH)
+        val candidate = eligible.copy(
+            now = Instant.parse("2026-11-20T09:30:00Z"),
+            scheduleAt = { _, _ -> listOf(NotificationSchedulePeriod(0, 0, 24, 0, 100)) },
+            budget = DeliveryBudgetState(hourlyCount = 10, passthroughWindowHour = 9),
+            ownedRows = due.take(9) + anotherHour,
+        )
+        assertThat(SnoozePolicy.decide(candidate)).isEqualTo(SnoozeDecision.Snooze(1_800_000L))
+        assertThat(SnoozePolicy.decide(candidate.copy(ownedRows = due + anotherHour)))
+            .isEqualTo(SnoozeDecision.Skip(SnoozeSkipReason.NO_CAPACITY))
+    }
+
+    // why: qualified device evidence enables grouped children, while the provisional guard remains the default.
+    // catches: excluding every grouped child after rollout or accepting a flagged group summary.
+    @Test
+    fun `verified grouping permits a child and still excludes its summary`() {
+        val child = exclusions.getValue(SnoozeSkipReason.GROUP_KEY).copy(
+            exclusionFlags = eligible.exclusionFlags.copy(hasGroupKey = true), groupSnoozeVerified = true,
+        )
+        assertThat(SnoozePolicy.decide(child)).isEqualTo(SnoozeDecision.Snooze(300_000L))
+        assertThat(SnoozePolicy.decide(child.copy(exclusionFlags = child.exclusionFlags.copy(isGroupSummary = true))))
+            .isEqualTo(SnoozeDecision.Skip(SnoozeSkipReason.GROUP_SUMMARY))
+    }
+
+    private fun owned(key: String, deadline: String, storedPriority: NotificationPriority) =
+        item(key, timestamp = 1L, priority = NotificationPriority.LOW).copy(
+            snoozeDeadline = Instant.parse(deadline).toEpochMilli(), snoozePriority = storedPriority, snoozeBootCount = 10,
+        )
 
     private fun assertSkip(reason: SnoozeSkipReason) {
         assertWithMessage("exclusion %s", reason)

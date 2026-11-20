@@ -24,28 +24,25 @@ class SnoozeReturnIntakeTest {
         assertThat(offers.count { it }).isEqualTo(128)
         assertThat(offers.count { !it }).isEqualTo(72)
         mailbox.close()
-        mailbox.consume { intake.drain(filterEnabled = true, settle = { settled += it }) }
-        intake.drain(filterEnabled = true, settle = { settled += it })
+        mailbox.consume { intake.drain(settle = { settled += it }) }
+        intake.drain(settle = { settled += it })
 
         assertThat(settled).containsExactlyElementsIn(expected)
         assertThat(flags.flagged()).isEmpty()
     }
 
-    // why: turning the filter off delays settlement but cannot erase synchronous return flags.
-    // proves: CLAIM(snooze-intake)
-    // catches: dropping off-state returns or double-settling on enable.
+    // why: worker wakeups may drop, so a later batch tick must read the retained return flag.
+    // catches: clearing the flag on a failed offer or settling it more than once.
     @Test
-    fun `filter off retains an overflowed return until enable drains it`() = runTest {
+    fun `a later drain settles an unqueued return once`() = runTest {
         val flags = FakeFlags(listOf("owned"))
         val intake = SnoozeReturnIntake(flags)
         val settled = mutableListOf<SnoozeReturn>()
 
         assertThat(intake.onPosted("owned", 200L) { false }).isTrue()
-        intake.drain(filterEnabled = false, settle = { settled += it })
-        assertThat(settled).isEmpty()
         assertThat(flags.flagged()).containsExactly(SnoozeReturn("owned", 200L))
-        intake.drain(filterEnabled = true, settle = { settled += it })
-        intake.drain(filterEnabled = true, settle = { settled += it })
+        intake.drain { settled += it }
+        intake.drain { settled += it }
         assertThat(settled).containsExactly(SnoozeReturn("owned", 200L))
     }
 
@@ -59,7 +56,7 @@ class SnoozeReturnIntakeTest {
         val rate = NotificationRateWindow(now = { 120_000L })
         val pkg = "com.whatsapp"
         fun callback(key: String) {
-            if (!intake.onPosted(key, 1_000L) { false }) rate.record(pkg)
+            intake.routePosted(key, 1_000L, offer = { false }) { rate.record(pkg) }
         }
 
         callback("ordinary") // Positive control: a new arrival reaches the rate path.

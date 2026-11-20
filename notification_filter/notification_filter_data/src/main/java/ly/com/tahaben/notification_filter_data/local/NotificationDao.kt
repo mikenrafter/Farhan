@@ -74,6 +74,9 @@ interface NotificationDao {
     @Query("UPDATE notificationitementity SET isDelivered = 1 WHERE id = :id")
     suspend fun markNotificationAsDelivered(id: String)
 
+    @Query(NotificationQueries.COMPLETE_SNOOZE_RETURN)
+    suspend fun completeSnoozeReturn(id: String)
+
     @Query(NotificationQueries.PENDING_UP_TO_PRIORITY)
     suspend fun getUndeliveredNotificationsUpToPriority(priorityLevel: Int): List<NotificationItemEntity>
 

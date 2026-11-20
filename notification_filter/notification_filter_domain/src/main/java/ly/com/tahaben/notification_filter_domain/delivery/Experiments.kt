@@ -38,6 +38,7 @@ data class ExperimentEvent(
     val removalReason: Int? = null,
     val packageName: String = "",
     val skipReason: SnoozeSkipReason? = null,
+    val fallbackReason: SnoozeFallbackReason? = null,
 )
 
 /** Bounded, newest-first record of the snooze demo's callbacks, for the settings screen. */

@@ -109,6 +109,7 @@ accompanist_ui_controller = { module = "com.google.accompanist:accompanist-syste
 room_runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room_compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 room_ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+room_testing = { module = "androidx.room:room-testing", version.ref = "room" }
 
 rootbeer = { module = "com.scottyab:rootbeer-lib", version.ref = "rootbeer" }
 

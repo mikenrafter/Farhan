@@ -21,4 +21,5 @@ data class NotificationItem(
     val snoozeDeadline: Long? = null,
     val snoozePriority: NotificationPriority? = null,
     val snoozeBootCount: Int? = null,
+    val snoozeGroupKey: String? = null,
 )

@@ -28,6 +28,7 @@ class NotificationCoreTest {
             override suspend fun appendSpend(entry: ly.com.tahaben.notification_filter_domain.model.BudgetSpendEntry) = Unit
         }
         val env = object : DeliveryEnvironment {
+            override fun scheduleAt(instant: java.time.Instant, zone: java.time.ZoneId) = schedule()
             override fun schedule() = store.snapshot.book.repeating
             override fun settings() = PriorityDeliverySetting.DEFAULTS + (HIGH to PriorityDeliverySetting(DeliveryCadence.IMMEDIATELY, BudgetBehavior.RESPECTING))
             override fun timeContext() = DeliveryClock.current(false, TEN_AM_DENVER)

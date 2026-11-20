@@ -2,6 +2,7 @@ package ly.com.tahaben.notification_filter_domain.delivery
 
 import java.time.Instant
 import java.time.ZoneId
+import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod
 import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
@@ -23,6 +24,9 @@ data class SnoozeInput(
     val scheduleAt: (Instant, ZoneId) -> List<NotificationSchedulePeriod>,
     val alreadyDelivered: Boolean,
     val liveSnoozes: Int,
+    val budget: DeliveryBudgetState = DeliveryBudgetState(),
+    val ownedRows: List<NotificationItem> = emptyList(),
+    val groupSnoozeVerified: Boolean = false,
 )
 
 data class SnoozeExclusionFlags(
@@ -63,6 +67,7 @@ enum class SnoozeSkipReason {
     ALREADY_DELIVERED,
     AT_CAPACITY,
     NO_FUNDED_MOMENT,
+    NO_CAPACITY,
 }
 
 object SnoozePolicy {

@@ -35,7 +35,7 @@ class DatabaseCombineHelper(
                             farhanDatabase.runInTransaction{
                                 runBlocking {
                                     notifications.forEach {
-                                        farhanDatabase.notificationDao.insertNotificationItem(it)
+                                        farhanDatabase.notificationDao.insertNotificationItem(it.toCurrent())
                                     }
                                 }
                             }

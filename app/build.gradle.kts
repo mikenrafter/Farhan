@@ -11,6 +11,7 @@ room {
 }
 android {
     namespace = "ly.com.tahaben.farhan"
+    sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
@@ -146,6 +147,7 @@ dependencies {
     androidTestImplementation(libs.hilt.testing)
     kspAndroidTest(libs.dagger.hilt.compiler)
     androidTestImplementation(libs.test.runner)
+    androidTestImplementation(libs.room.testing)
 
     // Dependency required for API desugaring.
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
