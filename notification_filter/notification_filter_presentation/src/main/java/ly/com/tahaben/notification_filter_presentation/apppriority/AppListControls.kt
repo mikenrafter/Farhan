@@ -29,8 +29,8 @@ import androidx.compose.ui.unit.dp
 import ly.com.tahaben.notification_filter_domain.model.NotificationCategory
 import ly.com.tahaben.notification_filter_presentation.R
 
-private val appFilters = listOf(AppFilter.All) +
-    NotificationCategory.entries.map { AppFilter.Category(it) } + AppFilter.HasNotifications
+private val appFilters = listOf(AppFilter.All, AppFilter.HasNotifications) +
+    NotificationCategory.entries.map { AppFilter.Category(it) }
 
 @Composable
 internal fun AppListControls(
