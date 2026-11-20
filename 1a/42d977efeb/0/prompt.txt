@@ -1,0 +1,1877 @@
+use boat to build me both the ADB extraction APK and the latest Farhan APK with settings important export. then taildrop me them both.
+
+---
+
+<task-notification>
+<task-id>br264vljs</task-id>
+<tool-use-id>toolu_015ZpAHunEJvMWsxAgpYCuji</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/br264vljs.output</output-file>
+<status>completed</status>
+<summary>Background command "Build both APKs on Boat sandbox" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+[File: Farhan settings rescue log 7f854af48d74.txt; ref=c4d1d9c8-50c9-4337-929a-2b98cb25f2be] 
+
+examine reverb, make sure that we are doing this adb connection process correctly. you can also take a look at shizuku's code...
+
+I didn't take a deep look at what this area is, but make sure that you can run this in emulator and actually are able to connect to ADB and are actually able to go and extract the database from or the other files from a particular app. If possible, I would also like to make this general so that I can reach into any APK that has a debug build. so that I can more easily inspect the state of things, although in the future it probably would just be better to make a quality import export. I would like to make this tool slightly more broadly usable and not just have it limited to be farhan only.
+
+<t3_context version="1">
+<context kind="file" id="c4d1d9c8-50c9-4337-929a-2b98cb25f2be">
+name: Farhan settings rescue log 7f854af48d74.txt
+mimeType: text/plain
+sizeBytes: 23290
+attachmentId: 86e353d2-41e5-46e8-865e-9cb6fd457e9c-2cc1faa1-50b5-41e7-be7c-635b4e08f9f5-txt
+</context>
+</t3_context>
+
+[Attached file "Farhan settings rescue log 7f854af48d74.txt" is saved at: /home/mini/.t3/userdata/attachments/86e353d2-41e5-46e8-865e-9cb6fd457e9c-2cc1faa1-50b5-41e7-be7c-635b4e08f9f5-txt.txt]
+
+---
+
+For some reason, the usage page does not work, no matter how many times I grant or re-grant the permission. I have already exported the settings file via the extractor. However, I am unable to locate where to import. I would like to unify all settings into one settings menu that is accessible from the top menu. This goes for the app appearance and theme as well.
+
+I would also like to fix the way that we are currently rendering the different settings inside of the dashboard. I would like to do a few quick mock-ups to see what alternative methods of displaying these different navigation items could look like. I don't have any strong opinions here. I would just like to use icons that don't conflict with each other conceptually and aren't all stacked in one corner. Three buttons stacked like that in a corner, especially with the icon ambiguity, is hard to use and not good UX.
+
+---
+
+I would also like to make the snooze feature fully fledged, so that it works for all of the applications. It should still be marked as a pilot, but I don't want it to be marked as demo and only work for the limited subset of apps. When I ask for a pilot, I expect it to be fully featured, even if experimental.
+
+---
+
+No, you do the mock-up, sub-agents do the rest.
+
+---
+
+Please switch to using a build loop in case that wasn't clear.
+
+---
+
+Two small things, make sure that you use WorkQ to keep track of this all, and then I would also like for you to make it so that the clear button, in a particular category, only clears what is in that category, not everything overall.
+
+---
+
+<task-notification>
+<task-id>bz596p3bt</task-id>
+<tool-use-id>toolu_013JxCNyakzHJxDL8YEcRxYp</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/bz596p3bt.output</output-file>
+<status>completed</status>
+<summary>Background command "Start the confirmed session keepalive in the background" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+At the end of the queue, I would like to add the padding fix as a PR to upstream. In the meantime, we can keep working on the other details.
+
+---
+
+bottom bar works for me, the rest of what you have there sounds great. As for displaying the notifications and an alternative manner, what other sorts of things could we use in displaying here? I would like for you to examine my current research on glamorous toolkit, as well as other UI libraries to see what sort of language we can use to convey notifications in another manner that perhaps is better. then simple text.
+
+The snoozing should not be a specific duration. It needs to be specific to what the budget allows and when the next notification moment is. How much flexibility does Android system have here? Are we able to access the notification details otherwise inside of Farhound and perhaps still activate it from within the app? If we can do this directly via APIs, then that's the preferred route. But if we must go through another means, then perhaps we must consider that.
+
+---
+
+Please note that the next notification moment is specific to what category. Critical always go through directly, thus no snooze. High priority and medium priority have a specific cadence and then low priority has a cadence of a longer hour interval.
+
+---
+
+Do the parallel research via subagent. Usage is not actually that low. Please do not stress about that.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3Asnooze-red-20261120-1 (Snooze pilot: red tests (Sol)) [completed]:
+Committed the Snooze pilot red tests and compile stubs as `028541d` on `pilot/snooze`. Pilot behavior is deferred to green.
+
+On Boat, all three targeted modules compiled. All 41 distinct Snooze contract tests failed on assertions as intended, and all existing tests passed. The handler tests pin that a tracked return is consumed even after snooze is turned off and the app becomes exempt.
+
+The [red report](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/snooze-red-report.md) records the temporary legacy declarations, settings validation expectation, and failure summary by module and variant.
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3Ausage-permission-20261120-1 (Usage permission fix: verify (Sonnet)) [completed]:
+The fix is verified and committed as `653b60b` on `fix/usage-permission-package`. I did not push. On the emulator, the base build showed the permission-not-granted screen and the fixed build showed the real Usage page.
+
+**Emulator proof** (API 35, `GET_USAGE_STATS` was `allow` in both runs):
+- **Base build:** the Usage page showed "Usage permission is not granted :(" even though the permission was allowed.
+- **Fixed build:** the Usage page showed today's totals, category percentages and the app list.
+- **Evidence:** screenshots and uiautomator text are in `research/usage-permission/`.
+
+**Build and tests:** `:usage_overview:usage_overview_domain:test`, `:usage_overview:usage_overview_presentation:testDebugUnitTest`, `:screen_grayscale:screen_grayscale_data:compileDebugKotlin`, `:app:compileDebugAndroidTestKotlin` and `:app:assembleDebug` all pass on the sandbox. Eight unit tests ran with no failures. None of them touches the permission check, which is Android-bound.
+
+**Your decisions:**
+- **Grayscale:** `GrayscaleUtilImpl` now runs `pm grant ${context.packageName} ...`. `context` was already a constructor field. The root path is reachable, because the Grayscale screen shows the button only when RootBeer reports a rooted device. I only compiled it; the emulator isn't rooted for `su`, so the root path is untested.
+- **Existing test changed:** `ExampleInstrumentedTest` now asserts `ly.com.tahaben.farhan_alpha`. It is compiled but not run on a device.
+- **E2E tidy:** `UsageOverviewE2E` imports `InstrumentationRegistry`.
+- **Release metadata:** `app/release/output-metadata.json` is untouched.
+
+**What I could not verify:**
+- **Installed APK:** the one on the emulator predates the grayscale, test and import edits. It was rebuilt and compiled afterwards but not reinstalled.
+- **Baseline APK:** it came from the shared pilot directory (built 10:02), not rebuilt from the base commit.
+- **"Ignore Farhan" filters:** not proven on the device. The setting is off by default, and the fixed run still lists Farhan-alpha, as expected with it off.
+
+I found no small pure seam that a JVM test could prove without just restating the change, so I added no tests.
+
+**Commit identity:** git has no author email set in this repo, so I committed with the owner's noreply identity from recent history, passed through environment variables only. No git config was changed. `research/usage-permission-brief.md` is left untracked.
+
+**Emulator:** it is still running on `bx_bngcafgz`, so stop it or the sandbox when you are done. The full report is `research/usage-permission-report.md`.
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3Aclear-category-20261120-1 (Per-category Clear (Sol)) [completed]:
+Committed as `10dd0d1` on `fix/clear-per-category`. Clear now removes the selected priority across every page and preserves unrelated pending deliveries and actions. **Clear all** still clears everything. **Delete cleared history** clears only the rows listed in Cleared.
+
+All six regressions failed first, then all 179 targeted JVM tests passed on Boat. Device behavior remains unverified. [Implementation report](/home/mini/Documents/repos/Farhan.worktrees/clear-category/research/clear-category-report.md)
+
+---
+
+Resume: reread ~/.claude/skills/build-loop/SKILL.md and the skills vigil, technical-excellence, test-quality, question-everything. Read /home/mini/Documents/repos/Farhan/research/build-loop-state-2026-11-20.md (Update 2026-11-20 ~12:05 UTC), run `workq list`, `vigil status w-18e9be9182195ff3-28a0df-0`, and start `vigil keepalive --session --brief --orchestrator` in the background. Then: (1) check-in with the settings-hub child (read 1-5 files in /home/mini/Documents/repos/Farhan.worktrees/settings-hub, ask 2-3 questions via t3_thread_send steer); (2) handle each child completion as it arrives, per the Next steps list in the state file.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3Acc518c48-343b-4a1d-b321-a8e590f566f3 (Snooze pilot: red tests (Sol)) [completed]:
+Committed Snooze red v2 as `938827f` on `pilot/snooze`. Removed the duration and its portability tests. Added red coverage for cadence timing across midnight and DST, immediate-priority exclusions, and budgeted returns with a per-key retry limit.
+
+On Boat, 43 distinct Snooze tests failed on the intended assertions across debug and release. All other targeted tests passed, including all 59 portability tests.
+
+The [red report](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/snooze-red-report.md) maps the budget port to a new coordinator operation under `DeliveryGate`. Retry timing and durable charging remain for green.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3Aresearch-snooze-android-20261120-1 (Research: Android snooze and listener flexibility (Sol)) [completed]:
+Committed the [research report](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/snooze-android-flexibility.md), probe scripts, and device transcript as `621fd7e` on `pilot/snooze`. No app source changed. Nothing was pushed.
+
+On the API 35 emulator, Farhan’s proposed approach could read snoozed notification details and use live source action tokens after a listener restart. The probe sent a content broadcast and a RemoteInput reply. Replacing a 24-hour snooze with a 1 ms snooze returned the original in 220 ms. Android still logged a beep when the listener immediately re-snoozed a returned notification.
+
+**Keep the proxy path as the default for strict budgets.** Pilot a native snoozed list for reading and acting inside Farhan, with native timer replacement for **Deliver now** where verified. The main open questions are visible flash, OEM behavior, and real app activity launches. Reboot behavior is source-read only.
+
+The probe APKs were removed and Farhan’s listener access was restored. Four synthetic proxy notifications from the first trial remained in the emulator shade.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3Areview-clear-usage-20261120-1 (Review: per-category Clear and usage-permission fix (Opus)) [completed]:
+Both reviews are done. I edited nothing in either worktree. To check what the authors hadn't, I compiled `:app:compileDebugKotlin` for branch A on Boat (run `review-clear`, from a shared clone). It passes. Room's generated `NotificationDao_FarhanDatabase_Impl.clearInbox` wraps the select and the delete in one `withTransaction`. The author had only compiled the `notification_filter` modules, and Room generates this DAO in `:app`.
+
+## A. fix/clear-per-category (10dd0d1)
+
+What works:
+- **Shared rule:** listing, ID selection and deletion are all built from one SQL predicate (`INBOX_PREDICATE`), at the cutoff of the query on screen.
+- **Atomic and limit-safe:** the select and delete run in one Room transaction, inside the coordinator's gate with `NonCancellable`. Nothing binds an ID list, so SQLite's variable limit can't be hit.
+- **Same set:** the IDs deleted are exactly the IDs whose delivery events are invalidated.
+- **Stale callbacks:** a stale callback for a cleared ID is rejected. A callback captured after `clearOrder` still gets through.
+- **All:** unchanged.
+
+**Findings, most severe first:**
+
+1. **[should]** `notification_filter_presentation/.../NotificationFilterState.kt:25`, `showCleared -> Cleared(priorityFilter)`
+   - **Claim:** the "Delete cleared history" label promises more than the button deletes.
+   - **Scenario:** in the chip row (`NotificationFilterScreen.kt:238`), tapping Cleared deselects every priority chip, but the hidden `priorityFilter` stays set. Tap Low, then Cleared: the list shows only cleared Low rows (an old bug). Pressing "Delete cleared history" then deletes only cleared Low rows, and cleared High history stays.
+   - **Fix:** when switching into Cleared, `OnToggleClearedView` also sets `priorityFilter = null`, so what's selected and what's deleted match. Then `InboxClearScope.Cleared` needs no priority.
+
+2. **[should]** `NotificationFilterViewModel.kt:122` and `:85`
+   - **Claim:** nothing tests the ViewModel's routing, so the owner's bug can come back with all 179 tests green.
+   - **Scenario 1:** change the handler to `notificationFilterUseCases.deleteAllNotifications()` (the old global clear). Every test passes.
+   - **Scenario 2:** drop `standingCutoff = query.standingCutoff`. The click then sends cutoff 0, so clearing Low misses aged Medium rows that the list shows under Low. Every test still passes.
+   - `NotificationFilterClearEventTest` only exercises `state.dispatchClear` with a hand-built state.
+   - **Fix:** one ViewModel test with a fake repository: select Low, let a page arrive, dispatch the clear, then assert the use case received `Priority(LOW)` and the query's own cutoff.
+
+3. **[should]** `notification_filter_presentation/src/main/res/values/strings.xml`
+   - **Claim:** the All label lost its translations.
+   - **Scenario:** the old label was core's `R.string.clear_all`, translated into ca, fr, ar, es, pl and ta. A French user who saw "Tout effacer" now sees English "Clear all". The new strings exist only in English.
+   - **Fix:** keep core's `clear_all` for the All scope, or carry its translations over.
+
+4. **[should]** `NotificationFilterViewModel.kt:142` and `:150`
+   - **Claim:** tapping any chip now briefly shows "No notifications".
+   - **Scenario:** the lists are emptied until the new query emits, so the screen's empty state (`Screen:259`) renders, and the Clear button disappears. Hiding a stale list is the right call, but the screen tells the user the inbox is empty. Not checked on a device.
+   - **Fix:** make the list nullable or add `isLoading`. While loading, render nothing and hide the button.
+
+5. **[should]** `NotificationDeliveryCoordinator.kt:210` and `DeleteAllNotifications.kt:25`, Cleared scope only
+   - **Claim:** deleting cleared history still invalidates events and cancels proxies one ID at a time, inside the gate.
+   - **Scenario A:** history can be thousands of rows. That means thousands of `NotificationManager.cancel` binder calls for proxies that don't exist (cleared rows have none), while deliveries wait on the gate.
+   - **Scenario B:** a source app re-posts a key whose old row is in history, and that callback was captured just before the press. It is rejected as `Cleared` and never reaches the inbox. The brief says the Cleared view touches no live rows.
+   - **Fix:** for `Cleared`, delete under the gate and remove retained actions, but skip `invalidateDeleted` and the proxy cancels.
+
+6. **[nit]** `DeleteAllNotifications.kt` / `NotificationQueries.INBOX_CLEAR`
+   - **Claim:** a row can be deleted before the user ever sees it.
+   - **Scenario:** a matching row arrives after the press but before the gate is free. The gate can be held by a batch tick posting up to 256 proxies. The clear deletes that row unseen. The old All clear behaved the same way.
+   - **Fix:** capture a high-water mark when the button is pressed (largest rowid or `clickedAt`) and add it to the predicate.
+
+7. **[nit]** `NotificationFilterViewModel.kt:122`
+   - **Claim:** the page number isn't reset after a clear.
+   - **Scenario:** clear Low from page 3 and you land on an empty page 3 with "Newer" still enabled.
+   - **Fix:** set `page = 0` on clear.
+
+8. **[nit]** `NotificationDeliveryCoordinatorTest`
+   - **Claim:** nothing pins the `event.order <= clearOrder` guard at `:226`.
+   - **Scenario:** remove the guard so every deleted ID is marked removed. All tests still pass, yet a post captured during `delete()` would be dropped.
+   - **Fix:** capture an event inside the `delete` lambda and assert that its arrival is accepted.
+
+9. **[nit]** Naming and signatures:
+   - `DeleteAllNotifications` now routes scoped clears; rename it `ClearInbox`.
+   - `NotificationRepositoryImpl.kt:61` hardcodes `search = ""` while `InboxQuery` has a `search` field. Pass the same query shape (without paging) so a future search box can't drift from the clear.
+   - `NotificationRemovalMapper.kt:7`: make `ownProxy` required instead of defaulting to `false`.
+   - I checked the mapper change against the other paths that cancel Farhan's own proxy (single delete, mark as cleared, failed open). Each records its own removal through `clearInbox`, so ignoring the proxy's own cancel callback loses nothing.
+
+**VERDICT A: CHANGES.** No must items. Items 1–3 should land before the owner sees it.
+- Correctness 7/10
+- Concurrency 8/10
+- Tests 6/10
+- Legibility 7/10
+
+## B. fix/usage-permission-package (653b60b)
+
+The fix is complete. I searched the whole repo for the package name as a string:
+- The only usage-access check is `UsageRepositoryImpl`. Report generation goes through the same check, so reports are fixed too.
+- Every other `ly.com.tahaben.farhan…` literal is a class or component name, which is correct: `Class.forName(...MainActivity)`, the accessibility component, and the widget `configure` attribute.
+- Hilt can supply the new `@ApplicationContext` parameter. The E2E test is its only direct constructor call. `WidgetWorker` uses its own `context`, so nothing else needs to change.
+
+1. **[should]** `research/usage-permission/fixed-usage.png`
+   - **Claim:** the "after" screenshot doesn't show what the report says.
+   - **Scenario:** it shows the loading state ("--", NaN %, a spinner). The report says it shows total usage. The loaded data appears only in `fixed-usage.txt` (1 h 41 m, 53.5 % Productivity). The text dump does prove the fix, but this PNG would mislead in the PR body.
+   - **Fix:** retake it after the screen loads. Separately, the loading state shows NaN % because of a division by zero. That bug is older than this branch; worth a ticket.
+
+2. **[nit]** `scripts/profile-notifications.py:19`
+   - **Claim:** same bug class as the fix.
+   - **Scenario:** the default `--package` is `ly.com.tahaben.farhan`, so the script fails with "not installed" against the alpha build.
+   - **Fix:** default to `ly.com.tahaben.farhan_alpha`.
+
+3. **[nit]** `UsageOverviewViewModel.kt`
+   - **Claim:** injecting `Context` into a ViewModel only to read the package name couples it to Android.
+   - **Fix:** expose the app's own package name from the repository or a use case. `ServiceUtil.getOwnPackageName()` already does this in notification_filter.
+
+4. **[nit]** `ExampleInstrumentedTest.kt:20`: assert against `BuildConfig.APPLICATION_ID` instead of a second hardcoded ID.
+
+**VERDICT B: OK.** Retake the screenshot before it goes into a PR.
+- Correctness 9/10
+- Concurrency 10/10 (no concurrent code touched)
+- Tests 5/10 (no automated check of the fix; the emulator evidence is good)
+- Legibility 8/10
+
+Ready for the pushback or question.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3Aresearch-notification-language-20261120-1 (Research: notification display language, Glamorous Toolkit and UI libraries (Sol)) [completed]:
+I recommend **cards by kind in Inbox** and a **delivery timeline in Overview**. The cards make six chat posts readable as one conversation. The timeline shows why five can arrive at 11:00 while the sixth waits for the next budget window.
+
+- [Research findings](/home/mini/Documents/repos/Farhan/research/notification-display-language.md) cover the owner’s Glamorous Toolkit and paneweft research, five display approaches, Compose costs, and open questions.
+- [HTML mock-ups](/home/mini/Documents/repos/Farhan/research/notification-display-mockups.html) compare current text rows, cards by kind, and a delivery timeline using the same 11 sample notifications. Two Overview widgets show counts by kind and estimated deliveries.
+
+Both files are uncommitted. I checked the markup, local SVG references, palette contrast, and sample budget totals. Browser rendering and on-device behavior remain unverified.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3A6412e51c-a3ec-47bc-9a2e-7561ab9b9353 (Review: per-category Clear and usage-permission fix (Opus)) [completed]:
+Three answers from the code. I edited nothing.
+
+**1. You're right about proxies; I withdraw finding 5 as written.**
+- **A source cancel leaves the proxy posted.** In `NotificationService.kt:328-341`, a source-app removal does `captureEvent(originalId, removed = true)`, then `actionStore.remove`, then `Work.Removed`. At `:84` that becomes `coordinator.onRemoved`, which calls `rows.markCleared(id)` (`NotificationDeliveryCoordinator.kt:200`). Nothing on that path calls `cancelProxy`. So a row that Farhan already delivered and the source app then cancels sits in Cleared with its proxy still posted. Mark-as-cleared (`clearInbox`, `:207`) does cancel the proxy through `deleteNotificationIntent`. Arrival-side `markCleared` (`:174`, `:253`, `:272`, `:283`) happens before or instead of a post. But the source-cancel path alone disproves "cleared rows have no proxies". The Cleared clear has to keep cancelling proxies.
+- **Invalidation for Cleared rows is mostly redundant, but harmless to keep.** Every path above records an event with `removed = true`, so `stale()` already rejects any callback captured before the removal. The only extra thing `invalidateDeleted` does for a cleared ID is drop a fresh re-post captured after the removal but before the press. Without the clear, that post would revive the row. That's a narrow edge, so I'm downgrading it to a nit. Keeping one code path for every scope is simpler. Don't special-case Cleared.
+- **The cost is the binder calls, not the loop.** `NotificationManager.cancel(tag, id)` is an IPC every time, because the client can't know whether the ID is posted. The loop already runs in one gate hold with no per-ID suspension: `clearActions(ids)` is a plain function called once inside `NonCancellable`. So batching is already in place and changes nothing. The cheap fix that works for every scope:
+  - read `manager.activeNotifications` once, the same pattern `cancelAllProxies` uses;
+  - intersect it with `ids` and cancel only those (live proxies are capped at `MAX_LIVE_PROXIES = 1024`);
+  - remove the retained actions for every ID in memory.
+
+  That gives one IPC plus at most the live proxies. Severity: should, keyed to how large history can grow, which I didn't measure.
+
+**2. Agreed: decline finding 6.** All behaves the same way, and a row that arrives while the gate is busy can't be told apart from one that arrives a moment after the press. A one-line note in the report is enough.
+
+**3. The flash is new in this branch.** At base 717faf6, `NotificationFilterViewModel.kt:149-158`:
+```kotlin
+is NotificationFilterEvent.OnSetPriorityFilter -> {
+    state = state.copy(priorityFilter = event.priority)
+    state = state.copy(page = 0)
+    getNotifications()
+}
+...
+NotificationFilterEvent.OnToggleClearedView -> {
+    state = state.copy(showCleared = !state.showCleared, page = 0)
+    getNotifications()
+}
+```
+Base kept the old list until the new query emitted. This branch adds `filteredNotifications = emptyList(), clearedNotifications = emptyList()` at `:142` and `:150`. The empty list is what triggers "No notifications" (`Screen:259`), so it's in scope.
+
+The branch has a reason for hiding the list: it stops the user from pressing "Clear high" while the Low list is still on screen. The fix is a loading state, not reverting the blanking: render nothing and hide the button until the first emission.
+
+**Revised verdicts:**
+- **A: CHANGES** (findings 1, 2, 3, 4, 7, 8, plus finding 5 reworked as the one-IPC proxy cancel). Correctness 7, concurrency 8, tests 6, legibility 7.
+- **B: OK** with the should-fixes you accepted. Correctness 9, concurrency 10, tests 5, legibility 8.
+
+---
+
+The spec should not forbid showing or keeping notification text. Where did that decision come from? I was certainly not spoken to about it. No, there should not be a separate list.
+
+I think that we could possibly get around the notification noise issue. is there a way that we could set up notification, do not disturb priority, such that all notifications that we don't elect to make sounds won't make sounds. Perhaps what we end up doing is checking for all notification noises and sending them ourselves when they would normally be sent. Now, we do have to keep in mind that the user may use, do not disturb themselves normally. I, for example, do use, do not disturb normally. So, this particular setting will not often affect me.
+
+i am currently drafting a response to the mock-up, respond to what I have here and I will get back to you with the draft shortly.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3Aaf9239d9-3411-442a-9b82-b1a287d4cc8e (Usage permission fix: verify (Sonnet)) [completed]:
+All four round-1 items are done in a new commit, `f877f11`, on top of `653b60b` (not amended, not pushed). The targeted JVM tests and the compile of the touched modules pass on Boat.
+
+**Items:**
+1. **Screenshot:** retaken on the shared emulator after the page loaded, with `GET_USAGE_STATS` still `allow`. It shows Today, total usage 49m, the category rings and the app list. The text dump and appops files were refreshed too. The new build's list no longer shows Farhan-alpha, but the reinstall reset the app's own usage events, so that is not evidence about the "ignore Farhan" filter.
+2. **Script default:** `scripts/profile-notifications.py` now defaults `--package` to `ly.com.tahaben.farhan_alpha`.
+3. **No Context in the ViewModel:**
+   - `UsageRepository.getOwnPackageName()` returns `context.packageName` in `UsageRepositoryImpl`, and a new `GetOwnPackageName` use case exposes it through `UsageOverviewUseCases`, following `ServiceUtil.getOwnPackageName()`.
+   - `UsageOverviewViewModel` is back to three constructor parameters and reads the name once into `ownPackageName`.
+   - `UsageRepositoryFake` returns `fake.own.package`, and `UsageOverviewE2E` builds the use case from the fake.
+   - `WidgetWorker` keeps `context.packageName`, since it already holds a context.
+4. **BuildConfig assert:** `ExampleInstrumentedTest` now asserts `BuildConfig.APPLICATION_ID`.
+
+**Boat run (run `usage-permission`, 95 s):** `:usage_overview:usage_overview_domain:test`, `:usage_overview:usage_overview_presentation:testDebugUnitTest`, `:usage_overview:usage_overview_data:compileDebugKotlin`, `:app:compileDebugAndroidTestKotlin` and `:app:assembleDebug` all pass; the log is `/tmp/boat-run/usage-permission-20261120T121335Z-c6c0dc.log`. A first attempt failed on a missing import in `UsageOverviewDomainModule`; I fixed it and re-ran. `ExampleInstrumentedTest` and `UsageOverviewE2E` are compiled only, not run.
+
+**Not fixed, noted in the report:** the loading state shows `--` and `NaN %` in the category rings, an older division by zero when the total is 0.
+
+`research/usage-permission-report.md` is updated. The emulator is still running on `bx_bngcafgz`.
+
+---
+
+<task-notification>
+<task-id>b49d3zjit</task-id>
+<tool-use-id>toolu_0154yB6pSFhKV7FKAyHafM1F</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/b49d3zjit.output</output-file>
+<status>completed</status>
+<summary>Background command "Session keepalive for the in-flight delegated runs" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3A5733023a-40bf-40ab-81e8-d55d3fe81f4f [completed]:
+I reviewed the spec, the red tests and the stubs at 938827f. Nothing was edited and nothing was written to git. A test-quality note first: the timing tests use literal UTC instants as their oracle, the policy tests cover every skip reason with no catch-all, and the tests are well annotated. The serious gaps are in the return path and the budget ledger. That is the part the round cares most about, and it has the fewest tests.
+
+File shorthands: **H** = `notification_filter/notification_filter_data/src/test/.../service/SnoozeHandlerTest.kt`, **S** = `research/snooze-pilot-spec.md`, **Svc** = `notification_filter_data/.../service/NotificationService.kt`, **Coord** = `notification_filter_domain/.../delivery/NotificationDeliveryCoordinator.kt`.
+
+## Findings, ranked
+
+**M1 (must). A red test endorses breaking I2.** H:157-162: the second callback at `boundary+30s` must return `true`, and `attempts` must stay at 2. The handler then takes over the post without charging it or snoozing it again, so the notification stays visible and uncharged. That is exactly what I2 (S:67) forbids. A second post of a tracked key inside one boundary means one of two things: the snooze did nothing on Android's side, or the source updated the notification during a race. In both cases it is visible. S:39 ("at most once per boundary") conflicts with I2.
+- **Fix:** one rule. A return that Farhan cannot snooze again natively falls through to the proxy path (return `false`, drop the key, log FAILED). The proxy path then queues it under the budget.
+- The same rule then covers five more cases: a native retry that throws (M2), the daily bound being hit (S5), `RetryAt` at or before now (S4), no funded moment existing (S6), and a snooze Android never confirms (M6).
+
+**M2 (must). A denied return whose native retry throws has no test and no decision.** The red report defers it (red report :19). Two tests are needed:
+- `startSnooze()`, then `rejectSnooze = true`, then a denied return. Expected: `false`, no charges, key dropped, FAILED logged.
+- `settleReturn` throwing.
+- **Port contract:** `settleReturn` never throws (except cancellation). A store failure after the decision returns `Charged`, with the commit left pending, following the existing `CommitPending` pattern (Coord:269-273). If the handler retried after a write that had already landed, it would charge twice.
+
+**M3 (must). Charge-exactly-once has no tests at the layer that writes the ledger.** `FakeReturnBudget` (H:326-348) is the only budget implementation in the tests. Its retry instant is a literal, so a coordinator that always returns `RetryAt(now + 1h)` would pass every handler test. Missing coordinator tests for `settleSnoozeReturn`:
+1. `appendSpend` throws once. Expected: `Charged`; the next gated operation appends exactly one entry; the state is charged once.
+2. `write` throws.
+3. A denied return performs no `write` and no `appendSpend`.
+4. A proxy row with the same id stays undelivered. `finishCompletion` calls `rows.markDelivered(pending.id)` (Coord:114), and row ids are `sbn.key` (Svc:245), so a return with the key of an earlier proxy row would mark that row delivered. `Completion.id` needs to become nullable.
+5. The first funded cadence tick is selected, using literal fixtures.
+- **Idempotency:** the spend ledger already removes duplicates by `effectId` (`DefaultPreferences.kt:351`). Derive `effectId` from key plus return `postTime` instead of a random UUID. That needs `postTime` added to the `settleReturn` signature (`SnoozeHandler.kt:20-25`).
+
+**M4 (must). E11 contradicts the tests, and the shipped defaults trigger it every night.** E11 (S:92) says a notification should never be snoozed to a tick already known to be unfunded. But `SnoozeInput` has no schedule (`SnoozePolicy.kt:8-26`), and `startSnooze` requires 300 000 ms to 09:00 (H:302-305) even when 09:00 has zero points or no period at all (H:140, H:149).
+- **LOW, shipped defaults:** LOW is `ONCE_DAILY`, which ticks only at boundary 0, local midnight (`NotificationDeliveryPolicy.kt:43`). The 00:00-09:00 period has 2 points (`NotificationSchedulePeriod.kt:20`) and LOW costs 8. So every snoozed LOW notification returns at midnight, can make a sound, is denied and is snoozed again.
+- **HIGH/MEDIUM, shipped defaults:** the 22:00-24:00 period has 0 points, so anything arriving between 22:00 and 23:00 makes a sound at 23:00.
+- **Fix:** one pure function, `nextDeliverableMoment(priority, setting, schedule, budget?, now, zone, testingMode)`: the first cadence tick whose period has at least the priority's point cost. Use it for both the first snooze and `RetryAt`.
+- **Owner decision needed:** I7 (S:71) contradicts D5's retry at "next period start" (S:39). Under the defaults no LOW tick is ever funded, so either I7 or the fallback has to give.
+- **Unverified aside:** the proxy batch path looks like it can never deliver LOW under the default schedule either (8 points > 2). I haven't checked whether schedule automation changes that.
+
+**M5 (must). Rehydrating from every snoozed key breaks I4 and E14.** `onListenerConnected` rehydrates every key regardless of the toggle (S:39 "whatever the toggle"; H:229-237).
+- **Failure:** with snooze never enabled, a notification the user snoozed in SystemUI returns. Farhan charges it, and if the budget is spent, Farhan snoozes it again to a Farhan moment. That overrides the user and breaks I4.
+- **E14:** the sentence at S:95 is garbled, and the test charges a key Farhan never saw itself snooze.
+- **Missing test:** snooze off, `keysAtConnection = {key}`, return at the boundary. Expected: `false`, `checked` empty.
+- **Fix:** a durable ownership record (S1).
+
+**M6 (must). A snooze that does nothing is invisible to the handler.** `snoozeNotification` returns void and can silently do nothing: the 500 limit, a zero or negative delay, or a key that has gone (flexibility doc :7). The handler would log SNOOZED, keep the key and return `true`. The notification stays visible and never passes through the budget, and its stale key later absorbs an update as a "return".
+- `FakeSnoozePlatform` (H:353-364) can only throw, so this case cannot be tested today.
+- **Fix:** confirm each snooze through the `REASON_SNOOZED` removal within a short window, or fall through to the proxy path. Add `Skip(AT_CAPACITY)` when Farhan's own live count is at or above about 400.
+
+**M7 (must). Returns can be lost from the intake queue.** By design, all returns for a cadence land on the same instant. The intake holds 128 (Svc:75), and on overflow the post is bypassed (Svc:247-252). An overflowed return is visible, uncharged and still tracked.
+- Returns while the filter is off (Svc:287 returns early) are also never charged, and their keys go stale.
+- **Fix:** check the tracker synchronously in `onNotificationPosted` and put tracked returns in their own pending set. That set is bounded by the 1024-key tracker, so it cannot overflow. Test with 200 simultaneous returns.
+
+**M8 (must). I1 is tested at the wrong layer.** The exclusion flags in `SnoozeInput` default to `false` (`SnoozePolicy.kt:18-25`). A service that forgets to map `FLAG_ONGOING_EVENT` gets an "eligible" input, and Android does not refuse to snooze ongoing, foreground-service, call or alarm notifications (flexibility doc :18).
+- **Fix:** remove those defaults. Add a pure mapping from raw `flags` and category to the input, tested with literal constants: 0x2 ongoing, 0x20 no-clear, 0x40 foreground service, 0x200 group summary.
+
+**M9 (must, owner decision). The E12 test is missing, and reboot loss is silent.** S:93 promises "a test that a rehydrated key with no returning post does not leak a counter". No such test exists in any of the four suites.
+- The round says nothing may be "silently dropped". E12 together with I3 means a reboot loss leaves no record anywhere.
+- I3 is stricter than what the app already does: the proxy path stores title and text in rows (Svc:245-247) and in spend entries. Raise this with the owner.
+
+**S1 (should, architecture). Use the existing `DeliveryRowStore` as the durable ledger.** It would replace the in-memory tracker and rehydration. One row per snoozed key holds state SNOOZED, the priority at snooze time and the deadline. That gives:
+- ownership, which fixes M5;
+- loss detection: deadline passed and the key in neither the active nor the snoozed list means LOST. It shows in the inbox and can be delivered from the row (M9);
+- returns that happened while Farhan was disconnected can be charged when it reconnects;
+- stale-key cleanup;
+- the row change and the budget write in one completion, which helps M3.
+
+This requires the owner to change I3. If they refuse, persist a salted hash of the key with its deadline and priority.
+
+**S2 (should). D6 and H:258-271 contradict the research.** The flexibility doc (§4 :73) says a source cancelling a hidden record produces no per-item removal callback. Stale keys therefore build up, and edge 4 (S:56) becomes common rather than rare. The test is still valid as a race case. Fix: store a deadline per key and drop the key at deadline plus a grace period.
+
+**S3 (should). Each return counts as a new arrival.** Returns go through classification again, which calls `rateTracker.record` (Svc:360). If 15 messages from one app return at 09:00, they can trip the flood threshold. The degraded priority costs more points (HIGH 2 → LOW 8), so more returns are denied, and the app's genuinely new posts get demoted. Fix: charge a return at the priority recorded at snooze time, and do not record it in the rate window.
+
+**S4 (should). `RetryAt` can already be in the past.** The handler computes `retryAt - input.now`. When the queue is backed up, that can be zero or negative, which Android silently ignores. Also, `settleReturn(at)` and the coordinator's `environment.timeContext()` are two different clocks: keep one. Test: `retryAt = boundary` should fall through to the proxy path or settle again.
+
+**S5 (should). The per-key daily bound has no number and no test** (S:62). With M4's targeting, one denial per period is the natural limit. Set a cap (for example 3 a day), fall through to the proxy path when it is hit, and test 4 denials.
+
+**S6 (should). Nothing handles "no funded moment exists"** (all periods 0, or every period's budget below the point cost). `RetryAt` cannot express it. Bound the search (for example 48 h), add a third outcome, and fall through to the proxy path.
+
+**S7 (should). Groups are an unverified loss path.** Snoozing an only child also snoozes its summary (flexibility doc :18). I am not certain whether the proxy path's `cancelNotification` on a summary (Svc:310) reaches hidden children through AOSP's group-cancel logic. Add device evidence (f): one eligible child plus its summary, and confirm the child returns. Until that passes, the pilot can skip any notification with a group key.
+
+**S8 (should). The rehydrate test would pass a wrong implementation.** H:229-237 reuses the same handler instance, and `snoozedKeys()` never changes. A handler that skips `onListenerConnected` and checks `snoozedKeys()` on every post passes the test. In production that fails, because the key has left the snoozed list by the time it returns. Fix: the fake removes returned keys from the snoozed list, and the test builds a second `SnoozeHandler`.
+
+**N1 (nit).** H:77-78 assert the fake's own arithmetic. They can only fail if `settleReturn` is called a different number of times, which H:76 already checks.
+
+**N2 (nit).** Small spec inconsistencies:
+- D8 (S:42) says "no key in memory", but D5's tracker keeps keys in memory.
+- Evidence item (a) (S:78) still says "chosen duration", left over from v1.
+- D2 (S:36) writes CRITICAL as `Skip(IMMEDIATE_CADENCE)`, but the code has `Skip(CRITICAL)`.
+
+**N3 (nit).** `SnoozeTiming.delayUntilNextMoment` takes `priority` and never uses it. An IMMEDIATELY cadence can be passed in; a batch-only cadence type would make that impossible.
+
+**N4 (nit).** Missing tracker test: recording an existing key again must make it the newest. Otherwise a key that was snoozed again can be evicted first.
+
+## Answers to the five questions
+
+1. **Gaps in states and lifecycle:**
+   - Reboot: M9.
+   - Android sounds before Farhan decides: M4. The shipped defaults make this happen nightly for LOW.
+   - Ownership after rehydration: M5 and S1.
+   - 500 limit: M6.
+   - Groups: S7.
+   - Also: queue overflow (M7), returns while disconnected (S1), and double-counted arrivals (S3).
+2. **Contradictions:**
+   - D5 with I2 and H:160 (M1).
+   - E11 with H:140/149/302 (M4).
+   - I7 with D5's retry (M4).
+   - E14 and I4 with D5 and H:229 (M5).
+   - D6 with the research (S2).
+   - D8 with D5 (N2).
+3. **Hollow red tests:**
+   - H:160 asserts a violation of I2.
+   - H:229-237 passes with lazy rehydration.
+   - `FakeReturnBudget`'s literal `RetryAt` hides any coordinator selection bug.
+   - H:77-78 test the fake.
+   - The policy suite is sound, but at the wrong layer for I1 (M8).
+   - The timing suite is good: literal instants are the oracle, and the production checks are a supplement.
+4. **Missing tests:** partial write (M3), per-key daily bound (S5), retry that throws (M2), a snooze that does nothing (M6), queue overflow (M7), the E12 counter (M9), and snooze off with foreign snoozed keys (M5).
+5. **Simpler designs and reuse:**
+   - The coordinator under `DeliveryGate`, with a nullable-id `Completion` and a deterministic `effectId`.
+   - One `nextDeliverableMoment`, built on `DeliveryTimeContext.from` and `isBatchTickForCadence`, for both the first snooze and the retry.
+   - The proxy path as the single fallback (M1).
+   - `DeliveryRowStore` as the ownership ledger (S1).
+
+SCORE[error-paths]: 4/10
+SCORE[durability]: 3/10
+SCORE[architecture]: 6/10
+SCORE[legibility]: 6/10
+VERDICT: CHANGES
+
+---
+
+Take a look at Clear SMS. It is an app that I have starred on GitHub. It has a filtering system that I would like to leverage. Please take a look at the open issues, particularly those that I have commented on. And then let's leverage the filtering work that they have to make this app have a filtering system that allows us to have different sorts of running balances and items that can be extracted from each of our notifications. Then with those details, we can do things like make charts, add status indicators, so forth... none of the mock-ups really tickle my fancy the forecast one looks kind of alright, but it isn't the sort of design language that I was thinking of. I was thinking of something that's more intrinsic to the notifications themselves, rather than what the app itself is doing. This needs to be about communicating the information that the notifications hold, not about communicating how the budget is going to be spent. That is something that is implicit, and then most cases should be relatively invisible to the user.
+
+I will now read subsequent messages.
+
+---
+
+<task-notification>
+<task-id>bic1a718b</task-id>
+<tool-use-id>toolu_01WViS19HAVQyZxkZaGtLyyf</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/bic1a718b.output</output-file>
+<status>completed</status>
+<summary>Background command "Session keepalive for in-flight delegated runs" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+i would also like to bring a feature from clear SMS which is the OTP notifications... Of course, only certain apps should have this variety of functionality, so it should be something that is assignable per app and category and so forth.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3Af6c313e6-c81b-4d42-8461-689f029cb3e5 (You are a spec reviewer (review only, edit NOTHING, no git writes, no...) [completed]:
+Short answers, all from code. Nothing edited.
+
+## 1. S1 after I3 is removed: yes, reuse the row store
+
+**Smallest record that fixes M5 and M9.** Per snoozed key: the deadline, the priority at snooze time, and the boot count at snooze time.
+- Deadline fixes M5 (ownership) and S2 (stale keys).
+- Priority is what S3 needs.
+- Boot count (`Settings.Global.BOOT_COUNT`) fixes M9. Without it, Farhan can't tell a reboot loss from a source cancelling while snoozed: in both cases the key is neither active nor snoozed after the deadline.
+
+The smallest place to keep that is a capped JSON list in preferences, like the spend ledger (`DefaultPreferences.kt:349-358`). It needs no migration.
+
+**Why the row store still wins.**
+- **Inbox parity.** Today every filtered notification gets an inbox row at arrival (the upsert in `onArrival`, Coord:165-171), and the inbox shows every row that isn't cleared (`NotificationQueries.kt:6`). If snooze keeps only a side ledger, snoozed notifications disappear from Farhan's inbox. That's a regression against the proxy path. It isn't a new Snoozed list: it's the same inbox row the proxy path already writes, and yes, showing it is wanted.
+- **Lost items get delivered for free.** A row lost to a reboot becomes an ordinary pending row (clear its deadline), and the existing batch path proxy-delivers it under the budget. A side ledger can only say "lost".
+- **One commit.** The return's `Completion` marks the row delivered and writes the budget under the same gate. That's what M3 needs.
+
+**Cost.**
+- One nullable column (`snoozeDeadline`) and a Room migration.
+- That column must go into the WHERE of all three pending queries (`NotificationDao.kt:16`, `:18`, `:77`). Otherwise `onBatchTick` proxies a row while Android still holds the original, and you get a duplicate. `onBatchTick`'s visible-source deferral (Coord:232) doesn't protect against this, because a hidden record isn't active.
+
+**Key collision.** Rows are keyed by `sbn.key` on purpose. The proxy path already treats a later post with the same key as the same notification: the upsert replaces the row. With S1 the snooze is that same upsert, so any pending proxy row with that key becomes the snoozed row, exactly as a source update would replace it today. The return then marks its own row delivered.
+
+The M3.4 hazard only exists in the stub design, where a return owns no row and `markDelivered(key)` touches someone else's. One edge remains: the post updates a row that was already proxy-delivered. The existing refresh branch handles that today (Coord:176), so the snooze policy should skip it, with a reason like `ALREADY_DELIVERED`.
+
+## 2. Keep I7, fall back to the proxy path: agreed, with one correction
+
+Nothing gets stuck that isn't already stuck today, provided three conditions hold:
+
+- **"Funded" is a static test.** A tick is funded when it falls in a period with points ≥ the priority's point cost, or the priority's setting is IGNORING. Spend and the hourly cap at that tick are decided at return. If the return is denied, the notification is snoozed again to the next funded tick, bounded by S5's daily cap, then the proxy path.
+- **The search must use each date's own schedule (the correction).** `environment.schedule()` is today's schedule only (`DefaultPreferences.kt:246-247`, `scheduleFor(today)`). A 48 h search has to call `ScheduleBook.scheduleAt(tick, zone)` for every tick. If it doesn't, a dated override tomorrow is misjudged: either the notification is snoozed into an unfunded period (a sound on denial), or it falls back when it didn't need to. `DeliveryEnvironment` needs the schedule book or a `scheduleAt(instant)`.
+- **The horizon in testing mode** is 960 three-minute boundaries. `ONCE_DAILY` still ticks only at boundary 0, so LOW has the same two candidates as in production.
+
+**LOW on the proxy path is an existing bug, but not on `main`.** `main` has no `NotificationDeliveryPolicy` at all (`git ls-tree main` finds 0 matches). The bug lives on the pilot base: neither file changed since 717faf6. Nothing rescues it:
+- `onBatchTick` offers only rows that pass `shouldDeliverOnBatchTick` (Coord:218-220). For LOW that's boundary 0 only (`NotificationDeliveryPolicy.kt:43`).
+- At midnight, `canDeliverNow` finds the 2-point period and the cost of 8, so the row is deferred, every day.
+- The "standing" degradation is inbox display only (`NotificationQueries.kt:7,33`, `NotificationInboxFilter.kt:17`). There's no carry-over or escalation.
+- `NotificationDeliveryPolicyTest.kt:118` tests LOW's cadence on its own and never together with `DEFAULT_SCHEDULE`.
+
+Under the default schedule, LOW is never pushed: it only ever shows in the inbox. So falling back to the proxy path matches today's behaviour. It isn't lost, but the owner should hear it as a separate bug.
+
+## 3. Against the one-minute re-snooze
+
+- **It breaks I7**, because one minute later isn't a cadence tick.
+- **It doesn't converge.** Every overflowed return has already made its sound (E11). Snoozing them all for one minute brings them back at one instant, so the burst repeats, possibly with a sound every minute. The 128-item intake drains slowly, because each item is classified and does I/O.
+- **Raising the bound is expensive.** Each queued item can carry up to 1 024 chars of title, 16 384 chars of text and 8 actions with their intents (Svc:245-251). A return needs only its key and `postTime` once S3 (charge at the priority recorded at snooze) is accepted.
+
+**Simpler than both:** the "pending set" is just a field on the entry you already have. `onNotificationPosted` already has to check the tracker synchronously. When it finds the key, it sets `returnedAt = postTime` on that entry and offers a small `Work.Return(key)`. If the offer fails, the flag stays set, and the worker settles flagged entries on its next item or at the next batch tick. No new structure, no loss on overflow, and the bound is the tracker's own.
+
+## 4. No timer: decide from Android's state, not from elapsed time
+
+**A late callback after a timer causes a duplicate.** The timer expires and Farhan falls through to the proxy path. Its `cancelNotification` on the now-hidden key does nothing (flexibility doc §4:73, verified on device). Farhan queues and delivers a proxy, then the original returns at its deadline. That's a duplicate, and it's charged twice. So a timer is wrong.
+
+**`Skip(AT_CAPACITY)` alone isn't enough.** It counts only Farhan's own snoozes. Android's limit of 500 includes the user's and other listeners' snoozes, and zero-delay or missing-key snoozes also do nothing. Keep it, and add a check against Android's own state:
+
+- **Rule:** an entry snoozed before the previous batch tick, never confirmed, and still in `getActiveNotifications()` with the same `postTime` did not snooze. Hand it to the proxy path.
+- **Where it runs:** at the next batch tick, which already reads `activeSourceKeys()` (Coord:217), and at connect.
+- **Why it's safe on a slow device:** a snooze that landed late is not in the active list, so it can't produce a duplicate. The "before the previous tick" condition orders the check against existing events (an hour, or 3 minutes in testing mode). Requiring one full tick also avoids a race where the next tick fires seconds after the snooze call.
+- **What `REASON_SNOOZED` does:** it only marks the entry confirmed early.
+- **Cost:** a notification that never actually snoozed bypasses the budget for at most about two ticks.
+- **A second post of the same key while unconfirmed:** handle it with M1's rule (fall through to the proxy path). A key that really is hidden doesn't produce a callback when the source updates it (E13).
+
+The scores and verdict stand, with one change: with S1 unblocked, architecture moves to 7/10. VERDICT: CHANGES.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3Ad7ca9b3a-f085-445c-a5da-da00f3c6d15d (Per-category Clear (Sol)) [completed]:
+Addressed all eight review items in `f10e52f`, a new commit on `fix/clear-per-category`.
+
+Boat passed **184 JVM tests** with zero failures or skips: 156 domain, 22 data, and 6 presentation. `:app:compileDebugKotlin` passed. All three mutation checks failed as expected, and the clean rerun passed.
+
+**Clear All** retains its translations. The five new scope labels are English-only. Device behavior remains unverified. [Implementation report](/home/mini/Documents/repos/Farhan.worktrees/clear-category/research/clear-category-report.md)
+
+---
+
+The list of apps should also be filterable by category and it should have an alphabetized scroll bar on the right for easier navigation.
+
+i would also like to impose cls rules on the app like how i've done with edge i would also like to take hey look at what the performance of the app was prior to my notification overhaul, what it is now after the performance improvements, and see if we can bring the base lines closer together, if we already are relatively close, then I simply say add a small buffer, and over time we will ratchet down, but for now we will just prevent it from backsliding.
+
+---
+
+That mock-up looks fine to me. Make sure that the apps have their icons in the final version
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3A78f48e1b-a860-4dec-8b89-14d21a560807 [completed]:
+I reviewed both diffs by reading them. I did not run anything on Boat: every mutation below I checked by tracing the test's control flow, and the author's own mutation log (`clear-category-20261120T121915Z`) already covers removing the guard, routing to All and forwarding a zero cutoff. Nothing was edited.
+
+**A: the round-1 fixes are right, but the new loading state blanks the inbox on every resume. Verdict CHANGES (one "should").**
+**B: all four items are fixed. Verdict OK, with two small cleanups.**
+
+# A. fix/clear-per-category (`10dd0d1..f10e52f`)
+
+## Round-1 items
+
+1. **Fixed.** `NotificationFilterViewModel.kt:176` `showCleared = !state.showCleared, priorityFilter = null, page = 0` and `InboxClearScope.kt:8` `data object Cleared`. Removing the priority from `Cleared` means it can't come back by accident.
+2. **Fixed.** `NotificationFilterViewModelTest` sends a Low clear from page 2 and checks it received `Priority(LOW)` and the displayed `shown.selection.standingCutoff`. Spot mutations, all of which turn the test red:
+   - Forward cutoff 0: the cutoff equality fails.
+   - Call the old global clear: `useCases` errors, and `clears` is empty.
+   - Delete `priorityFilter = null` (`:176`): the Cleared test fails on `shown.priority isNull`.
+   - Delete the `getNotifications()` re-query after the page reset (`:151`): `queries.last().offset` is 100.
+   - Delete `isLoading = true` (`:90`): the loading test fails.
+3. **Fixed.** `NotificationFilterState.kt:39` `InboxClearScope.All -> ly.com.tahaben.core.R.string.clear_all` is translated in ca, fr, ar, es, pl and ta. `clear_inbox_all` was deleted, and no locale file had a copy of it.
+4. **Fixed for chip taps, but too broadly; this causes the "should" below.** `:89-92` blanks the list in `getNotifications()` itself, so blanking now also runs on `startObserving()`, which fires on every `ON_RESUME`.
+5. **Fixed.** In `ScopedProxyClear.kt:16-23`, every id's action is removed. There is one `activeNotifications()` snapshot, and only tags in `PROXY_TAG + id` are cancelled. A proxy that is retained but not posted (`"inactive"` in the test) loses its action and gets no IPC, which is correct. The cancel uses `(tag, notification.id)` from the snapshot, which matches the post site at `NotificationService.kt:164` (`manager.notify(PROXY_TAG + item.id, 1, …)`). Posting and the clear both run under the gate, so a proxy cannot appear between the snapshot and the cancel.
+6. **Fixed.** `:149-152`. The reset only happens when the same scope is still selected, and it re-queries only if observation is live.
+7. **Fixed.** `NotificationDeliveryCoordinatorTest` captures the event inside `delete` and asserts `Delivered(id)`. Removing the guard marks the fresh event `removed`, so `stale()` returns `Cleared`: red. Taking `clearOrder` after `delete()` also goes red. The `freshOrder > 0` check proves the capture actually ran.
+8. **Fixed.** `ClearInbox` replaces the old name, `fromReason(reason: Int, ownProxy: Boolean)` has no default, and `deleteInboxNotifications(selection: InboxSelection)` passes `selection.search`.
+
+The declined high-water mark is recorded as a known limit in the report.
+
+## New findings
+
+**Should**
+
+- **`NotificationFilterViewModel.kt:82,89-92` with `NotificationFilterScreen.kt:131-132,250`: the inbox goes blank on every resume and loses its scroll position.**
+  - `ON_RESUME` calls `startObserving()`, which calls `getNotifications()`. That clears both lists and sets `isLoading = true`, so `return@Column` removes the `LazyColumn` and its internal list state.
+  - Room re-emits within milliseconds and the list comes back scrolled to the top, with a flash of the chips alone.
+  - It happens after opening a notification's app and coming back, after the POST_NOTIFICATIONS dialog, and after recents. A dialog only pauses the activity, so the job is still live; it is cancelled and rebuilt anyway.
+  - At `10dd0d1`, `startObserving` kept the rows. Round 1 asked to hide the list "until the first emission **for the new query**", and a resume is not a new query.
+  - Fix: only blank when the cleared flag, priority or page differs from what is shown. The cutoff changes on every call, so leave it out of the comparison. Or move the blanking back into the chip, Cleared and page handlers.
+  - Test: stop and start observing with the same selection; assert `isLoading` stays false and the rows are kept.
+
+**Nits**
+
+- **Rapid chip taps are not pinned.** The loading test only emits on `pages.last()`, so it stays green if `getNotificationsJob?.cancel()` (`:88`) is deleted. The behaviour itself is safe, because the old collector is cancelled on the same main dispatcher. Emit on the previous flow after the HIGH tap and assert nothing changes.
+- **`ClearInbox.kt:72`: `InboxClearScope.All -> invoke()` ignores `search`.** Search is always `""` today (nothing sets it), so this is latent. If a search field arrives, "Clear All" would wipe the whole inbox while a filtered list is shown. Route All with a non-empty search through `clearScoped(InboxSelection(search = …))`, or `require(search.isEmpty())`.
+- **The `search = ""` defaults on `ClearInbox.invoke` and `OnClearNotifications` make the "same query shape" optional again.** Drop them. A simpler route: keep the shown `InboxSelection` in state at emission and dispatch it, rather than rebuilding it from `clearScope`, `standingCutoff` and `inboxSearch`.
+- **One name, three meanings.** `ClearInbox` (the scoped or global use case), `coordinator.clearInbox(id)` (marks one row cleared) and `dao.clearInbox(selection)` (deletes by predicate). The coordinator method should become something like `clearOne` or `markCleared`.
+- **`ScopedProxyClear.kt:16-19` hides a side effect in `mapTo`.** Use `ids.forEach(actions::remove)`, then build the set.
+- **Test seam leaks into production.** The `useCases: () -> NotificationFilterUseCases` provider and the switch from the use cases to `serviceUtil` in `checkServiceStats` (`:65,73`) exist for the test. The behaviour is the same (both use cases are pass-throughs), so this is acceptable, but it is a test seam in production code.
+- **`return@Column` inside `Column` (`Screen:250`).** It works, but `if (!state.isLoading) { … }` reads better in Compose.
+- **Translations and casing.** The five new scope labels (`clear_inbox_critical`, `_high`, `_medium`, `_low`, `_history`) are English only, as the report says. In English, core's "Clear All" is title case while the new labels ("Clear low") are sentence case.
+
+**Scores for A:** correctness 7/10, tests 8/10, legibility 7/10.
+
+# B. fix/usage-permission-package (`653b60b..f877f11`)
+
+## Round-1 items
+
+1. **Fixed.** The screenshot now shows the loaded page: 49m, rings at 0.0 / 4.1 / 0.0 %, and the app list. The NaN % in the loading state is reported as a separate finding.
+2. **Fixed.** `profile-notifications.py:19` `default="ly.com.tahaben.farhan_alpha"`.
+3. **Fixed.** `Context` is gone from the ViewModel. `GetOwnPackageName(usageRepository)` follows the `ServiceUtil.getOwnPackageName()` pattern, and the E2E test compiles against `UsageRepositoryFake.getOwnPackageName() = "fake.own.package"`.
+4. **Fixed.** `assertEquals(BuildConfig.APPLICATION_ID, appContext.packageName)`.
+
+## New findings
+
+- **Should (small): `UsageRepositoryImpl.kt:185-190` moved the KDoc onto the wrong function.**
+  - `getOwnPackageName()` was inserted between the `CLAIM(own-package)` comment and `checkUsagePermission()`.
+  - The claim ("A hardcoded name made **this** always false") now documents a String getter instead of the AppOps check.
+  - `checkUsagePermission` still reads `context.packageName` directly, so there are two sources for the same fact.
+  - Fix: put the comment back on `checkUsagePermission`, have it call `getOwnPackageName()`, and add `// ↳ CLAIM(own-package)` at the AppOps call.
+- **Nit: the report contradicts itself.**
+  - The new caveat says the list "no longer shows Farhan-alpha". The unchanged bullet below it still says "the fixed run still lists Farhan-alpha".
+  - Also, Productivity is 4.1 % of 49m (about 2m), but neither visible row is Productivity. Farhan-alpha was categorised Productivity in the old dump, so it is probably the off-screen third row; uiautomator only dumps rows that are on screen.
+  - Change the caveat to "not visible in the screenshot".
+- **Nit: no JVM test covers `filterFarhan` with `ownPackageName`.** Round 1 did not ask for one, and the report states the filter is unproven.
+
+**Scores for B:** correctness 9/10, tests 6/10, legibility 8/10.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3A53ec1099-fda2-4522-a13e-15ff7951a9fe (You are a code reviewer (review only: edit NOTHING in the worktrees, ...) [completed]:
+1. **Fix shape: compare inside `getNotifications()`, against the selection that produced the rows on screen.**
+   - **Why this one.** The blank exists to keep the list and the clear scope in step. Putting the check where the query is built covers every path that changes the selection, including ones added later. Moving the blank into each handler means every future handler has to remember to blank.
+   - **What to compare.** Record a key of `(cleared, priority, page)` in the same `state.copy` as the rows, at emission. Blank only when the new request's key differs from it. Leave out the cutoff, since it changes on every call. Comparing against the last *request* would also work, because a pending query's blank stays until something emits. The shown key states the rule directly, though.
+   - **A path the handler approach misses.** The clear's page reset (`NotificationFilterViewModel.kt:149-152`) sets `page = 0` without re-querying when observation is stopped. On resume, handler-only blanking would show page-2 rows under "Page 1" until Room emits. The scope still matches, so this is cosmetic. The comparison approach blanks here because the page differs.
+   - **No other path changes the scope without a blank.** I checked each one:
+     - `priorityFilter` and `showCleared` are only written at `:169` and `:176`; `page` only at `:84`, `:85`, `:150`, `:169` and `:176`.
+     - A change to the standing threshold is safe. The dispatched `standingCutoff` is written in the same `state.copy` as the rows, at `:103-109`, and `clearScope` doesn't depend on the threshold. On resume with a new threshold, the old rows and the old cutoff stay together until the new emission replaces both at once.
+     - Process restore starts from a fresh state with `isLoading = true` by default, because there is no `SavedStateHandle`.
+     - A permission result comes back through `ON_RESUME`, then `startObserving`.
+     - Dismissing or opening a notification deletes one row, and Room re-emits with the same scope.
+
+2. **Agreed on all three declines.**
+   - Casing: concede.
+   - Test seam: concede.
+   - `All -> invoke()` with a search: you're right that a `require` adds a crash for a case nobody can reach. There is a version with no crash path if you want it later: `All -> if (search.isEmpty()) invoke() else clearScoped(InboxSelection(search = search, standingCutoff = standingCutoff))`. I won't push for it.
+
+3. **Yes, `filterFarhan` can be tested on the JVM today.**
+   - **Why it works.** The usage domain module imports nothing from Android. The ViewModel's constructor needs `UsageOverviewUseCases` and `UsageSettingsUseCases` (concrete wrappers over the `UsageRepository`, `Preferences` and `WorkerRepository` interfaces) plus `Preferences`. `compose-module.gradle:65-69` already gives the presentation module JUnit, Truth and coroutines-test. Compose's `mutableStateOf` and Timber both run on the JVM.
+   - **The smallest test**, in `usage_overview_presentation/src/test`:
+     - Use `Dispatchers.setMain(StandardTestDispatcher)`.
+     - Fake `UsageRepository`, either as a reflection proxy like the one in A's tests or a copy of the androidTest `UsageRepositoryFake`. Have `getOwnPackageName()` return `"own.pkg"`. Have `getUsageDataForDate` return start/stop event pairs for `"own.pkg"` and `"other.pkg"` (the E2E test's fixtures show the shape).
+     - Fake `Preferences` with `isIgnoreFarhan = true`, `isIgnoreLauncher = false` and caching off.
+     - Call `vm.iniFilters()`, then `onEvent(OnPreviousDayClick)`. Yesterday avoids the today-only `dropLast(1)`, and caching off sends the read through `getUsageDataForDate`.
+     - Run `runCurrent()`, then assert that `state.trackedApps` contains only `other.pkg`. Repeat with `isIgnoreFarhan = false` as a positive control: both apps must appear.
+   - **What it catches:** going back to a hardcoded `"ly.com.tahaben.farhan"`, comparing against the Kotlin namespace, or dropping the `filterFarhan &&` guard (the positive control catches that one).
+
+---
+
+UI skeletons or placeholders are a good way to solve CLS issues.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3A10dc4a60-95cc-4e35-a3e5-be8e1317e572 [completed]:
+**Recommendation: do not ship global mute and replay.** On API 35, Android’s listener hint suppressed the source app’s sound and vibration and also muted the probe’s own playback with notification attributes. Heads-up still appeared. The listener can read the source channel’s sound and vibration settings, but Android exposes neither a per-notification exception to the hint nor a reliable way to tell which suppressed posts would have alerted.
+
+An app-owned automatic rule can leave manual Do Not Disturb intact, but it still changes effective DND and can outlive the listener. The report recommends leaving alert delivery and DND under Android’s control.
+
+The emulator cleared the hint after process death and explicit unbind. Subsequent notifications alerted. I restored Farhan’s listener grant, removed both fixtures, and left DND settings alone. Reboot and live DND transitions were source-read only. Physical output and Android 16, Android 17, and OEM runtime behavior remain unverified.
+
+[Research report](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/notification-sound-control.md) · [API 35 transcript](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/sound-probe/api35.txt) · [Probe runner](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/sound-probe/trial.sh)
+
+Committed locally as `2a85ea2` on `pilot/snooze`. No app source changed.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3Asettings-hub-20261120-1 (Settings menu and notification bottom bar (Sol)) [completed]:
+Implemented the Farhan Settings hub and the Overview, Inbox, and Apps bottom bar. Committed locally as `37f1832` on `pilot/settings-hub`. The UI ships without a feature flag, and Inbox remains the entry tab for the dashboard card and notification deep link.
+
+Boat built the debug APK, compiled the Android tests, and passed all 10 JVM tests. On the API 35 emulator, both backup rows opened the correct document picker, Back left the notification area in one press, and Clear All sat above the bar in both navigation modes.
+
+The [implementation report](/home/mini/Documents/repos/Farhan.worktrees/settings-hub/research/settings-hub-report.md) records the inheritance decisions and mock-up differences. The [15 screenshots](/home/mini/Documents/repos/Farhan.worktrees/settings-hub/captures/settings-hub/) include all six screens in Light and Dark. Android’s three-button system icons remain dim in Dark on this emulator.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3A5ec888b6-8f05-4230-8d96-511d125f4f8f [completed]:
+Wrote the [ClearSMS filtering research report](/home/mini/Documents/repos/Farhan/research/clearsms-filtering-research.md). It traces ClearSMS from rule matching through extraction and account storage, reviews 23 open issues and relevant closed threads, and proposes three pilot slices for Farhan.
+
+The pilot separates **observed transaction totals** from **the latest balance reported by each account**. For OTPs, it recommends opt-in per app, with category and channel scoping, and immediate delivery for selected authentication notifications. On Android 15 and 16, ordinary listener access cannot reliably read codes Android marks sensitive, so the original notification remains available for the user.
+
+The Android findings are source-verified. Device behavior and extraction accuracy on real Farhan notifications remain unverified. No Gradle or checkout code ran.
+
+---
+
+I want Farhan to send sounds that break through dnd, use dnd and mute her apps. It outliving Farhan is not an issue. Let's make the app robust in a similar manner to how reverb makes itself robust.
+
+We can provide disclaimers to the user. I, being the primary user, know what the possible problems are, and the app making the phone silent is generally a small issue for me.
+
+I would just like to make sure that a small subset of notifications do still make sound. Really, it's only phone calls that I have breakthrough and actually make audible noises at the current moment.
+One possible way around this would be to have everything muted by default, then when we get a notification that we wish to send, on mute, the notification channel, snooze for one millisecond, it gets sent through, and then after a few seconds we re-mute, no problem.
+
+I want you to push a little harder on these agents. I know that they sound like they're compelling, but these things are totally doable. We just have to be a little creative here.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3A9659c02d-3e0b-42c4-a12c-572be32fa357 [completed]:
+My verdict is **fix first**. The structure matches the signed-off mock-up, but the bottom bar the owner asked for is the wrong colour family on all three notification screens.
+
+I rendered the mock-up with headless Chromium on Boat at 360×800, scale 3, and made side-by-side pairs (mock-up | build) for all 12 screenshots. The mock-up has only one dark palette, so its light and dark renders came out identical. Its text shows in a serif font because the page relies on font variables from its original host; ignore that. Boat reported 0% hours left after this, so I stopped using it.
+
+**Your four points:**
+- **(a) Lavender bar: confirmed.** `NotificationArea.kt` creates `NavigationBar { … }` without setting a colour, so it falls back to `surfaceContainer`. `Theme.kt` never passes that colour into any of its six colour schemes, although `Color.kt` defines it (`surfaceContainerLight = 0xFFF6EDDF` and so on). The bar's pixels are exactly the Material 3 defaults: `#F3EDF7` in light, `#211F26` in dark. The gap in the theme is older than this branch; the bar is just the first full-width thing that shows it. The mock-up's bar has no fill: it uses the page background with a thin line on top.
+- **(b) Clear All overlap: not new.** At 717faf6 the button already floated over the list, with 72 dp of bottom padding so the last card can scroll clear. The branch only removed the old bottom padding because the bar now handles it. The button's white text on peach is also from the base and has poor contrast.
+- **(c) Appearance control: your premise is wrong, and the build matches.** The caption says "three-way switch", but the markup is a three-segment control (Light / Dark / System). That is what the build draws. The real problem is that in light mode the selected segment is `#E6E8DC` on white, so you can barely see which one is on. The author's report doesn't mention this.
+- **(d) Apps tab:** not flagged.
+
+**Inheritance:** the build reuses the original appearance and theme state, the dashboard cards, the dashboard widgets, the inbox rows, the existing app bar and the backup engine. None of it was rebuilt; the report quotes the code. One leftover: `UiModeDialog` and `ThemeColorsDialog` are no longer used anywhere, but their state fields and events remain.
+
+**Top 3 fixes:**
+1. **Bottom bar:** use the page background with a thin divider on top, as in the mock-up. Fixing the missing colours in `Theme.kt` is the real cure, but it would recolour every dialog and menu in the app, so it should be a separate follow-up.
+2. **Selected appearance segment:** use the theme's green (`secondaryContainer`), which matches the mock-up's highlight and the bar's selected pill.
+3. **Accent colours:** make the group headings `secondary` green (readable in both modes; today they are near-black in light and gold in dark). Make the badge amber instead of error red. Also fix the gold backup-row titles in dark mode.
+
+Two things for the owner to decide rather than fix: the notification area opens on Inbox while the mock-up shows Overview selected, and the mock-up highlights the Import row while the build makes Export and Import identical.
+
+Files are in `/home/mini/Documents/repos/Farhan.worktrees/settings-hub`:
+- `research/fidelity-review.md`
+- `captures/settings-hub/pairs/` (side-by-side pairs)
+- `captures/settings-hub/pairs/mockup/` (mock-up renders)
+
+---
+
+For the OTPs, we can provide it as a Claymer, and just let the user figure out which apps happen to actually work. I know for a fact that the apps that I would be getting most OTPs through don't redact, so it wouldn't be an issue. I do have a more secure app, but that one doesn't bother trying to send things through a notification channel, because that's not something that's too particularly secure anyway.
+
+Ask for the finance aspect of things that's actually my least useful thing that I would like to glean from notifications. Yes, I think we should include it, but it should not be the main focus. Principally, because I don't currently have any apps that display finance information through any sort of notification channel. Now, if I had an open source banking app that wasn't so terrible, then perhaps it wouldn't be a problem. But modern making apps are really, really terrible. And they like to debunk you if you try to make your own application off of their APIs. So it's best to just not touch it. I leave those apps that I do use sandbox or I run their web version. It's frankly a pain in the ass. But my point is, finance is not the main objective for me. I think we should include those pieces on our side because the work has already largely been done there. But I would like to focus on the other sorts of details that we can glean rather than on the finance ones because that just won't be what I'm going to use most principally. And anyway, if I had an open source finance application that I wouldn't be bothering trying to get some sort of side channel notification system to display information for me, I would just interact with the API directly. It would make more sense...
+
+It would be nice if I could save my notification data in a compact archival format for later analysis to see what sort of notifications could be translated into a different sort of display format. I would like to be able to view this archive to ensure that nothing sensitive is in there when I export it to an AI session for analysis, but that is something that I would also like to explore.
+
+I would like to avoid having to use ADB. ADB was really just for the recovery path, not for the main application path. If possible, let's avoid it. So if that means becoming a system administrator app to manage, do not disturb, turning on, do not disturb, and then managing it from that point onward. I think that's a reasonable approach. We just take note of what do not disturb was prior to Farhan's involvement. and then use that as the mode that we send notifications through when we actually want for them to sound.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3A49b87cf6-040b-41eb-9415-058b2bbd0571 (You are a UI fidelity reviewer (a different model from the author, wh...) [completed]:
+Short answers below. Measuring point 4 overturned my own fix 2, and the grep in point 1 changes what I recommend for fix 1. I edited nothing.
+
+**1. Bar colour.** Setting `containerColor = colorScheme.background` and adding a `HorizontalDivider(color = outlineVariant)` uses only theme tokens, so it isn't theming around the app in the hard-coded-hex sense. But it does override a shared control's default to cover a gap in the theme, and the gap stays everywhere else. Since the grep shows the gap is wider than the bar, the fix belongs in `Theme.kt`, and I withdraw the override.
+
+Grep (Material 3 1.3.1, from BOM 2025.02.00):
+- **Explicit reads:** no app code reads `surfaceContainer*` directly.
+- **Material defaults that read it, outside tests:**
+  - 11 `AlertDialog` (reads High), in 7 files across app, core-ui, notification_filter, onboarding and usage_overview.
+  - 9 `DropdownMenu` (reads `surfaceContainer`).
+  - 2 `DatePickerDialog`, 1 `DatePicker` and 2 `TimePicker` (High).
+  - 1 `ModalBottomSheet` and 1 `BottomSheetScaffold` (Low).
+  - About 16 `Switch` calls, whose off-state track reads Highest.
+  - The new `NavigationBar`.
+- **Plain `Card`s:** the two that don't pass colours are covered. `MainScreenCard` sets `primaryContainer` (it measures `#E6E8DC`), and the Inbox rows paint their own background. So no visible card changes.
+
+All of these show Material's baseline lavender today, so wiring the tokens corrects every one; none of them gets worse. The change is mechanical: `Color.kt` already defines the five `surfaceContainer*` values for every scheme, and wiring them adds about 30 lines to `Theme.kt`. The shifts are subtle: in light, the bar goes from `#F3EDF7` to `#F6EDDF` and dialogs from `#ECE6F0` to `#F0E7D9`. It's cheap enough to do now, checked with screenshots of one dialog, one menu, an off switch and the bar, in light and dark. After that the default bar fits the theme. What remains differs from the mock-up only in being a tonal bar instead of flat with a hairline, which can be recorded as a deliberate Material default.
+
+**2. Badge.** The amber is made up for the mock-up. It is `--app-warn:#e6b35a` in the mock-up's `:root` block, not a theme token. Classic `tertiary` is teal (`#0C6B59` light, `#85D6BF` dark), and the only amber-ish token is `primary` `#EAB466`, which is close by coincidence. Keep Material's error red. I drop this fix.
+
+**3. What the owner sees in the first 10 seconds:**
+1. **Bar colour.** It shows on every notification screen, next to cream cards and a green pill. Fix now with the `Theme.kt` wiring.
+2. **The area opens on Inbox, not Overview.** The owner signed off on a picture with Overview selected. This needs one line in the handoff explaining why, not a code change.
+3. **Light mode: you can't tell which appearance option is selected.** This is visible as soon as the owner opens Settings in light mode. Fix now (see point 4 for how).
+
+Leave as follow-ups (only visible side by side, or not from this branch):
+- heading colour (they read as bold labels and don't look broken)
+- gold backup titles in dark mode
+- Import emphasis
+- the unused dialogs
+- Clear All's white on peach (1.87:1), which comes from the base and belongs on `fix/clear-per-category`.
+
+**4. Segment contrast (WCAG ratios):**
+
+| Pair | Now | With `secondaryContainer` |
+|---|---|---|
+| Selected fill vs unselected, light | `#E6E8DC` on `#FFFFFF`: **1.24:1** | `#CBEEA5` on `#FFFFFF`: **1.29:1** |
+| Selected fill vs background, dark | `#222317` on `#000000`: 1.32:1 | `#334E17` on `#000000`: 2.24:1 |
+| Selected label on its fill | 13.81:1 | 13.31:1 |
+
+My fix fails by the number. In light it changes the hue, not the contrast, and both are below the 3:1 that WCAG 1.4.11 asks for state indicators. The fill colour can't carry the selected state on its own. Material 3 1.3.1's `SingleChoiceSegmentedButtonRow` puts a checkmark on the selected segment, and the checkmark carries the state. Switching to that replaces the hand-built control with a shared one. If a fill alone is wanted, `secondary` `#4A672D` with white text is 6.42:1.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3A67deee74-85d6-48eb-a159-486b96cf0c1d (Snooze pilot: red tests (Sol)) [completed]:
+Committed Snooze red v3 as `438f3eb` on `pilot/snooze`. The tests cover proxy fall-through, funded cadence, ledger recovery, return accounting, 200 returns through the 128-slot intake, and Android callback handling.
+
+Boat verified 73 distinct expected assertion failures across debug and release. All targeted controls passed, including 59 portability tests.
+
+The [red report](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/snooze-red-report.md) records the new seams, per-variant counts, and open spec decisions. The three pending queries were tested against SQLite. Room migration execution remains unverified because the repo has no migration test harness.
+
+---
+
+Farhan should accept the change for 30 seconds and then revert back to its own dnd mode and then when it needs to sound again, it will switch back to your mode. Basically, it will treat any override as switching the active wringer mode, but it will still reinstate the inactive wringer mode in order to keep the first time pushes that aren't budget confirmed silent.
+
+Farhan itself may need to snooze critical notifications in order to get those to sound and for notifications that cannot be snooze, such as phone calls that are allowed in the D&D mode, then Farhan may need to make sounds itself. but I have a screener application, that is most phone calls, and it really gets them to a small notification. I have that set to a critical notification, so that Farhan never touches it. Those ones should remain silent, but my real phone calls, those are also marked as critical, but this app doesn't intercept them, should still act as normal. On the first call, it's silent, but it does vibrate. If I happen to be looking at the screen at that moment, then it will pop up on screen. And then on a stalker call, otherwise known as a subsequent call, then it will actually make the sound in addition to the vibration, and it may choose to go full screen for the notification.
+
+I don't know if those are normally snoozable, my guess is no. I just want to make sure that they make sound when they normally should. Which basically just means some testing to make sure that priority DND still works with this mode. And if not, then including that as a disclaimer. We can also try workarounds to see if we can get DND. and D priority to be a little more well-behaved.
+
+i will note that boat still has prepaid usage credits. use them until it stops letting you
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3Adeacff5e-f7a8-47b1-acd2-f28df7cb387b (Per-category Clear (Sol)) [completed]:
+Committed round two as `4abe664` on `fix/clear-per-category`, directly over `f10e52f`. Resuming the same inbox page keeps its rows visible during refresh. Changing the chip, Cleared tab, or page still hides the old rows until the new query emits. All four requested tests and the accepted nits are included.
+
+Boat passed **188 JVM tests** (156 domain, 22 data, 10 presentation) with zero failures or skips. `:app:compileDebugKotlin` passed. Both regressions failed as expected under mutation, and the clean rerun passed. Scroll position on a device remains unverified. [Implementation report](/home/mini/Documents/repos/Farhan.worktrees/clear-category/research/clear-category-report.md)
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3A67430f3d-283e-435c-abad-523ee1f6df6c (Research task (no app source changes, no push, no stash, vigil only n...) [completed]:
+**Build a Farhan-owned Priority DND rule and a bypass channel for elected alerts.** On API 35, Farhan’s test notification produced a beep and buzz while Priority DND stayed on and the original stayed silent. The main path needs notification access, DND policy access, and permission to post Farhan’s own notifications. ADB is reserved for recovery.
+
+Both temporary-unmute approaches worked for some elected notifications, but unrelated notifications also sounded. Even re-muting in the elected notification’s callback left a leak window. The proxy avoids that window. It appears as a Farhan notification, and existing DND exceptions or a stricter active mode still apply.
+
+The owned rule survived process death. The rebound listener found it and removed only that rule, returning the emulator to its prior filter. Reboot, manual DND changes in Settings, and the owner’s actual call and conversation settings remain to be verified.
+
+[Round 2 report and implementation slices](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/notification-sound-control.md#round-2-selective-breakthrough-with-user-granted-dnd-access) · [App-only transcript](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/sound-probe/round2/dnd/api35.txt) · [Recovery transcript](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/sound-probe/round2/dnd/api35-recovery.txt)
+
+Committed locally as `98e346c` on `pilot/snooze`. Farhan’s listener grant was restored and the fixtures were removed. No production app source changed.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3A1d6f0242-e734-4c73-952c-f3f52265c8a0 [completed]:
+[The report](/home/mini/Documents/repos/Farhan/research/cls-and-perf-baseline.md) maps Edge’s layout-shift rules to Compose and proposes slot-matched skeletons for the inbox, App Priorities, dashboard, and usage. Start with probes for the inbox and App Priorities, then use those probes to verify the skeletons.
+
+Boat built debug and release-like APKs for `3668f5e` and `717faf6`. The signed release-like APK grew **647,500 bytes (2.69%)**. The report includes a [size-budget draft](/home/mini/Documents/repos/Farhan/research/perf/budgets.example.json) and a [checker](/home/mini/Documents/repos/Farhan/research/perf/check-budgets.py) that rejects raised ceilings.
+
+Memory pressure and competing use of the shared emulator prevented a matched runtime comparison. Six current debug cold starts and two diagnostic inbox runs are recorded. The before cohort, release runtime measurements, fresh catalog trace, and on-screen layout-shift scores remain unverified. I seeded the disposable app’s Room database to avoid posting into another run’s listener, then removed the disposable installation.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3A98b905b5-3ec9-49d8-84b4-3ee25251931b (Usage permission fix: verify (Sonnet)) [completed]:
+All three round-2 items are done in a new commit, `e11b0e2`, on top of `f877f11`. I did not push or amend. The full gate passes on Boat, and the new test goes red for the dropped-guard mutant.
+
+**Items:**
+1. **Claim placement:** `CLAIM(own-package)` is back on `checkUsagePermission()`. It now calls `getOwnPackageName()`, so there is one source for the name, with `// ↳ CLAIM(own-package)` at both AppOps calls.
+2. **Report:** the Farhan-alpha caveat now says "not visible in the screenshot, probably an off-screen row". The older bullet no longer claims the fixed run lists Farhan-alpha, and it points to the JVM test as the evidence for the filter.
+3. **JVM test:** `UsageOverviewIgnoreFarhanTest` has two tests. It uses the real ViewModel and real use cases, a fake repository returning `own.pkg`, and start/stop events for `own.pkg` and `other.pkg`. The previous day is used to avoid `dropLast(1)`.
+   - `ignoreFarhanOn_hidesOnlyTheOwnPackage` expects only `other.pkg`.
+   - `ignoreFarhanOff_showsBothPackages` is the positive control and expects both.
+   - Each carries `why` and `catches`.
+
+**Results on Boat:**
+- **Green run:** 2 tests, 0 failures.
+- **Hardcoded `"ly.com.tahaben.farhan"` mutant** (this covers a namespace comparison too): 1 of 2 failed. I read only the counts, not the failing test's name. By construction it can only be the filter-on test, since the filter-off test never compares the name.
+- **Dropped `filterFarhan &&` guard mutant:** the control failed with `expected:<[own.pkg, other.pkg]> but was:<[other.pkg]>`.
+- **Final gate on the restored tree:** `:usage_overview:usage_overview_domain:test`, `:usage_overview:usage_overview_presentation:testDebugUnitTest`, `:usage_overview:usage_overview_data:compileDebugKotlin`, `:app:compileDebugAndroidTestKotlin` and `:app:assembleDebug` all pass. The log is `/tmp/boat-run/usage-permission-20261120T125703Z-2aa6c4.log`.
+
+**Retracted result:** my first run of the dropped-guard mutant passed. A backgrounded earlier command had restored the file mid-run, so I discarded that result and reran the mutant alone, which is the red result above. The report says so. Both mutants were edited in the worktree and restored with `git checkout`, and the ViewModel is clean.
+
+`research/usage-permission-brief.md` and `research/usage-permission-review-round1.md` are still untracked. The emulator is still running on `bx_bngcafgz`. Other agents are queued on the Boat lock, so builds waited for it.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3A3285c178-178d-486f-8e69-6fd115370361 (Settings menu and notification bottom bar (Sol)) [completed]:
+Committed as `19e032e` over `37f1832`. All eight static schemes now use Farhan’s surface colors. Appearance uses Material 3 segmented buttons with a selected checkmark. The bottom bar still opens on Inbox and keeps its tonal surface and red badge.
+
+Boat passed `:app:assembleDebug`, Android test compilation, and all **10 JVM tests**. I recaptured all six screens in Light and Dark and compared the bar, dialog, dropdown, and off switch. The off-switch track lost a small amount of contrast in both appearances. The sampled Light dialog’s gold actions still look faint.
+
+[Implementation report](/home/mini/Documents/repos/Farhan.worktrees/settings-hub/research/settings-hub-report.md) · [Before-and-after comparisons](/home/mini/Documents/repos/Farhan.worktrees/settings-hub/captures/settings-hub/fidelity/before-after/) · [Mock-up pairs](/home/mini/Documents/repos/Farhan.worktrees/settings-hub/captures/settings-hub/fidelity/mockup-pairs/)
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3A523afab7-21ec-493e-be1e-97e42d958915 (Research task (no app source changes, no push, no stash, vigil only n...) [completed]:
+**The 30-second mode worked on API 35.** Farhan’s probe released only its own Priority rule, resumed the remaining window after process death, and reactivated the rule after reboot. It also adopted a visible manual DND change and reactivated its own rule without clearing the owner’s stricter mode. Unconfirmed notifications can still sound during the open window if the owner’s mode allows them.
+
+**Real calls kept their baseline behavior when Priority allowed calls from anyone.** In Normal, both calls rang and vibrated. In Vibrate, both only vibrated. With repeat callers only, the first call was silent and the repeat rang and vibrated in Normal. None of the tested policies reproduced **first call vibrates, repeat rings and vibrates** with one ringer setting. Heads-up was observed. A locked-screen full-screen launch and the owner’s actual screener remain unverified.
+
+The report specifies the persisted mode transitions and keeps Telecom and the screener out of Farhan’s replay path. No production code changed. The emulator’s listener grant was restored and DND ended off. The initial reboot and cleanup left the emulator ringer in Vibrate rather than its original Silent state.
+
+[Updated report](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/notification-sound-control.md) · [Real-call transcript](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/sound-probe/round2/calls/api35-calls.txt) · [Recovery transcript](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/sound-probe/round2/calls/api35-modes.txt)
+
+Committed locally as `5008654` on `pilot/snooze`.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3Ad56ac365-025e-4819-b778-b34b06ed2684 [completed]:
+# Snooze spec and test review, round 2 (red v3 at 438f3eb)
+
+**VERDICT: CHANGES.** Most of the round-1 musts now have real red tests, but four problems would let a return be charged twice, cause a duplicate, or wake the owner at midnight. Three of them are spec fixes plus a few tests. I ran no Gradle mutations; each finding comes from reading the code and its fakes, and each names the line that lets a wrong green pass.
+
+Paths below are relative to `Farhan.worktrees/snooze`. `N…/` is short for `notification_filter/notification_filter_<module>/src/{main,test}/java/…`.
+
+## (1) Round-1 items: pinned or not
+
+| Item | Test | Can I name a wrong implementation it catches? | What is still open |
+|---|---|---|---|
+| M1 | `SnoozeHandlerTest:186-192` | Yes: reporting the duplicate as handled | The event check is too loose (should S7) |
+| M2 | `:326-333` (retry throws); `SnoozeReturnCoordinatorTest:44-58` (write throws, still `Charged`) | Yes | **Partly open.** "Never throws" is untested when `budget.read()` or `rows.find()` fails. Settling a row that is missing, cleared or already delivered has no decision and no test (should S2) |
+| M3 | Coordinator tests at 22, 44, 64, 81, 101 | Yes | **Partly open.** The order these tests pin contradicts v3.1 (must 2). The "first funded tick" is only checked against the static allocation |
+| M4 | `SnoozeFundedMomentTest` (4 cases), policy `NO_FUNDED_MOMENT` | Yes | **Partly open.** At the coordinator, `scheduleAt` silently falls back to today's schedule (should S1) |
+| M5 | `:381-394` | Yes, with an owned positive control | Only covered with snooze off |
+| M6 | `:432-452`, `AT_CAPACITY`, `:338-346` | Yes | What `fallback(row)` actually does is not specified (should S4) |
+| M7 | `SnoozeReturnIntakeTest:12-50` | Yes: dropped overflow, settling twice | **Partly open.** Flags are lost if the process dies, and the batch tick with the filter off has no test (musts 3, should S5) |
+| M8 | `SnoozeExclusionFlagsTest` | Yes; the bit constants are correct (0x2, 0x20, 0x40, 0x200) | The service still has to wire the mapper; device evidence (c) covers that |
+| M9 | `:399-427` | Partly | **Open.** Both tests start with Android's active and snoozed lists empty, so a green that ignores those lists still passes (must 3) |
+| S1 | Through the fake `SnoozeLedger` | — | **Open.** No migration test (should S8) |
+| S2 | `:279-292` | Yes | — |
+| S3 | `SnoozeReturnIntakeTest:56-70` | Weak | The test writes the production wiring itself in `callback()` (a mirrored implementation, and the wrong layer) |
+| S4 | `:338` covers a retry in the past | — | **Open.** Two clocks remain: `settleReturn(…, now)` and `environment.timeContext()`. The test sets both to 22:30 (`Coordinator:65-67`), so it cannot tell which one green uses |
+| S5 | `:361-376` | Yes: a Denver/UTC day mix-up goes red | — |
+| S6 | Covered by the funded-moment tests | Yes | — |
+| S7 | `GROUP_KEY` skip | — | Device evidence (f) is still open (should S6) |
+| S8 | Second handler added; the fake removes returned keys | — | **Open.** An implementation that looks keys up lazily still passes, and nothing tests that the synchronous key cache is loaded from the ledger at connect |
+| N4 | `SnoozeTrackerTest` | Yes | — |
+| v3.1 V2: subtract spend already recorded | none | — | **Open.** `nextDeliverableMoment` (`SnoozeTiming.kt`) has no budget-state parameter, so the rule cannot be implemented through it |
+
+## Musts
+
+**1. The pending queries reopen a snoozed row the moment its deadline passes.** Locations: `NotificationQueriesTest.kt:52-72`; spec V3, "deadline in the future".
+- **Why it happens:** Every snooze deadline is a cadence tick, and the batch tick fires at that same tick.
+- **Failure:** At 10:00:00 the batch tick runs before Android's alarm has reposted the original (`Coordinator:239`). The row is not in `visibleSources` yet, so the tick sends it to `deliver()` and posts and charges a proxy. Android's return then arrives, still carrying its deadline. That gives a duplicate and a second charge, because `settleSnoozeReturn` has no rule for a row that is already delivered.
+- **Why the tests can't catch it:** they only use deadline 2000 with now 1000, and the `rows()` helper ignores unused arguments. A green using `> :now` passes; so does `IS NULL`.
+- **Fix:** Exclude every row whose `snoozeDeadline` is not null. Custody should end only through a settle, a fallback or the loss scan. Add three tests:
+  - a deadline equal to now and one earlier than now are both still excluded;
+  - `onBatchTick` with a row past its deadline posts nothing;
+  - settling a row that is already delivered charges nothing.
+
+**2. The crash order in v3.1 contradicts the red tests, and neither order is exactly-once.**
+- **The contradiction:** `SnoozeReturnCoordinatorTest:50` asserts `assertThat(rig.budget.appendAttempts).isEmpty()` after a write failure. Its catches line (42) names "appending spend before the state write" as a bug. That is the existing order in `finishCompletion` (`Coordinator:115-118`: row, then budget state, then spend), and the proxy path shares that code, so reordering it touches I4. v3.1 says the opposite: spend, then budget state, then row.
+- **Why neither is exactly-once:** recovery after process death re-decides the return. Suppose the process dies after the budget state is written but before the row. The rescan sees the charged budget and may deny, so it snoozes again. The next return has a new `postTime`, so a new `effectId`, and is charged a second time. `CommitPending` lives only in memory and does not survive a process death.
+- **Fix:** Write the `effectId` into the budget snapshot together with the state (a small bounded set of recent ids). Order the writes state-with-id, then spend (already de-duplicated), then row. On replay, check the id before deciding anything. If that is too much for a pilot, keep row-first, accept a possible undercharge and say so in the code. Either way, add a test that rebuilds a fresh coordinator over the same stores after each step.
+
+**3. The rescan of expired rows is the only recovery path, and it has no test.**
+- **What depends on it:** both a crash before step (1) and V5 flags lost in a process death recover only through "deadline passed and key active, so settle".
+- **The conflict:** that condition is the same one V6 uses to fall back (unconfirmed, active, same `postTime`). The rule that separates them, `active postTime != row.timestamp`, is not written down anywhere.
+- **The gap:** Separately, the loss tests (`:399`, `:417`) both start with empty lists. Mutating the code to drop the "in neither list" check survives both.
+- **Fix:** Add tests for:
+  - an active key with a new `postTime` settles exactly once;
+  - an active key with the same `postTime` falls back;
+  - a key still in the snoozed list after its deadline is left untouched.
+
+**4. Under shipped defaults the owner gets several beeps at midnight.** This is the one for question (4).
+- **The numbers:** 22:00–24:00 has 0 points, and 00:00–09:00 has 2, which pays for exactly one HIGH. Every HIGH that arrives in the evening is planned for 00:00.
+- **What happens:** The first is charged. Each of the others comes back at 00:00, beeps once (E11), is denied and is snoozed again to 09:00. The proxy path delivers one and holds the rest silently, so snooze makes nights strictly worse.
+- **Fix:** When planning a snooze, also subtract the points and hourly slots already held by Farhan's live snoozes aimed at the same period. Test: two HIGH notifications at 22:30 come back at 00:00 and 09:00.
+
+## Shoulds
+
+- **S1. Dated schedules are ignored at the coordinator.** `DeliveryEnvironment.scheduleAt` defaults to `schedule()` (`Coordinator:71`). Neither `FakeEnvironment` nor the production adapter overrides it, so dated overrides are silently ignored for retries. That is the M4 correction coming back. Remove the default and add a coordinator test with an override tomorrow.
+- **S2. `settleSnoozeReturn` has no result for an unowned row.** There is no `NotOwned` result for a row that is missing, cleared, not snoozed or already delivered, and no test. The handler fake maps a missing row to `NoFundedMoment`.
+- **S3. Two entry points and three key stores.** The handler tests settle returns through `onPosted`, while production settles through `SnoozeReturnIntake.drain`. Keys live in `SnoozeTracker`, `SnoozeReturnFlags` and `SnoozeLedger`. Name one path: binder thread sets the flag, drain calls `handler.settle`, which calls the coordinator, and `onPosted` handles fresh posts only. Then decide whether the five red tracker tests pin dead code.
+- **S4. `fallback(row)` must say what it does.** It has to cancel the visible original and enter the proxy path as an arrival. Otherwise `candidate.id in visibleSources` defers forever, and the notification stays visible and never charged. `:443` only checks the callback list.
+- **S5. A denied return with the filter or snooze off.** Settling at the batch tick while the filter is off can hide notifications again after the owner turned the filter off. With snooze off, a denial snoozes again, which contradicts edge 2 ("no new snoozes"). Recommendation: with the filter off, release the return (leave it visible, close the row, no new snooze). With snooze off, send a denial down the proxy path. `SnoozeReturnIntakeTest:44` only covers `drain(false)`.
+- **S6. The group-key skip excludes most messaging apps.** WhatsApp, Telegram and Gmail all set a group, so the pilot would snooze few real notifications. Tell the owner, and get device evidence (f) during green.
+- **S7. Fallback assertions are too loose.** `assertThat(event.kind == FAILED || event.skipReason != null).isTrue()` (`SnoozeHandlerTest:470`) should pin the exact reason for each case. Add skip reasons for the daily limit and for "not a return".
+- **S8. Room migration.** Adding three nullable columns with no default through AutoMigration 7→8 is safe: existing rows get NULL and behave as never snoozed. Commit `8.json`. Add an instrumented test with `MigrationTestHelper` (`room-testing` 2.6.1; `androidTest` already exists): create a v7 database with a pending row, migrate, validate, then run `PENDING_*` and check the row is still pending. Run it on the Boat emulator.
+- **S9. Clearing the inbox while a notification is snoozed.** `clearInbox` marks the row cleared, but Android still brings it back and it gets charged. `clearAll` deletes the row, so the return looks fresh and is snoozed again. The spec needs an edge case for this.
+- **S10. A post of an owned key before its deadline is not a return.** It happens when an unconfirmed snooze is updated while visible. It should take the v3 fallback rule (V1), not be charged. There is no test.
+
+## Nits
+
+- `:107-108` assert `spentPoints` and `hourlyCount`, which only check the fake's own arithmetic.
+- The test name at `:247` ("rehydrates from Android") is stale; v3 rehydrates from the ledger.
+- The system-exempt category list is duplicated in the domain flag mapper and in `NotificationService:374`.
+- `Completion.id` became nullable (`Coordinator:98`) with no reason given.
+- The bound on the per-key daily counters is not stated.
+- When a snoozed notification is updated before it returns (E13), the update is not written to the row, so the inbox shows stale text.
+- In the V6 test, `previousTick = arrival - 3600` (07:55) is not a tick.
+- `research/snooze-pilot-spec.md` and `research/review/` are untracked in the worktree.
+
+## (2) Hollow or weak tests
+
+None of the 73 is a pure tautology, and each one fails against the stub. These would still pass a wrong green:
+- the three pending-SQL tests (must 1);
+- the two loss tests (must 3);
+- the rehydrate test (S8 in the table: lazy lookup passes);
+- the coordinator denial test (two clocks, S4 in the table);
+- the rate-window test (mirrored wiring);
+- `assertFallback` (S7).
+
+The 59 portability tests are valid regression controls, but nothing in this diff can reach them. Their schema is a hard-coded v7 DDL. They are not evidence for I4. The real I4 controls are the "ordinary" row with null columns in each pending-SQL test, and `:297-321` with its positive control.
+
+## (3) Android facts
+
+The spec matches `snooze-android-flexibility.md` on these points:
+- cancelling a hidden key does nothing;
+- `REASON_SNOOZED` is 18;
+- a return keeps the same key with a new `postTime`;
+- a zero-length snooze is a no-op;
+- the 500 limit is global;
+- snoozing again from the return callback still beeps;
+- deadlines are absolute wall-clock times.
+
+Two gaps: the 500 limit is shared with the user and other listeners, so the 400 cap does not guarantee success (V6 covers that case). And the "neither active nor snoozed" check races Android's repost at the tick, because the record briefly sits in neither list. Apply V6's "earlier than the previous tick" rule to loss detection as well.
+
+## Scores
+
+SCORE[error-paths]: 6/10
+SCORE[durability]: 5/10
+SCORE[architecture]: 6/10
+SCORE[legibility]: 7/10
+VERDICT: CHANGES
+
+Musts 1–3 are spec edits plus about six tests. Must 4 needs the owner's view only if the orchestrator wants to treat midnight beeps as acceptable for a pilot.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3Af6885784-883d-4778-819e-4f2b0c255efe (You are a spec and test reviewer, round 2 of at most 2 (review only; ...) [completed]:
+# Round 2 rebuttal: crash order, midnight cap, grouped children
+
+Short answers:
+1. **Crash order:** I agree with option (a): keep the existing order and drop v3.1's reordering. But (a) is safe only if green does two specific things, and its worst case is a little worse than you describe.
+2. **Midnight cap:** a capacity cap reads the same ledger rows I meant, so there is no reservation bookkeeping either way. Your cap fixes the two-HIGH example, but it is wrong unless it is counted per period with cost weights.
+3. **Grouped children:** they can be snoozed. The loss risk comes from Farhan's own proxy path cancelling a group summary, not from Android's snooze. Leaving summaries alone fixes most of it.
+
+## 1. Crash order: keep (a), but say exactly what it costs
+
+**What the code does today:**
+- `finishCompletion` (`Coordinator:115-118`) writes the row first, then the budget state, then appends the spend entry.
+- `rows.markDelivered` is the DAO statement `UPDATE … SET isDelivered = 1 WHERE id = :id` (`NotificationDao.kt:74-75`). It does not clear `snoozeDeadline`.
+- `CommitPending` is the `completion` variable, which lives only in memory and does not survive a process death.
+
+**What a replay does after a crash between the budget-state write and the spend append:**
+- The row is already `isDelivered = 1`, and its `snoozeDeadline` is still set and in the past.
+- The source key is active (the original came back with a new `postTime`).
+- That is exactly the rescan condition from must 3 ("deadline passed and key active, so settle").
+- So if green reuses `markDelivered` unchanged, and neither the rescan nor `settleSnoozeReturn` checks `isDelivered`, the replay decides again. If the return is allowed, it charges a second time; if denied, it snoozes a notification that was already charged. **Answer: as the code stands, the rescan does not see that the row was delivered, and it double charges.**
+
+**Two conditions make (a) safe:**
+1. The row step for a return is one statement: `SET isDelivered = 1, snoozeDeadline = NULL, snoozePriority = NULL, snoozeBootCount = NULL`. That needs a new DAO query, not `markDelivered`. Once the deadline is cleared, the row drops out of `liveRows` and the rescan cannot find it.
+2. `settleSnoozeReturn` refuses any row that is not live or is already delivered, and charges nothing (should S2). This is the second guard.
+
+**Worst cases under (a) with both conditions:**
+
+| Crash point | Outcome |
+|---|---|
+| Before the row step | The rescan settles it, charged exactly once. |
+| After the row step, before the budget state | One return is never charged against the budget. This is the case your summary leaves out. |
+| After the budget state, before the spend append | The spend log is one line short. |
+
+There is never a double charge. The stable `effectId` only matters for the replay inside one process (and does no harm). Across a process death, a spend entry is never appended without its row already being done.
+
+**Is (a) enough for a pilot?** Yes. It needs:
+- a documented CLAIM giving the order and "may undercharge one return, never double";
+- the two conditions above, pinned by tests;
+- a test that rebuilds the coordinator over the same stores at each of the three crash points, asserting the outcomes in the table.
+
+The existing proxy path has the same exposure, so nothing in shared code changes and I4 holds. **Must 2 is withdrawn.** It becomes a spec fix: strike the v3.1 reorder and keep these two conditions.
+
+## 2. Midnight beeps: the cap works if it is counted per period
+
+**It uses the same state.** The live ledger rows already hold `snoozeDeadline` and `snoozePriority`, so they are the reservation. "Subtract points held by live snoozes" and "count the ledger's live snoozed rows" read the same rows. The only real difference is what happens past capacity: you send it to the proxy path, I searched for the next tick. I accept yours. It is simpler, the proxy queue is silent, and it delivers at the same 09:00.
+
+**The two-HIGH-at-22:30 example:** the 00:00–09:00 period has 2 points and a HIGH costs 2, so the capacity is one. The first notification is snoozed to 00:00. The second finds one live row due at 00:00, gets no snooze, and is queued by the proxy path for 09:00. That is equivalent.
+
+**Where a per-tick cap breaks:** the HIGH ticks at 09:00, 10:00 and 11:00 all share the 09:00–12:00 period, which has 8 points.
+- Four HIGHs at 08:30 go to 09:00, and four more at 09:30 go to 10:00.
+- A per-tick cap of 8 ÷ 2 = 4 allows both groups.
+- At 10:00 the period is already spent, so four returns are denied and beep four times.
+- Priorities also share the points: a MEDIUM costs 4 and a HIGH costs 2.
+
+**The rule that works:** the target period's points must be at least:
+- the cost of the live rows whose deadline falls in that period (cost-weighted by `snoozePriority`);
+- plus the spend already recorded in that period (the v3.1 rule);
+- plus this notification's cost.
+
+**The hourly cap:** `MAX_HOURLY_PASSTHROUGH = 10` is counted per `passthroughWindowKey`, not per tick (`NotificationDeliveryPolicy:26,145`). In testing mode several ticks share one window. Count the live rows due in the same window, plus `hourlyCount` if that window is the current one.
+
+This is one pass over `liveRows()`, which is at most 400 rows, with no new columns.
+
+**A race the cap does not fix:** at the 00:00 tick, `onBatchTick` can spend those 2 points on a queued proxy row before the native return settles. The return is then denied and beeps. Proxy selection should also leave out the points of live snoozes due at the current tick. This is a should.
+
+**Does the Do Not Disturb mute change the severity?** It would, if it ships the way round 2 recommends. Under Farhan's Priority mode the probe silenced a source message entirely ("intercepted with no beep or buzz", `notification-sound-control.md` round 2). Denied returns would then only flash in the shade. But it is not built yet, it needs a Do Not Disturb access grant, and the owner can turn it off. Also, round 2 notes that a global open window "cannot enforce a per-item budget". If elected items are announced through that window rather than the bypass channel, a charged return at 00:00 opens it exactly when the denied ones arrive. **My recommendation:** ship the cap now; it costs one loop. Downgrade must 4 to a should once the mute ships with the bypass-channel design.
+
+## 3. Grouped children: snooze them, but stop Farhan cancelling summaries
+
+**What the code shows:** the proxy path has no handling for summaries at all. Nothing in the data or domain modules checks `FLAG_GROUP_SUMMARY`. A summary is classified, stored as a row, and listener-cancelled like any other notification (`NotificationService.kt:310`).
+
+**The cascade (from my memory of AOSP; (f) must confirm it):** a listener cancel of an app summary runs `cancelGroupChildrenLocked`. That cancels the group's active children with `REASON_GROUP_SUMMARY_CANCELED` (12). It walks the active and enqueued lists, not `SnoozeHelper`.
+
+**The loss paths with snooze on and children allowed:**
+1. **The usual messaging-app pattern.** The app posts the child and the summary together. Farhan's worker snoozes the child, but the summary reaches the proxy path while the child is still active. Farhan cancels the summary, and the cascade cancels the child with reason 12. The ledger row has a deadline. At the deadline the key is in neither list on the same boot, so the row is marked cleared. **That is a silent loss.**
+2. **An only child.** Snoozing an only child also snoozes its summary (flexibility doc §1). Both come back at the deadline. The child is charged and left visible. The summary is not Farhan's, so it is skipped as `GROUP_SUMMARY` and goes to the proxy path. Farhan cancels it, and the cascade cancels the charged child. Its row is already delivered, so no proxy follows. **That is a loss after charging.**
+3. **A summary that comes back alone.** A summary snoozed alongside our child returns. If we leave it alone it is harmless noise, so on its own it needs no handling. It only matters through path 2.
+4. **The source cancels the summary.** That is the source's own intent, the same as a source cancel. Clearing is correct.
+
+Paths 1 and 2 are caused by Farhan's own intercept, so the ledger can make them safe:
+- **(a) Leave summaries alone while snooze is on.** Do not cancel a summary and do not store a row for it: summaries carry no message of their own in current apps. This removes the cascade at its source.
+- **(b) Treat reason 12 on an owned key as collateral, not cancellation.** That means a snoozed or returned child. Put the saved row back as pending. If it was already charged, send it through the existing refresh path, which posts a proxy without charging again.
+- **(c) Restore missing grouped rows on the same boot.** Rule: same boot, key missing, row has a group key, so restore it as pending instead of clearing it. This trades a rare stale proxy for a cancelled message against a silent loss, which matches your first priority.
+
+**A related test error.** The research says a source cancel of a snoozed record has no removal callback; the record just lingers in the snoozed list until its deadline (flexibility doc line 73). But `SnoozeHandlerTest:279-292` drives `onRemoved(…, REASON_APP_CANCEL)` for a snoozed key. That test contradicts the research and should go through the scan path instead (should). A green that relies on that callback would never see the cancel on a real device.
+
+**Pass and fail criteria for device evidence (f).** Run on the API 35 emulator on Boat, with a fixture publisher using `setGroup` plus an app summary, in two variants: `GROUP_ALERT_CHILDREN` and `GROUP_ALERT_SUMMARY`. Use the green build with snooze on.
+
+| Case | What to post | What must come back |
+|---|---|---|
+| F1 | Two children and a summary, posted together | Both children receive `REASON_SNOOZED` and appear in the snoozed list. At the deadline both come back with the same keys and new `postTime`s, and each is settled once in the ledger. Record whether the summary is visible while the children are hidden (shade screenshot). |
+| F2 | An only child and a summary | Record whether Android snoozes the summary too. After the return, the child is still active 60 s later and gets no reason-12 removal. Its row is delivered and charged once. |
+| F3 | A new child plus a summary update while a child is snoozed (the messaging-app pattern) | The snoozed child stays in the snoozed list and comes back at its deadline. The new child is snoozed or proxied. No owned key gets a reason-12 removal. |
+| F4 | Source cancels the summary while the children are snoozed | Record what happens to the snoozed children. Either outcome is acceptable if the ledger row ends up cleared or pending, never stuck. |
+| F5 | Farhan's listener cancels the summary (today's intercept path) once with a snoozed child and once with a returned, active child | This measures the cascade directly and decides whether (a) or (b) is required. |
+| F6 | Four or more ungrouped posts from one package, which triggers Android's auto-group summary | All are snoozed and all come back. The adapter passes a null group key (the v3.1 actual-group rule). |
+| F7 | Every case above | Count alert events per return in the event log (the E11 beep), for each alert variant. |
+
+**Global fail condition:** two minutes after its deadline, an owned key is not active, not in the snoozed list, and has no pending or delivered row. Also a fail: any proxy posted for a summary.
+
+**Evidence to post:**
+- `dumpsys notification --noredact` excerpts before the deadline and after it;
+- the listener log with removal reasons;
+- `sqlite3` dumps of the ledger rows;
+- shade screenshots at T−1 min and T+1 min.
+
+**Conditions for dropping the group-key skip:** drop it in green if (a) and (b) ship with tests and F1–F3 and F5 pass. Keep summaries excluded from snooze.
+
+## Where this leaves the verdict
+
+| Item | Status |
+|---|---|
+| Must 2 | Withdrawn. Becomes a spec fix: keep the existing order, plus the two conditions and the crash-point test. |
+| Must 4 | Kept, using your cap counted per period, cost-weighted, and per hourly window. Drops to a should once the mute ships. |
+| S6 (group-key skip) | Replaced by a must, but only if the skip is dropped: (a) and (b), with tests. |
+| New should | `SnoozeHandlerTest:279` drives a removal callback that Android does not send. |
+
+Musts 1 and 3 stand as you accepted them. With these changes made in the spec and red, I'd call it **OK to start green**. The scores are unchanged until the spec and red are updated.
+
+---
+
+<task-notification>
+<task-id>biwz8u14b</task-id>
+<tool-use-id>toolu_012ZywrfNSPMBW1zFbiS9QCm</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/biwz8u14b.output</output-file>
+<status>completed</status>
+<summary>Background command "Session keepalive for in-flight delegated runs" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3Ac75921d9-7393-432b-bdb6-205d9babb500 (Snooze pilot: red tests (Sol)) [completed]:
+Committed Snooze red v4 as `a34df71` on `pilot/snooze`.
+
+Boat verified 96 distinct expected assertion failures across debug and release: 58 domain and 38 data per variant. All other targeted tests passed, including all 59 portability tests.
+
+Room generated and committed `8.json`. The migration test compiled and both schemas were packaged as test assets. Emulator execution and W9 device evidence remain for green.
+
+The [red report](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/snooze-red-report.md) records the new seams and flags the unresolved question of how grouped-child ownership survives a restart with only the three specified Room columns.
+
+---
+
+<task-notification>
+<task-id>b1b2i50x4</task-id>
+<tool-use-id>toolu_019pPMXRPtnA2guNTG33rGiA</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/b1b2i50x4.output</output-file>
+<status>failed</status>
+<summary>Background command "Session keepalive for in-flight delegated runs" failed with exit code 1</summary>
+</task-notification>
+
+---
+
+i think the custom notification rule is the correct approach given the evidence we've seen thus far...
+
+anything else you need my sign off on, or do you disagree?
+
+---
+
+1 sounds good, I'll test it
+2 sounds good, we'll test out both
+3 no redaction, I'll handle that myself
+4 sure
+5 i believe i gave my mockup response already. I had said that it looks great
+6 ok
+7 yes
+
+---
+
+It meets a baseline aspirational level. We can roll with it for the pilot.
+
+---
+
+ETA to APK based on the speeds you've seen today?
+
+---
+
+I'll wait for D. Don't waste compute on the others. I suspect your timeline is way off. I bet I'll have an APK in 1-2h or sooner.
+
+---
+
+Since we have emulator tests, I would like to see if we could improve the testing hardest such that our app can be tested without the actual emulator for many things. Of course, some things are exploratory and we need to interact with a real Android API, but for the things that aren't try to limit the test overhead.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3A5dc4a46e-1c4a-4ca9-b363-ab5e5fcfaf93 [completed]. Use task_status with taskId node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3A5dc4a46e-1c4a-4ca9-b363-ab5e5fcfaf93 to read the result.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3Ad3db508e-9042-4be8-83a5-03954fb8383a (You are a spec reviewer (review only; edit NOTHING; no git writes, no...) [completed]:
+## 1. M2: I accept the downgrade to a disclosure, with two conditions
+
+The owner said "send sounds that break through DND", and you're right that a normal-channel proxy would be intercepted by Farhan's own rule. The bypass channel is the only way an elected alert sounds at all.
+
+What the disclosure doesn't cover:
+
+- **The shipped copy says the opposite.** The mock-up bullet and S7 both say "A stricter Do Not Disturb mode of your own still silences them." With the AOSP default policy (`allowPriorityChannels=true`, `dnd/api35-recovery.txt:26`) that is false. Research line 152 only shows blocking by a mode that denies priority channels. A disclosure can't sit next to a sentence that contradicts it, so that bullet must be replaced, not added to.
+- **The owner can't easily switch it off per mode.** Bypass is set per channel and applies to every mode. On Android 15/16 the owner's per-mode control is probably all-or-nothing ("allow priority channels"), which would also silence their other apps' exceptions (needs device test on the Pixel). The disclosure should name the control that does work: turn off "Override Do Not Disturb" on Farhan's breakthrough channel. That stops breakthrough in every mode, including Farhan's own.
+
+Suggested line: "Elected alerts can sound during your own Do Not Disturb and Bedtime modes. To stop that, turn off 'Override Do Not Disturb' for Farhan's alert channel."
+
+The remaining harm is sleep interruption by an elected item at night. The owner can accept that.
+
+## 2. Smallest set for a flagged-off, owner-tested pilot of slices 1–2
+
+One design rule makes most of the list cheap: **the reconciler can only release.** Its action type has no Create or Activate case. Only the enable or resume tap creates or activates the rule.
+
+That one rule takes care of these risks for free:
+
+| Risk | Why it's covered |
+|---|---|
+| Re-enabling behind the owner's back | Nothing outside a tap can activate the rule. |
+| An imported or restored "On" | It finds no rule and cannot create one (M9 risk gone). |
+| A rule the user deleted | It is never recreated. |
+| A user stop in Settings | No Paused latch or status broadcast needed: Farhan reads the rule's state and shows "Stopped in Settings, tap to resume". |
+
+**Must hold now** (each protects against a stuck mute, changed calls or a rule left behind):
+
+1. **Calls (M1).** Calls from anyone plus repeat callers, as fixed values.
+2. **Full policy (M10).** Every ZenPolicy field set explicitly: alarms and media allowed, visual effects all shown, device effects null. Without this, an alarm or media setting inherited from the owner's default could change behaviour.
+3. **Orphan cleanup (M6 + M7).** On app start and on listener connect, regardless of the flag: if no persisted On, remove every owned rule found by Farhan's fixed `conditionId`. Adopt by stored id, else by conditionId, never by name.
+4. **Persist order (M8, reduced).** `commit()` "desired On, generation" before `addAutomaticZenRule`. Crash windows are then covered by item 3.
+5. **Fail-open (M5).** Release the rule when any of these holds:
+   - the filter switch or app main switch is off (`NotificationService.kt:240`);
+   - any of the three grants is missing;
+   - the breakthrough channel reads back without bypass or at importance NONE.
+6. **Channel order (M11, reduced).** Create the breakthrough channel only after policy access is granted, and read it back. A bad read-back feeds item 5.
+7. **Off.** Persist Off, remove the rule, and keep the status notification until removal is confirmed (S4). If removal fails, the notification links to Modes settings.
+8. **No other zen or ringer writes (S10).** A whole-tree ban with a positive control.
+9. **Enable key name.** Keep the enable key out of the `notification_experiment_` prefix. It then falls to `Unsupported` and is never exported, with zero catalog code.
+
+**Red tests for this set** (fake `ZenRulePort` and `SoundStateStore`):
+- policy fields pinned by name, calls ANY even when the fake readable policy is STARRED;
+- flag off with an owned rule present → rule removed;
+- stale id → adopted by conditionId, no add;
+- a foreign rule is never touched (positive control: the owned rule is removed);
+- rule missing while desired On → no add;
+- each fail-open precondition → rule released;
+- crash between persist and remove → completed on restart;
+- the ban test.
+
+**On the emulator:**
+- create, then read the policy back;
+- competitor stays silent while the proxy alerts;
+- a non-starred call rings while held with DND off;
+- clear data while held → rule removed on next launch.
+
+**Can wait for slice 3, with a one-line disclosure:**
+
+- **M2:** the line from section 1.
+- **M4:** "While muted, only the first message in a conversation sounds until you open or dismiss Farhan's alert."
+- **M9 backup and import exclusion:** no disclosure needed, because the release-only reconciler makes it harmless.
+- **M11 versioned channel recovery:** "If you turn off Farhan's alert override, Farhan turns sound control off; reinstall to reset it."
+- **M5 dead-man alarm:** "If Farhan stops, force-stopped or killed by the system, your phone stays muted until you open Farhan or tap Off in the status notification or Modes settings."
+- **S7 work profile:** "Work-profile notifications are silenced too."
+- **M3:** see section 3.
+
+## 3. M3: yes, there's a simpler honest answer, and it's safer for the screener
+
+Farhan can't make another app's notification sound natively. So "let the owner pick audible exception apps" inside Farhan would mean building the duplicate after all. The honest version uses Android's own control:
+
+- **At enable**, list the owner's exception apps (from `notification_filter_exceptions`) and say: "These apps, and notifications Farhan marks Critical, will be silent. To keep one audible, allow it in Android's Do Not Disturb app exceptions."
+- **No code is needed for this to work.** Farhan's rule allows priority channels, so any channel the owner sets to bypass in Android sounds natively. That keeps its own sound and identity, and it keeps working when Farhan is off.
+
+**The screener comes out better this way.**
+- If the screener is part of the default dialer (Pixel Call Screen) or posts with `CATEGORY_CALL`, the call path treats it as a call. With calls from anyone it then behaves exactly as today, untouched.
+- A Farhan duplicate is what would put it at risk: it would make a CRITICAL item audible and give it Farhan's identity.
+- If duplicates come later, they must be per-app opt-in, with CRITICAL excluded by default.
+
+Needs device tests on the owner's phone:
+- whether Android 15/16 lets the user grant bypass to another app's channel from the Modes UI;
+- whether the screener's notification passes as a call while Farhan's rule is held.
+
+Verdict on the reduced set: **OK for a flagged-off, owner-tested pilot of slices 1–2**, if items 1–9 and their red tests hold and the disclosures above ship in the enable text.
+
+---
+
+the small PR. Can we get it open now?
+
+---
+
+A before and after screenshot isn't necessary, I already have complained inside of an issue, just reference the issue.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3Aa5e40016-3523-41e5-ba25-0259d51b2dd0 [completed]:
+I've written the report. Most of the emulator work can move off the emulator. The Robolectric experiments passed on Boat; I only read the source for the snooze/zen shadows. The file is about 19.8 KiB (20,302 bytes). If you read "under 20 KB" as 20,000 bytes, it's 302 over.
+
+Of the 25 instrumented tests at `717faf6`, 6 can run as plain JVM tests with temp files. 18 can run under Robolectric, because they use `android.util.Json*`, `SQLiteDatabase`, DataStore, SharedPreferences or Compose. 1 needs a real device: `SettingsRecoveryIntegrationTest.a_`, which tests raw `PackageManager` component states. No instrumented test uses `NotificationManager`, uiautomator or a bound listener. Those claims live only in the probe scripts and the manual F1–F7 evidence, which stay on the emulator.
+
+I tried the two first-slice checks on a throwaway worktree off `717faf6`, on Boat, with Robolectric 4.14.1 and Roborazzi 1.43.1 on AGP 8.8.2 / Kotlin 2.1.10:
+- **Migration:** a 1→7 `MigrationTestHelper` chain over the exported schemas passed in 6.2 s. Renaming one column in `7.json` made it fail with a real Room mismatch error.
+- **Screenshot:** a themed Compose chip row rendered with the app's real font, and the golden matched on verify in 6.7 s. Changing the theme made it fail.
+- **Schema assets:** the first run failed because AGP ignores the unit-test assets folder. The fix is to add the schema directory to the debug assets (92 KB, nothing in release).
+- **Not run:** the 7→8 migration on `pilot/snooze` and any Compose test in a presentation module.
+
+Timings, all on Boat unless noted:
+- **Warm Robolectric run:** 52 s Gradle (73 s with sync) for migration plus screenshot.
+- **Cold first run:** 2 m 28 s, plus a one-off 200 MB Robolectric SDK jar.
+- **Emulator path for one migration check:** about 3 to 5 min, from the measured assembleDebug median (65 s), androidTest compile (45 s) and emulator boot (37–81 s). I didn't measure the install or `am instrument` steps.
+- **Saving:** roughly 2 to 4 min per iteration. 20 to 40 min a day is a guess that assumes 10 iterations move.
+- **Local host:** the 7 GB machine can't run Gradle, so all of this runs on Boat.
+
+Robolectric's `ShadowNotificationManager` and `ShadowNotificationListenerService` have no snooze, no zen composition, no group cascade and no listener callbacks (read from the 4.14.1 source). That is why the report keeps snooze return timing, DND, auto-grouping, ADB and performance as real-device work. A contract suite, run against both the fake and the emulator, covers the fake drifting from Android.
+
+Two refactors would unblock the rest. `NotificationFilterScreen` builds the inbox chips inline under `hiltViewModel()`, so it needs a state-hoisted content composable before a screenshot test. And `notification_filter_domain` has 4 of 111 files importing `android.*`; moving them out lets domain become a plain JVM module that a shared `testing-fakes` module can depend on.
+
+Not checked: Hilt under Robolectric, a fully offline Robolectric run, Paparazzi, newer Roborazzi, and how short a snooze duration Android accepts for a quick real-device run. No blockers; the schema-assets dead end took two runs. I removed the throwaway worktree.
+
+Files are in `/home/mini/Documents/repos/Farhan/research/`:
+- `test-strategy-no-emulator.md`
+- `test-strategy-chips-golden.png`
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3A78382ddd-fc42-4e2d-a8a3-b60151957080 (Snooze pilot: red tests (Sol)) [completed]:
+Snooze green is complete on `pilot/snooze` at `c88fde7`. Grouped-child snooze was enabled after the API 35 trials. No summary became a proxy, and all owned children were accounted for at the two-minute checkpoint.
+
+| Phase | Commit |
+|---|---|
+| Domain and return accounting | `36ce6ad` |
+| Room and native custody | `c61bfc1` |
+| Listener and worker wiring | `f42ac4f` |
+| Settings | `1d66f98` |
+| Group metadata follow-up | `16760b3` |
+| Group enablement and evidence | `c88fde7` |
+
+**Boat passed all 595 targeted JVM tests.** Each debug and release variant passed 210 domain, 57 data, and 1 presentation test. Portability passed 59. The debug APK built, Room migration 7→8 passed on the emulator, and all three mutation checks failed on their intended assertions.
+
+Both publishers returned at the cadence tick after Farhan restarted, with one Android beep event each. The emulator finished in Silent with DND off, the original listener grant restored, and no test notifications remaining.
+
+The [green report](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/snooze-green-report.md) includes F1–F7, the settings screenshots, and both test edits. The fixture listener triggered the F5 summary cancellation while Farhan handled Android’s callback. The before screenshot’s APK SHA was unavailable.
+
+---
+
+It would seem that 83 was actually closed and fixed. I just made my own fork from a while ago and hadn't checked back in...
+
+Though I would like to run upstream, inside of a nebulator, with the three-button layout, just to double-check that it is, in fact, actually fixed.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3A8ddfc338-8374-4a29-a436-89aa9c105efb [completed]:
+Committed the RED tests and compile stubs as `9c0ff5f` on `pilot/sound-control`.
+
+Boat ran 33 targeted JVM tests. All 29 expected failures were assertion failures, and all four controls passed. The five API 35 instrumented tests compiled. Device execution remains pending.
+
+The [RED report](/home/mini/Documents/repos/Farhan.worktrees/sound-control/research/sound-control-red-report.md) records the test coverage, chosen IDs and preference keys, and two recovery limits: Android may block cleanup after policy access is revoked, and the clear-data test needs to confirm that API 35 leaves an orphan for Farhan to remove.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3Aa08f06c3-ac85-44ff-a7c8-5400a12b0d74 [completed]:
+Implemented the Apps list on `pilot/apps-list`. The three code commits are `0208748` for sorting and filters, `a689df3` for icon loading, and `1c54eeb` for the Compose UI. The verification report is committed as `a9fe0f5`.
+
+**Boat passed 8 targeted JVM tests** with zero failures or skips. `:app:compileDebugAndroidTestKotlin` and `:app:assembleDebug` also passed. The emulator verified the gear return, expanded lock and queue controls, and the empty search state.
+
+[Eight screenshot pairs](/home/mini/Documents/repos/Farhan.worktrees/apps-list/captures/apps-list/pairs/) cover the default list, category filter, held rail, and loading skeleton in Light and Dark. Both panels use a 1080 × 1920 viewport.
+
+The build uses real 40 dp icons, native search and chips, Classic colors, and the settings-hub gear and bottom bar. Cards retain their lock and expand glyphs. The emulator fixture shows 17 apps and four Communication matches, compared with the mock-up’s 84 apps and 11 Social matches. The held bubble sits at the rail midpoint and has no accent outline. The mock-up has no loading view. The recordings show fixed icon slots and a stable first row, with later section gaps appearing as the catalog loads. A full layout-shift score remains unmeasured.
+
+The captures used a disposable application ID because the shared emulator had a newer database schema. The schema-8 APK and its listener grant were restored. The [pilot report](/home/mini/Documents/repos/Farhan.worktrees/apps-list/research/apps-list-report.md) records the full visual differences, build hashes, and verification limits.
+
+---
+
+Resume: reread ~/.claude/skills/build-loop/SKILL.md and the skills vigil, technical-excellence, test-quality, question-everything. Read /home/mini/Documents/repos/Farhan/research/build-loop-state-2026-11-20.md (last three updates are current), run `workq list` and `vigil status w-18e9c37e69913217-2c0908-0`, make sure the background `vigil keepalive --session --brief --orchestrator` is running (restart it if not; confirm 97de3f56 if challenged). Then handle child completions in order: snooze green (verify, spot mutations, review rounds), apps-list (fidelity pass by a different model), sound red (verify the gate), test-strategy (summarise), and the final integration APK on integration/owner-build. The padding PR draft is in research/pr/padding-pr-draft.md: open it only after the owner says go.
+
+---
+
+<task-notification>
+<task-id>b24ww9xa2</task-id>
+<tool-use-id>toolu_0144VHVzSJUvbw2r8MMbb3LT</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/b24ww9xa2.output</output-file>
+<status>completed</status>
+<summary>Background command "Session keepalive for in-flight delegated runs" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+use the boat CLI to see what the full planned details are, tell me how many hours I've been spent on the prepaid usage.
+
+---
+
+yes, update the advisory and make sure to install the new version of Vigil, make sure that you use Nyx Scout, you should not need root. keep working on boat not qex
+
+---
+
+The advisory should just read the number of hours remaining.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3A34393192-ae8b-4258-80ee-26a100486709 [completed]:
+Verdict: **CHANGES.** The core charging logic holds up, but I found two blockers and two shoulds where a notification is lost, leaks past the filter, or acts against what the owner did. I ran no Gradle; every finding comes from reading the code paths named. The reply is saved at `/home/mini/Documents/repos/Farhan.worktrees/snooze/research/review/snooze-round1-reply.txt`, and here it is in full:
+
+```
+Snooze pilot, code review round 1 (tier 1). Diff 717faf6..c88fde7, author Sol. Reviewer: Opus.
+Read: brief r1, spec v3/v3.1/v3.2, red and green reports, spec reviews r1/r2 and exchange, snooze-android-flexibility, evidence groups/ and groups-hidden-cancel/. No Gradle run; every finding below comes from reading the code paths named, and each cites the lines to check.
+Threat-model note: the brief's "never stores notification text" is stale (owner removed it); rows keep text, which I did not flag.
+
+SCORE[error-paths]: 4/10 (S1 and S4 lose or leak notifications in common cases; S2 and S3 act against the owner. Fixing S1-S4 with tests through the real coordinator and service would raise it to 8; bar 8)
+SCORE[architecture]: 6/10 (W7 rule assumes Farhan cancels summaries, which W7(a) makes false; dead SnoozeTracker, delayUntilNextMoment and SnoozeHandler.onListenerConnected; returns reuse SnoozeInput with MEDIUM placeholders. Fix S2 and delete dead code for 7; bar 7)
+SCORE[legibility]: 7/10 (CLAIM tags are mostly sourced. snooze-group-device overclaims, and "funded" in the copy is jargon; bar 7)
+SCORE[durability]: 6/10 (charging core is right: W2 order, single-statement row step, NotOwned, stable effectId, recovery via gate. S4 leaves returns uncharged, and a cleared row with a deadline captures its key forever; bar 8)
+VERDICT: CHANGES
+
+S1 [blocker] [needed for bar: yes] [class: prod-wiring] [concern: error-paths] NotificationService.kt:386-400, SnoozeHandler.kt:255-258, NotificationDeliveryCoordinator.kt:330, :314, :296-301
+Every in-process fallback (everything after onPosted) is cancelled from the shade and never proxied. offerFreshPost calls coordinator.captureEvent(sbn.key), giving order N. When the snooze path takes custody (handled = true), processNotificationPosted returns without coordinator.accept(N): onArrival is the only caller of accept. Later, fallback() cancels the original and calls proxyArrival = onArrival(row, priority) with eventOrder = null, so accept stays a no-op. At each batch tick, deliver() hits `unprocessed(item.id)` (order N > accepted, not removed) and returns Deferred. onBatchTick only pulls nextHead after Delivered, so the stuck row also blocks its app's queue at that priority. This lasts until 4096 newer keys evict the event or the process restarts.
+Reproduction: snooze on, defaults. A HIGH post is snoozed. The owner turns snooze off; at the return the budget is exhausted, giving RetryAt and then fallback SNOOZE_OFF. The original disappears, sits in the inbox, and is never delivered. The same happens for NO_FUNDED_MOMENT, DAILY_LIMIT, NATIVE_FAILURE, UNCONFIRMED, NOT_A_RETURN, and BEFORE_DEADLINE (a messaging app updating within ms of the snooze request, which is common). It also covers the W7(b) pending restore. LOST is unaffected because it happens in a new process.
+The handler tests miss this because proxyArrival is a fake list. No test drives a fallback through the real coordinator after captureEvent.
+Fix: accept the arrival's order when the snooze path takes custody, for example withSnoozeAdmission(order) { ... } marking it accepted when the block returns true. Add a coordinator test: captureEvent(id), take custody via the snooze admission, call onArrival(row) with no order, then onBatchTick posts the row. Mutation check: deleting the accept call must turn it red.
+
+S2 [should] [needed for bar: yes] [class: consent-bypass] [concern: error-paths] SnoozeHandler.kt:270-273, SnoozeHandler.kt:142-145, NotificationService.kt:424-426, SnoozeHandlerTest.kt:562-600
+W7(b) and (c) bring back notifications the source app or the owner removed. W7's premise was "Farhan's own proxy path listener-cancels summaries". But W7(a), at NotificationService.kt:384, means Farhan never cancels a summary while snooze is on. So every reason-12 removal it sees then comes from the app or the user. The device evidence agrees.
+- F4 and F5 show snoozed children survive a summary cancel. Android also co-snoozes the summary: summaries 1100, 1200, 1300 and 1510 carry reason 18 and an "until" in groups/T-minus-1m.txt and listener.txt, although Farhan never snoozed them. So (c), restoring a missing grouped row as pending on the same boot, guards a cascade that does not happen. In practice it only fires when the app cancelled a snoozed child.
+- F5's refresh of 1511 was triggered by the fixture listener's cancel, which stands in for a Farhan cancel that production no longer performs.
+- The case that matters was not run: the source cancels the summary after a child has returned.
+Reproduction: snooze on; a grouped chat child returns and is charged. The owner reads the chat; the app cancels its summary, and NMS cascades REASON_GROUP_SUMMARY_CANCELED to the child. refreshProxy then posts a Farhan proxy of the read message. For (c): the owner reads on another device, and the app cancels the snoozed child, which sends no callback. After the deadline plus one tick, the scan restores the row as pending, and the batch path proxies it and charges it. A user swiping the group probably cascades reason 12 the same way; this is unverified.
+The tests at 562-600 pin the rule as the spec wrote it.
+Fix: treat reason 12 as collateral only for a summary Farhan cancelled. Record the group keys of summaries the proxy path cancels; while snooze is on there are none. Otherwise treat it as SOURCE_APP_CANCELLED (row cleared). Drop (c) and apply the same-boot rule (cleared) to grouped rows. Also null snoozeGroupKey in COMPLETE_SNOOZE_RETURN, or bound its life, so a delivered row does not stay "grouped" forever. Rewrite the three tests, and add one where the app cancels the summary.
+
+S3 [should] [needed for bar: yes] [class: consent-bypass] [concern: error-paths] NotificationService.kt:325
+returnInput.filterEnabled reads isNotificationServiceStatsEnabled() and ignores the app main switch. Elsewhere the filter is off when preferences.isServiceEnabled() is false (stats AND app_main_switch): see processNotificationPosted via ServiceUtilImpl.isNotificationServiceEnabled, and NotificationDeliveryEngine.kt:18 and :23.
+Reproduction: the owner pauses Farhan with the main switch while items are snoozed. A return arrives, and settle still decides by budget: it charges it, re-snoozes it (hiding it again while Farhan is paused), or falls back. A fallback cancels the original and queues a proxy that the paused batch tick never posts. W5 says filter off means release: leave it visible, close the row, no charge.
+The handler test at :504 passes filterEnabled = false directly, so the wrong source is untested.
+Fix: build the input from isServiceEnabled() (resolve it before the call, since it is suspend). Add a service-level or seam test that the main switch off releases a return.
+
+S4 [blocker] [needed for bar: yes] [class: hidden-state] [concern: durability] NotificationService.kt:355-359, SnoozeHandler.kt:166-169, NotificationDao.kt:71 (markNotificationAsCleared), NotificationDeliveryCoordinator.kt:262
+Clearing a snoozed row from the inbox breaks I2 for that return and captures its key forever. Spec review r2 raised this as S9, and v3.2 never decided it. MarkNotificationAsCleared calls clearInbox, which sets isCleared = 1 and leaves snoozeDeadline set. At the return, settle finds isCleared and returns false: the original stays visible, beeps, is uncharged and is not in the inbox. Worse, the processNotificationPosted pre-check (`find(id)?.snoozeDeadline != null`, then settle, then return) catches every later post of that key. Messaging apps reuse one key per conversation, so after one swipe in Farhan's inbox the conversation bypasses the filter permanently: never stored, proxied, snoozed or charged.
+Reproduction: snooze on; a chat message is snoozed; the owner swipes it away in Farhan's inbox (or clears all). It returns visible and uncharged, and every later message in that chat shows unfiltered.
+Fix:
+- The pre-check uses the live predicate (deadline != null AND not cleared AND not delivered), the same one as liveSnoozes.
+- An owned cleared row at return: cancelVisible, null the snooze columns, record REMOVED, return true.
+- The inbox clear path closes custody, so the row cannot keep a deadline after it is cleared.
+- Tests: clear while snoozed, then return, giving an original cancelled with no charge; then a fresh post of the same key goes through the normal path.
+
+NIT-STASH:
+- NotificationService.kt:391 alreadyDelivered = isDelivered ignores isCleared. A chat whose returned original was dismissed takes the proxy path for its next message (ALREADY_DELIVERED) instead of snooze. Use isDelivered && !isCleared.
+- SnoozeTracker.kt (whole file), SnoozeTiming.delayUntilNextMoment, and SnoozeHandler.onListenerConnected have no production caller. SnoozeTrackerTest and the delay-only cases in SnoozeTimingTest pin dead code ("pins dead code" mode). The green report's re-recorded-key mutation hit the dead tracker, so it proves nothing about production. Delete them; W5 asked the tracker to keep one purpose.
+- NotificationDao.kt:80 liveSnoozes is not in NotificationQueries, so it is not run against SQLite. It also does not exclude deliveryInvalidated. Move it into the constants and test it (W1 completeness).
+- NotificationService.kt:349 the previous-tick formula in reconcileSnoozes, (minute % interval + interval), is untested. A mutation to minute % interval would stay green.
+- NotificationService.kt:318-333 returnInput fabricates packageName "" and a MEDIUM priority, setting and flags to satisfy SnoozeInput for settle. Give settle a small input of its own (filterEnabled, snoozeEnabled, now, zone, testingMode).
+- SnoozeHandler.kt:153 repeats the summary check already made at NotificationService.kt:384.
+- NotificationService.kt:387 a post that is no longer current returns handled = true and still runs captureActions(), which retains actions for a key with no row.
+- NotificationDeliveryCoordinator.kt:236 the outer catch maps a store read failure to NoFundedMoment, so the fallback event is mislabelled. The spend timestamp uses the handler's now, not environment.timeContext (V4 asks for one clock).
+- NotificationDeliveryCoordinator.kt:319-323 the batch reservation adds points for reserved returns whose priority is IGNORING, which is conservative. hasSnoozeCapacity does the same for owned rows.
+- AutomationSettingsSection.kt: "no funded time in the next 48 hours" is jargon (try "no time with budget left in the next 48 hours"). Counters omit FAILED and LOST. A return fallback is labelled "could not snooze". v3.1 asked the copy to say the daily retry limit resets when Farhan restarts.
+- NotificationService.kt:393 CLAIM(snooze-group-device) says the "collateral cases" passed. F5's collateral cancel came from a fixture listener, and the returned-child source-cancel case was not run.
+
+HARDENING-STASH:
+- NotificationService.kt:121-123 drainSnoozeReturns runs inside the same try as the work item. If a settle throws (for example a DB error), the current Posted or Removed work is dropped, and that repeats while the flag stays set.
+- SnoozeHandler.kt:250-253, :217 release() and the retry upsert are read-modify-write of the whole row outside DeliveryGate. A concurrent clearInbox or markCleared under the gate can be overwritten (isCleared reset).
+- SnoozeHandler.kt:135-141 an unconfirmed snooze is only detected after its deadline (W3 as written). A silent native no-op leaves the original visible and uncharged for up to 48 h.
+- NotificationDeliveryCoordinator.kt:278-281 the batch path reserves only returns due at this tick. Proxy deliveries at 09:00 can spend points promised to 10:00 or 11:00 returns, which are then denied with a beep (W4 as written).
+- A post that races the snooze request (app update within ms) gives a BEFORE_DEADLINE fallback while Android has already hidden the updated record. That yields a proxy now plus the original at its deadline, refreshed without charge. Visible twice, charged once.
+- An owner's own shade snooze of a returned, charged notification comes back as an update of a delivered row and is replaced by a silent proxy.
+- DST fall-back: two instants share calendarHour, so the hourly-window count in hasSnoozeCapacity merges two real hours.
+
+COMMENT-FIXUPS:
+- none applied. Suggested: NotificationService.kt:393 narrow the CLAIM to "grouped children return with their summary [F1-F3, F5 hidden-child]". Delete CLAIM(snooze-tracker-bound) with the dead tracker.
+
+Device evidence F1-F7, what it proves versus what it claims:
+- It proves: children snooze and return with summaries present (F1-F3); Android co-snoozes the summary itself, so W7(a) holds; snoozed children survive a summary cancel by the source (F4) or by a listener (F5); a listener cancel cascades reason 12 to an active returned child (F5); ungrouped auto-group summaries are not proxied (F6); returns can beep (F7, only some).
+- It does not prove: that any reason-12 event reaches Farhan from its own cancel while snooze is on (it cannot); the source-cancels-summary-after-return case (S2); any fallback path delivering a proxy (S1). F5's refresh shows the resurrection mechanism, not a protected case.
+
+Tests per W item (would a wrong implementation go red?):
+- W1: yes for the three pending constants (null, future, equal and past deadlines). liveSnoozes: no.
+- W2: yes. The COMPLETE_SNOOZE_RETURN SQLite test, plus crash cuts over shared fakes.
+- W3: yes in the handler (snapshot gap, changed postTime, still snoozed, same post after a full tick). The service's previous-tick computation: no.
+- W4: yes. DEFAULT_SCHEDULE at 22:30, 08:30/09:30 period carry, mixed 4+2+2 exact fit, hourly window, batch positive control.
+- W5: scheduleAt is enforced by the compiler. The filter-off test is at the handler layer only, so production wiring (S3) is untested.
+- W7: the tests pin the flawed rule (S2).
+- Wrong layer: every fallback test asserts a fake proxyArrival was called, so S1 passes them all.
+- Hollow: SnoozeTrackerTest (dead code), and the delayUntilNextMoment-only cases in SnoozeTimingTest (nextDeliverableMoment shares ticks(), so the alignment checks still bite).
+
+Wiring check: every new port has a production implementation in NotificationService or NotificationFilterDataModule (SnoozePlatform, SnoozeLedger, SnoozeReturnBudget, scheduleAt, completeSnoozeReturn, liveSnoozes). Owned returns route before classification and before the filter-off check (onNotificationPosted:291). Lock order is always snoozeWork then gate, and the gate is never nested: onPosted inside withSnoozeAdmission never reaches fallback or onArrival. Foreign REASON_SNOOZED is ignored unless the key is owned. The Room migration (four nullable columns, 8.json, legacy v2 entity) looks right. Snooze off keeps the proxy path except for extra reads; I4 holds apart from S1-S4.
+```
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3A9620c58e-3118-4527-8c0e-60df576676fd (You are the round-1 code reviewer (tier 1) for the Snooze pilot. Revi...) [completed]:
+Error-paths reaches 8 once S1–S4 are fixed with tests through the real coordinator and service, but two of the fixes as you described them each miss a second site. Without those, the same bugs stay reachable and it stays at 6. The full reply is in `/home/mini/Documents/repos/Farhan.worktrees/snooze/research/review/snooze-round1-exchange.md`. I edited nothing else and made no git writes.
+
+1. **S4 scope:** skip (c), but (a)+(b) as written don't close the hole.
+   - **Second pre-check:** `SnoozeHandler.kt:154` uses the same wrong check (`snoozeDeadline != null`) as the service pre-check. With only the service fixed, the key is still captured while snooze is on.
+   - **(b) depends on the in-memory owned entry:** the next scan drops cleared rows from that cache, and so does a restart. Any deadline more than one tick away hits this. The return then comes in as a new arrival and gets snoozed again, which un-clears the row and reverses the owner's clear.
+   - **Fix:** decide from the row instead. A cleared row with a deadline, posted at or after that deadline, is a return the owner cleared: cancel the visible original, null the snooze columns, record REMOVED. The evidence shows Android's return post time always lands at or after the stored deadline.
+   - **What's left:** a deleted row comes back as a new arrival and is charged once; fine for the pilot. A cleared row whose snoozed record the app cancelled keeps a stale deadline. To close a narrow window where a genuinely new post of that key would be cancelled, have the scan clean those rows too.
+
+2. **S2:** keep the recording machinery, but make it small.
+   - **Evidence:** every reason-12 removal in the device logs comes straight after a summary cancel (reason 8 from the app, reason 10 from the test listener). None follows a child cancel. No fallback ran, so the logs have no case of Farhan cancelling a child with siblings present.
+   - **Snooze on:** no reason 12 is ever Farhan-caused. Farhan never cancels a summary then, and that includes Android's auto-group summaries.
+   - **Snooze turned off:** the proxy path cancels app summaries on arrival (`NotificationService.kt:403`). That cascades reason 12 to children that returned earlier and are still visible originals. So the set isn't always empty: record only at that one cancel site, and only for summaries.
+   - **Supporting evidence:** in the hidden-cancel run, the app's own summary cancel cascaded reason 12 to an active sibling. Had that sibling been a returned child, the current code would have re-posted it.
+
+3. **S1 fix shape:** accepting at admission is safe. `accept` sets only this event's order, so a newer event or removal for the same key stays unprocessed until it runs. Don't move it to the fallback: the fallback doesn't know the original order and could accept a newer, unprocessed event. You also need it at a second site: the custody pre-check (`NotificationService.kt:355-359`) returns without accepting its own order. A BEFORE_DEADLINE fallback from that path gets stuck the same way.
+
+4. **Dead code:** agree. Pull the previous-tick formula out of `reconcileSnoozes` into a pure function and pin literal times:
+   - 10:25 gives 09:00;
+   - 10:00:30 gives 09:00;
+   - testing mode at 10:25 gives 10:21;
+   - a +05:30 zone at local 10:25 gives local 09:00.
+
+   Changing it to `minute % interval` turns the 10:00:30 case red. Deleting the accept call (S1) and reading the filter flag from stats (S3) also count as mutations through the production path.
+
+5. **Hardening stash:** no objection to declining all three. One unlisted item deserves a two-line fix: the return drain runs inside the same try as each work item (`NotificationService.kt:121-123`). A settle that keeps throwing drops the current post or removal every time. Give the drain its own try/catch.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3A0305e988-b26b-4539-82d8-ef69b2fdab70 (Apps list: UI fidelity pass (Opus)) [completed]:
+Verdict: **FIX FIRST.** The real icons the owner asked for are in place, but the held-letter bubble doesn't follow the held letter, and in Dark mode it nearly disappears.
+
+The review is at `/home/mini/Documents/repos/Farhan.worktrees/apps-list/research/fidelity-review.md`. Nothing else in the repo changed.
+
+**Your known differences:**
+- **Bubble at the midpoint:** this is a bug. The code always centres the bubble on the rail (`AppAlphabetRail.kt:104`, `Alignment.CenterStart` with `offset(x = -62.dp)`). `light-held` only looks right by luck: the filtered rail has three letters (C, M, P), so M happens to be the middle one. Holding C or P, or any letter in the default rail, would put the bubble mid-screen. No capture shows that case.
+- **Bubble over the lock:** the mock-up's bubble covers part of a row too, so overlap itself is fine. It just lands on the lock column. Once the bubble follows the finger, this is acceptable.
+- **17 apps vs 84, no loading view in the mock-up:** both are artifacts of the fixture and the mock-up. Social has 0 apps on the emulator, so the build filters Communication instead, and no image shows the `#` bucket.
+- **Layout-shift score:** still unmeasured. I found three likely sources of shift:
+  - The rail letters respace when the app count goes from 12 to 17.
+  - Rows below the first move when the section gaps appear after loading.
+  - A chip count over 99 would widen its chip, since the count slot only reserves two digits.
+
+**What matches:**
+- **Icons:** they are real package icons in a 40 dp slot, measured as 105 px at 2.625 px/dp.
+- **Default state:** All is selected and the list starts at the top.
+- **List and rail:** sticky letter headers, chip counts taken from the full list, and a rail showing only letters present.
+- **Inherited parts:** the priority badge, lock, expand arrow, gear, bottom bar and theme colours are the same as the settings-hub Apps screen.
+- **Skeleton:** the first row, icon slot, chip widths and search field are in the same place before and after loading.
+
+**New findings:**
+- **Dark bubble contrast:** the bubble's colour is the same olive as the card under it, and it has no border. The mock-up gives it an accent outline.
+- **Has notifications:** this chip is 10th in the row, so it's off-screen until you scroll.
+- **Search label:** "Search apps" floats up when you start typing instead of disappearing.
+- **Held rail letter:** it's hard to pick out in Dark.
+
+**Not checked:**
+- I didn't open the `dark-filtered` and `dark-skeleton` pairs.
+- No capture shows how a disabled app's row looks in the build; the old screen faded the whole row.
+
+**Fix first:**
+1. Place the bubble at the held letter's height, not the rail's midpoint. Then re-capture with a letter other than the middle one held.
+2. Give the bubble a border or a fill that stands out from the card in Dark.
+
+**Optional:**
+- Move Has notifications next to All.
+- Make room for three-digit chip counts.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3A886323dc-b287-4321-9969-573171c80faa [completed]:
+Yes. On upstream main `13764d2`, **Clear All** and the final notification were fully visible and tappable with 3-button navigation on the Android 15 emulator. The button ended at `y=1773`, 21 px above the navigation bar, and opened its confirmation dialog. The last row ended 189 px above the bar and opened the sender app when tapped.
+
+Upstream’s notification screen applies its own `Scaffold` padding in commit `2a356b5`. The RC3 release note documents the separate notification-opening fix from issue #83. [Scaffold commit](https://github.com/tahaak67/Farhan/commit/2a356b5260cb1a7a511a3b777727bc2c6c3748b7) · [RC3 release note](https://github.com/tahaak67/Farhan/releases/tag/v1.0.0-RC3)
+
+The build kept compile SDK and target SDK at 36. I used a temporary Android user and Test Storm to keep test notifications out of the fork’s inbox. The emulator was restored and the before and after snapshots match. The original GrapheneOS device remains unverified.
+
+[Verification report](/home/mini/Documents/repos/Farhan/research/upstream-nav-check.md) · [3-button screenshot](/home/mini/Documents/repos/Farhan/research/upstream-nav-check/three-button-list-bottom.png) · [Clear All confirmation](/home/mini/Documents/repos/Farhan/research/upstream-nav-check/three-button-clear-all-dialog.png) · [Gesture screenshot](/home/mini/Documents/repos/Farhan/research/upstream-nav-check/gesture-list-bottom.png)
+
+---
+
+You can delete that branch. Also, updated ETA?
+
+---
+
+<task-notification>
+<task-id>b33yronlq</task-id>
+<tool-use-id>toolu_01EW8EF9dzYZ3L7f9P8f4vUA</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/b33yronlq.output</output-file>
+<status>completed</status>
+<summary>Background command "Run base integration verification on Boat" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Remember that this is pilot work, so you don't need to be quite so stringent. I want the sound control in my APK, even if that means it gets delayed.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3A0291e20e-947b-4019-87ca-06a62866e5ca (Implementation task (UI). No push, no stash, never vigil orchestrator...) [completed]:
+Completed the four fixes on `pilot/apps-list`, one commit each.
+
+- `b659c45` Anchors the bubble to the held letter and clamps it inside the rail.
+- `898dbc4` Adds an accent outline and a fill that stands out in Dark.
+- `1a33caa` Moves Has notifications next to All and keeps its count.
+- `7607c69` Reserves three digits for each chip count.
+
+**Boat passed all 10 targeted JVM tests and assembled the debug APK.** The emulator also confirmed that raising All from 17 to 117 left the next two chips in place.
+
+I reviewed all [six screenshot pairs](/home/mini/Documents/repos/Farhan.worktrees/apps-list/captures/apps-list/fidelity-fixes/pairs/) against the mock-up. They show A and W held in both themes, plus the Dark filtered and skeleton states. The [report](/home/mini/Documents/repos/Farhan.worktrees/apps-list/research/apps-list-fidelity-fixes.md) records what I checked in each pair and is committed as `40cae42`.
+
+No issue reached 30 minutes.
+
+---
+
+<task-notification>
+<task-id>bd1w15nz1</task-id>
+<tool-use-id>toolu_01Ct1mTrJ4ciMMRFYQvsF6hw</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/bd1w15nz1.output</output-file>
+<status>completed</status>
+<summary>Background command "Restart session keepalive on new vigil binary" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bnmdmlv2w</task-id>
+<tool-use-id>toolu_019N68vWuQjLYacMUbZERaQX</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/bnmdmlv2w.output</output-file>
+<status>completed</status>
+<summary>Background command "Restart session keepalive" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3A5b2ac318-443e-478b-9296-aa0bdf56470f (Snooze pilot: red tests (Sol)) [completed]:
+Round-one fixes are committed on `pilot/snooze` in the requested order.
+
+| Step | Commit |
+| --- | --- |
+| Red tests | `2b5e4b3` |
+| S1 · Accept the event order when taking custody | `bb90c9b` |
+| S4 · Close cleared snoozes using the stored row | `950405f` |
+| S3 · Honor the main switch on return | `44dccc9` |
+| S2 · Attribute group removals to Farhan’s summary cancellation | `3a7a0ce` |
+| Cleanup | `5e32899` |
+| Verification report | `ac54cf6` |
+
+The red run reproduced **11 Truth assertion failures per data variant**. After the fixes, Boat passed **198 domain, 71 data, and 1 presentation test per variant**, with zero failures in Debug and Release. The app and Android test APK builds passed. All five mutations triggered their intended assertions, and the restored data Debug suite passed again.
+
+Room’s 7→8 migration passed on the API 35 emulator. Farhan’s listener grant was restored and confirmed separately. Active notifications were unchanged, the snoozed lists were empty, and the ringer stayed Silent with DND off.
+
+S2 uses a two-second window capped at 128 groups. Android reports a listener cancellation without identifying the listener, so two listeners racing to cancel the same summary remain indistinguishable.
+
+[Round-one fix report](/home/mini/Documents/repos/Farhan.worktrees/snooze/research/snooze-round1-fix-report.md)
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3A68f502d2-e939-4180-8436-6e2101289011 (Snooze pilot: code review round 2 (Fable)) [completed]:
+Reply written to `/home/mini/Documents/repos/Farhan.worktrees/snooze/research/review/snooze-round2-reply.txt`.
+
+- **S1–S4 are properly fixed** at every site the argument record named, and the deletions left no production reference or hollow test. I did not run Gradle; test counts and mutation results are from Sol's report.
+- **One new finding, S5 [should, needed for bar: yes]:** the S4 fix cancels a cleared return without looking at its content. Android absorbs a same-key update into a snoozed record with no callback (spec edge 3, E13), so a chat message that arrives after the owner swipes the snoozed row away is cancelled at the deadline and never shown or stored.
+- **VERDICT: CHANGES**, error-paths 7/10, durability 8/10. The fix is one content check plus one test; it needs a diff-only look at that change, not another full round.
+
+---
+
+<task-notification>
+<task-id>bx973kie6</task-id>
+<tool-use-id>toolu_01UdTAUT8bRXNVe7wg2S9Yqm</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/bx973kie6.output</output-file>
+<status>completed</status>
+<summary>Background command "Restart session keepalive" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3Adcd673ba-162c-4e42-9577-ef8692708f7e (RED phase (tests first). No push, no stash, never vigil orchestrator ...) [completed]:
+Sound control GREEN is ready for integration through `ec48ddc`. Boat passed all **265 JVM tests** and built the debug app and instrumented-test APKs. All three spot mutations failed at their intended assertions. The RED files match `9c0ff5f`.
+
+| Phase | Commit |
+|---|---|
+| Domain | `844cfc0` |
+| Data | `0bbf344` |
+| Wiring | `f878525` |
+| UI | `d07000d`, `ec48ddc` |
+
+On API 35, policy read-back, pre-grant bypass rejection, and the unfamiliar incoming call passed. The original competitor test failed at its shell-quoting setup. A supplemental run recorded the proxy beeping and buzzing while the competitor stayed silent. Continuous filter monitoring remains unverified.
+
+The held rule survived clear-data on a disposable build, and launch removed it. The exact-ID clear-data test remains unrun to preserve the shared alpha database. I restored the schema-v8 alpha APK and verified Silent ringer, DND off, the original navigation mode, and the original listener grant.
+
+[GREEN report](/home/mini/Documents/repos/Farhan.worktrees/sound-control/research/sound-control-green-report.md) · [Six screenshot pairs](/home/mini/Documents/repos/Farhan.worktrees/sound-control/captures/sound-control/pairs)
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3Af0d9dc5a-3ba4-418c-a32b-061f2cb33685 (Snooze pilot: code review round 2 (Fable)) [completed]:
+Answers are written to `/home/mini/Documents/repos/Farhan.worktrees/snooze/research/review/snooze-round2-exchange1.md`. Nothing was run; they come from reading the code at ac54cf6.
+
+1. **What is compared:** agreed, title and text only, exact equality. Compare the fields as Farhan already captures and stores them, so both sides carry the same truncation and no trim is needed. A follow-up chat message changes the text (platform source, not device-verified). An identical re-post is cancelled as the cleared return, which I accept.
+
+2. **One rule for both paths:** agreed, and "leave it visible" was the wrong fallback. But the owned Return path cannot fall through as it stands:
+   - `Work.Return` carries no fields and no captured order.
+   - The drain can settle a return under a different work item, so fields added to `Work.Return` might not be in hand.
+   - The handler's no-order arrival hook would have the new message cleared again at the batch by the removal tombstone that `clearInbox` leaves.
+
+   The cheapest fix is to keep cleared keys off the owned path: in `onNotificationPosted`, skip the flag route when the coordinator holds an unaccepted removal for the key. The post then reaches `handleStoredPost` with fields and an order. There, same content disposes as now; different content closes custody and returns false before the accept. I checked order, pre-check, lock and row on that fall-through and found no double handling.
+
+3. **The content read:** you are right, and I withdraw the platform read. `handleStoredPost` already receives the item built from the sbn and discards everything but id and timestamp. Two callers have no fields, the stats-off `CustodyCheck` and the scan; both should close custody and leave the post visible instead of cancelling.
+
+The file also names the test I would ask for: a changed-text return after `clearInbox`, through the real coordinator, ending with the new message's row un-cleared and delivered.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3A0ac81b5a-d0e2-4c2c-95ff-5bcf34dfa54f (Snooze pilot: code review round 2 (Fable)) [completed]:
+Answers are in `/home/mini/Documents/repos/Farhan.worktrees/snooze/research/review/snooze-round2-exchange2.md`. Nothing was run; this is from reading `pilot/snooze` at ac54cf6 and `fix/clear-per-category`.
+
+**(a) Coordinator state at the return**
+
+- **Your expectation does not hold:** "applied" and "accepted" are separate fields. `removalApplied` writes only `appliedRemoval`; `accepted` stays at the admission order. So after a row clear, `lastRemoval > accepted` is true in case (i).
+- **Case (ii):** the coordinator state is the same, but the scan has dropped the owned entry, so the return already takes the stored path.
+- **Recommended predicate (inverted):** take the flag route only when the coordinator still vouches for custody, meaning the event exists and `lastRemoval <= accepted`. Everything else goes through `handleStoredPost`. Clear all wipes the events, so my original predicate would miss it; the inverted one does not.
+- **Routing by the stored row** is not available: the flag decision runs in the listener callback, which cannot read the database.
+- **Scoped clear, Clear all and single-row delete:** S5 does not apply, because they delete the row. A return of a deleted row is not a loss:
+  - Same tick: it stays visible, uncharged and unstored, and a follow-up is shown.
+  - After a scan or restart: it takes the normal path and is charged.
+
+  The inverted predicate also removes the same-tick uncharged case.
+
+**(b) Stop rule**
+
+No other blocker after S5. The strongest remaining candidate is a same-key post racing the snooze request: it proxies the old text, and the updated record shows uncharged at the deadline. Nothing is lost, and round 1 already stashed it as hardening.
+
+**(c) Scores for ac54cf6**
+
+| Concern | Now | With S5 fixed |
+| --- | --- | --- |
+| error-paths | 7/10 | 8/10 |
+| architecture | 7/10 | 7/10 |
+| legibility | 7/10 | 7/10 |
+| durability | 8/10 | 8/10 |
+
+The `SnoozeTimingTest` deletion is a note, not a blocker. The diff removed only `delayUntilNextMoment` and an unused enum; `ticks()` and `nextDeliverableMoment` are unchanged. What is gone is test cover for DST, non-UTC zones and testing-mode alignment, which can be restored after the pilot.
+
+---
+
+<task-notification>
+<task-id>b6so9ez4o</task-id>
+<tool-use-id>toolu_019eUwMo1E4muy1xcmm99hBG</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/b6so9ez4o.output</output-file>
+<status>completed</status>
+<summary>Background command "Restart session keepalive" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bjazu1jd7</task-id>
+<tool-use-id>toolu_01StFh3n6wDps7CaTGTXxnCn</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/bjazu1jd7.output</output-file>
+<status>completed</status>
+<summary>Background command "Restart session keepalive" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3Ac10888cb-1d60-4891-8c27-06858d059730 (Sound control pilot: review + fidelity (Opus)) [completed]:
+The sound branch needs one fix before it is clean: there is one blocker. I also found one rare path where the phone stays muted after tapping Off, and one trade-off for the owner to decide. I read the diff and viewed all six screenshot pairs; I did not run Gradle.
+
+The report is at `/home/mini/Documents/repos/Farhan.worktrees/sound-control/research/review/sound-code-review-r1.md`.
+
+- **F1, blocker: an elected alert can disappear from the shade.**
+  - **What happens:** if the owner turns off "Override Do Not Disturb" on Farhan's alert channel, which the enable screen tells them how to do, the next elected alert fails to post. `NotificationService.kt:327` still cancels the original. Alerts that wait for a batch tick are retried. Alerts set to deliver immediately are never retried, so the message only shows in Farhan's in-app list.
+  - **Fix:** in the coordinator's `deliver()`, if the breakthrough post fails, post once more on the normal channel. The poster's `Failed("breakthrough_bypass_lost")` result and its red test stay as they are.
+  - **Reach:** default settings never hit this. It needs a non-critical priority set to deliver immediately.
+- **F2, should: Off can leave the phone muted.** If saving the Off state fails (for example, a full disk), `off()` at `SoundControlController.kt:95-98` does not remove the rule. Removing it anyway is safe, because the reconciler can never recreate a rule.
+- **F3, should, owner decision: a dropped listener does not release the mute.** If Android unbinds Farhan's listener while access stays granted, the rule stays on. Nothing is lost, and the Off action in the status notification still works. Releasing would mean the owner has to tap resume after every brief reconnect, so I recommend leaving it as is for the pilot.
+
+**Invariants K1–K8:** all hold in the code and tests.
+- Only the "I understand, turn it on" button (all three permissions granted) creates or turns on the rule. Every other path can only remove it.
+- Every missing precondition releases the rule, apart from F3.
+- Leftover Farhan rules are found by condition ID, never by name.
+- The enable key is never exported and is excluded from backup and device transfer.
+- The rule allows calls from anyone and repeat callers, and sets every policy field explicitly.
+- The alert channel is only created after Do Not Disturb access is granted.
+- Updates to an alert that already sounded stay silent.
+- Nothing touches the owner's own Do Not Disturb.
+
+**UI fidelity:** nothing makes a control unusable, hides the confirmation, or contradicts the copy.
+- The warning that the phone can stay muted if Farhan stops is on the enable screen.
+- The confirm button sits two screens down, but it scrolls into view above the navigation bar since `ec48ddc`.
+- The screens reuse `ExperimentRow` and the standard Material cards, with no custom theming. This branch has no settings-hub components to reuse; moving onto them is a job for the integration branch.
+
+VERDICT: CHANGES (F1).
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3Aaf51217a-89f8-47fa-8c77-80554ae54dc5 (Sound control pilot: review + fidelity (Opus)) [completed]:
+All three challenges hold up against the code. Nothing else I saw should block the pilot: **no**. The answers are in `/home/mini/Documents/repos/Farhan.worktrees/sound-control/research/review/sound-code-review-r1-exchange.md`.
+
+1. **F1 fix shape.**
+   - **No double post:** the poster checks the channel and returns `Failed("breakthrough_bypass_lost")` before it publishes anything (`SoundProxyNotificationPoster.kt:24-28`, and its test checks nothing was posted). In the real post, `notify` is the last call. Even a second post would only replace the first, because every proxy uses the same tag (`PROXY_TAG + item.id`) and id 1.
+   - **Where it shows:** as a `PostResult.Failed` that `postSafely` returns.
+   - **Which reasons:** fall back only on `breakthrough_bypass_lost`. Every other reason would fail on the normal channel too.
+   - **Smallest change:** put the fallback inside `postSafely`. Neither the sound nor the integration version of `deliver()` touches it, and the poster's RED unit and instrumented assertions stay valid. Putting it in the poster instead would break both. One harmless side effect: it counts as the tick's one sound, so one more elected alert in that tick stays silent.
+2. **F1 reach.**
+   - **CRITICAL is unaffected:** CRITICAL, exception and system-exempt items are pass-through (`NotificationService.kt:321`). `onArrival` returns before posting them, line 327 never cancels them, and they are never elected.
+   - **Batch items are not retried forever:** the failed post triggers a reconcile. That leaves the state `Suspended` even if removal fails, and `electionFor` returns nothing unless the state is `Held`. So the next tick posts on the normal channel.
+   - **The queue stalls for one period, not forever:** a failed head holds its app and priority group until the next tick, which is an hour for HIGH by default. With the fallback in place, that tick delivers instead.
+3. **F2.**
+   - **Nothing recreates the rule:** with the rule gone and the saved state still On, the reconciler reports "stopped in Settings" and takes no action. Only `enable()` can create or turn on a rule.
+   - **The status notification is cleared**, because the state is not `Held`.
+   - **The settings switch shows off**, since it is checked only for `Held` or `Creating`.
+   - **Wording is the only gap:** after a restart the status line says "Stopped in Settings" rather than the real cause. The mute state is correct, so that is cosmetic.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Athread-send%3A0a427965-01bd-4b33-8a80-fcbd91d15f57 (RED phase (tests first). No push, no stash, never vigil orchestrator ...) [completed]:
+Fixed F1 and F2 on `pilot/sound-control`. RED is `e960b89`, and the fix is `59b42e4`.
+
+- **F1:** `postSafely` retries once on the Normal channel only when Breakthrough reports `breakthrough_bypass_lost`. A successful fallback uses the tick’s audible slot.
+- **F2:** Off still attempts to remove owned rules when saving fails. Confirmed removal clears the status notification. A surviving rule keeps the recovery notification visible.
+
+Boat passed all **36 targeted sound tests** and `:app:assembleDebug`. Both mutations reproduced the intended assertion failures. No problem exceeded 30 minutes.
+
+[Fix report](/home/mini/Documents/repos/Farhan.worktrees/sound-control/research/sound-control-fix-report.md)
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aa9583e5f-0f51-4b45-be2b-5bf111e74c2e%3Adelegate-task%3A15d1f9aa-cab5-4b72-94e0-dc80610e0008 (Snooze pilot: S5 fix (Sonnet)) [completed]:
+The S5 fix is done on `pilot/snooze`. A follow-up folded into a cleared snooze is no longer cancelled; it takes the normal arrival path. The full gate passed on Boat: 344 tests, 0 failed, and `:app:assembleDebug` built. Nothing ran on a device, and no test calls `onNotificationPosted` itself.
+
+**Commits**
+- `813ba4a`: red tests plus a seam that keeps today's behaviour.
+- `e18a9e7`: the owned path takes the flag route only while the coordinator vouches for the custody (event exists and `lastRemoval <= accepted`).
+- `98919bb`: the stored path compares title and text. A different post closes the custody and returns false before the order is accepted. Callers with no fields close the custody and leave the post visible.
+- `e696b17`: corrects one test comment (see mutations).
+- `4e921b2`: `research/snooze-s5-fix-report.md`, with the red list, counts and mutation results.
+
+**Red:** 11 tests failed, and the 4 controls stayed green. Fix 1 alone turned the 3 predicate tests and the route test green; fix 2 turned the other 7 green.
+
+**Tests:** 15 new tests (4 predicate tests in the domain module, 11 through the real coordinator, handler and routing). The final counts are domain 202, data 82, presentation 1 and `settings_portability` 59.
+
+**Mutations:** all six turned tests red and were reverted:
+- Comparison inverted: 10 red.
+- Predicate back to the old rule: 9 red.
+- Predicate reading `appliedRemoval`: 1 red.
+- Cancel restored in `CustodyCheck`, the scan and `settle`: 1 red each.
+
+The `appliedRemoval` mutation exposed that my comment on the clear-inbox test was wrong. `clearInbox` applies its removal, so only the native-removal test catches that variant; `e696b17` fixes the comment.
+
+**One departure from the exchange:** `settle` (the owned path when a clear overtakes the flag) now leaves the post visible too, instead of keeping the blind cancel. The reviewer accepted the blind cancel for that millisecond window. I did not, because `settle` has no fields either. The cost is that a dismissed message can reappear once in that window.
+
+**Edits to existing tests:**
+- `SnoozeReturnIntakeTest`: three constructions pass `{ true }`, because `SnoozeReturnIntake` now takes the vouch function as a required argument.
+- `cleared native return is canceled and next post can arrive normally` now goes through the listener route with fields, because the fieldless `settle` no longer cancels. It still asserts the cancel, the cleared row, no charge and key reuse.
+
+The worktree has no git identity, so the commits are authored `Claude <claude@localhost>`; I changed no config.
+
+---
+
+<task-notification>
+<task-id>brzhrs4pp</task-id>
+<tool-use-id>toolu_01BxqQFh8BRFrAakHiX6GG8V</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/brzhrs4pp.output</output-file>
+<status>failed</status>
+<summary>Background command "Restart session keepalive" failed with exit code 1</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bnv7eqnx9</task-id>
+<tool-use-id>toolu_01KhYktMMPuJuniXp87238Pf</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/bnv7eqnx9.output</output-file>
+<status>completed</status>
+<summary>Background command "Confirm the new hold and start the session keepalive" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b90iq3qa4</task-id>
+<tool-use-id>toolu_018H4pukRW7bUrgEW5ScDdze</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e378507e-d8ef-4043-822c-47aebac66689/tasks/b90iq3qa4.output</output-file>
+<status>completed</status>
+<summary>Background command "Confirmed keepalive on the new hold" completed (exit code 0)</summary>
+</task-notification>
