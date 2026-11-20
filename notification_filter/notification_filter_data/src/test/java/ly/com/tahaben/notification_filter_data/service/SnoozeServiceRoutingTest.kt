@@ -163,7 +163,7 @@ class SnoozeServiceRoutingTest {
         assertThat(rig.budget.entries).hasSize(1)
 
         rig.platform.active.remove(source.id)
-        assertThat(rig.routing.handleRemoval(source.id, source.packageName, 12, deadline.plusMillis(2).toEpochMilli(),
+        assertThat(rig.routing.handleRemoval(source.id, 12, deadline.plusMillis(2).toEpochMilli(),
             farhanCancelledSummary = false, postTime = deadline.toEpochMilli())).isTrue()
         assertThat(rig.poster.refreshed).isEmpty()
         assertThat(rig.rows.find(source.id)?.isCleared).isTrue()
@@ -201,9 +201,9 @@ class SnoozeServiceRoutingTest {
             platform, events, SnoozeReturnBudget(coordinator::settleSnoozeReturn), rows, { 5 },
             proxyArrival = { coordinator.onArrival(it, it.priority) },
             refreshProxy = { coordinator.refreshSnoozeProxy(it) },
-            inputAt = ::input,
+            inputAt = { at -> input(at).returnContext() },
         )
-        val routing = SnoozeServiceRouting(coordinator, handler, rows::find, ::input)
+        val routing = SnoozeServiceRouting(coordinator, handler, rows::find) { at -> input(at).returnContext() }
 
         suspend fun input(at: Instant) = SnoozeInput(
             packageName = source.packageName, ownPackageName = "farhan", snoozeEnabled = snoozeEnabled,

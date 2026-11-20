@@ -5,6 +5,7 @@ import android.service.notification.NotificationListenerService.REASON_SNOOZED
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import ly.com.tahaben.notification_filter_domain.delivery.DeliveryTimeContext
 import kotlinx.coroutines.CancellationException
@@ -27,6 +28,7 @@ import ly.com.tahaben.notification_filter_domain.delivery.SnoozeInput
 import ly.com.tahaben.notification_filter_domain.delivery.SnoozeReturn
 import ly.com.tahaben.notification_filter_domain.delivery.SnoozeReturnDecision
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
+import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 
 interface SnoozePlatform {
     fun snooze(key: String, millis: Long)
@@ -49,7 +51,18 @@ fun interface SnoozeReturnBudget {
     suspend fun settleReturn(key: String, postTime: Long, now: Instant): SnoozeReturnDecision
 }
 
-class SnoozeHandler(
+internal data class SnoozeReturnInput(
+    val filterEnabled: Boolean,
+    val snoozeEnabled: Boolean,
+    val now: Instant,
+    val zone: ZoneId,
+    val testingMode: Boolean,
+)
+
+internal fun SnoozeInput.returnContext() =
+    SnoozeReturnInput(filterEnabled, snoozeEnabled, now, zone, testingMode)
+
+internal class SnoozeHandler(
     private val platform: SnoozePlatform,
     private val events: ExperimentEventLog,
     private val budget: SnoozeReturnBudget,
@@ -57,7 +70,7 @@ class SnoozeHandler(
     private val bootCount: () -> Int,
     private val proxyArrival: suspend (NotificationItem) -> Unit,
     private val refreshProxy: suspend (NotificationItem) -> Unit,
-    private val inputAt: suspend (Instant) -> SnoozeInput,
+    private val inputAt: suspend (Instant) -> SnoozeReturnInput,
 ) : SnoozeReturnFlags {
     private data class Entry(
         var deadline: Long,
@@ -67,6 +80,7 @@ class SnoozeHandler(
     private data class Attempts(val day: LocalDate, val count: Int, val boundary: Instant, val retry: Boolean)
     private val owned = linkedMapOf<String, Entry>()
     private val attempts = mutableMapOf<String, Attempts>()
+    private var hasClearedCustody = false
 
     @Synchronized
     override fun flagIfOwned(key: String, postTime: Long): Boolean {
@@ -90,7 +104,7 @@ class SnoozeHandler(
     fun owns(key: String) = key in owned
 
     @Synchronized
-    fun hasOwnedRows() = owned.isNotEmpty()
+    fun needsReconciliation() = owned.isNotEmpty() || hasClearedCustody
 
     @Synchronized
     private fun remember(key: String, deadline: Long, confirmed: Boolean = false) {
@@ -111,15 +125,12 @@ class SnoozeHandler(
         attempts.remove(key)
     }
 
-    suspend fun onListenerConnected(now: Instant, previousTick: Instant) = scan(now, previousTick)
-
     // CLAIM(snooze-confirmation): reconcile against Android state at a batch tick [Snooze pilot spec W3].
-    suspend fun onBatchTick(now: Instant, previousTick: Instant) = scan(now, previousTick)
-
-    private suspend fun scan(now: Instant, previousTick: Instant) {
+    suspend fun onBatchTick(now: Instant, previousTick: Instant) {
         val rows = ledger.liveRows()
         val clearedRows = ledger.clearedRows()
         synchronized(this) {
+            hasClearedCustody = clearedRows.isNotEmpty()
             for (row in rows) if (!owns(row.id)) {
                 row.snoozeDeadline?.let { remember(row.id, it) }
             }
@@ -144,7 +155,7 @@ class SnoozeHandler(
             if (row.id in snoozed) continue
             val activePostTime = active[row.id]
             if (activePostTime != null && activePostTime >= deadline) {
-                disposeClearedReturn(row, deadline, now)
+                disposeClearedReturn(row, deadline, activePostTime, now)
             } else if (activePostTime == null && deadline < previousTick.toEpochMilli()) {
                 retireClearedSnooze(row.id, deadline)
             }
@@ -174,19 +185,18 @@ class SnoozeHandler(
 
     // CLAIM(snooze-handled): unsuccessful native snoozes leave the post for ordinary delivery [Snooze pilot spec V1].
     suspend fun onPosted(item: NotificationItem, input: SnoozeInput): Boolean {
-        if (input.snoozeEnabled && input.filterEnabled && input.exclusionFlags.isGroupSummary) return true
         if (ledger.find(item.id)?.hasLiveSnooze == true) return true
         return when (val decision = SnoozePolicy.decide(input)) {
             is SnoozeDecision.Skip -> {
                 if (decision.reason == SnoozeSkipReason.PLATFORM_TOO_OLD) record(FAILED, item, input.now)
                 false
             }
-            is SnoozeDecision.Snooze -> request(item, input.priority, decision.durationMillis, input, retry = false)
+            is SnoozeDecision.Snooze -> request(item, input.priority, decision.durationMillis, input.returnContext(), retry = false)
         }
     }
 
     // CLAIM(snooze-one-return-path): intake and rescan settle through one worker entry [Snooze pilot spec W3, W5].
-    suspend fun settle(returned: SnoozeReturn, input: SnoozeInput): Boolean {
+    suspend fun settle(returned: SnoozeReturn, input: SnoozeReturnInput): Boolean {
         val row = ledger.find(returned.key) ?: return false
         val deadline = row.snoozeDeadline ?: return false
         if (row.isCleared) {
@@ -194,7 +204,7 @@ class SnoozeHandler(
                 retireClearedSnooze(row.id, deadline)
                 return false
             }
-            return disposeClearedReturn(row, deadline, input.now)
+            return disposeClearedReturn(row, deadline, returned.postTime, input.now)
         }
         if (!row.hasLiveSnooze) return false
         val priority = row.snoozePriority ?: return false
@@ -241,8 +251,11 @@ class SnoozeHandler(
     }
 
     private suspend fun request(
-        item: NotificationItem, priority: ly.com.tahaben.notification_filter_domain.model.NotificationPriority,
-        delay: Long, input: SnoozeInput, retry: Boolean,
+        item: NotificationItem,
+        priority: NotificationPriority,
+        delay: Long,
+        input: SnoozeReturnInput,
+        retry: Boolean,
     ): Boolean {
         val previous = ledger.find(item.id)
         val deadline = input.now.toEpochMilli() + delay
@@ -271,7 +284,7 @@ class SnoozeHandler(
         return true
     }
 
-    private fun boundary(input: SnoozeInput): Pair<LocalDate, Instant> {
+    private fun boundary(input: SnoozeReturnInput): Pair<LocalDate, Instant> {
         val local = input.now.atZone(input.zone)
         val interval = if (input.testingMode) DeliveryTimeContext.TESTING_BOUNDARY_MINUTES
             else DeliveryTimeContext.PRODUCTION_BOUNDARY_MINUTES
@@ -284,8 +297,13 @@ class SnoozeHandler(
         forget(key)
     }
 
-    private suspend fun disposeClearedReturn(row: NotificationItem, deadline: Long, now: Instant): Boolean {
-        platform.cancelVisible(row.id)
+    private suspend fun disposeClearedReturn(
+        row: NotificationItem,
+        deadline: Long,
+        postTime: Long,
+        now: Instant,
+    ): Boolean {
+        if (platform.activePostTimes()[row.id] == postTime) platform.cancelVisible(row.id)
         retireClearedSnooze(row.id, deadline)
         record(REMOVED, row, now)
         return true
@@ -307,11 +325,10 @@ class SnoozeHandler(
     // CLAIM(snooze-removal): Android's snooze callback bypasses proxy removal [Snooze pilot spec D6, W7].
     suspend fun onRemoved(
         key: String,
-        packageName: String,
         reason: Int,
         atEpochMillis: Long,
         farhanCancelledSummary: Boolean = false,
-        removedPostTime: Long = Long.MAX_VALUE,
+        removedPostTime: Long,
     ): Boolean {
         val row = ledger.find(key) ?: return false
         val deadline = row.snoozeDeadline

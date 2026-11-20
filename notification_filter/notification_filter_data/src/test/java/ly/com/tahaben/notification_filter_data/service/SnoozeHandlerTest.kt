@@ -70,7 +70,7 @@ class SnoozeHandlerTest {
         SnoozeHandler(platform, events, budget, ledger, { bootCount },
             proxyArrival = { fallback += it; fallbackOrder += "arrive:${it.id}" },
             refreshProxy = { refreshed += it },
-            inputAt = { input.copy(now = it) },
+            inputAt = { input.returnContext().copy(now = it) },
         )
 
     private fun item(key: String, input: SnoozeInput) = NotificationItem(
@@ -85,7 +85,7 @@ class SnoozeHandlerTest {
     private suspend fun returnPost(key: String, input: SnoozeInput, target: SnoozeHandler = handler): Boolean {
         platform.returned(key)
         platform.active[key] = input.now.toEpochMilli()
-        return target.settle(SnoozeReturn(key, input.now.toEpochMilli()), input)
+        return target.settle(SnoozeReturn(key, input.now.toEpochMilli()), input.returnContext())
     }
 
     // why: a fresh eligible arrival hands off to Android until its cadence tick with no charge before delivery.
@@ -261,7 +261,7 @@ class SnoozeHandlerTest {
         startSnooze()
         assertThat(platform.snoozedKeys()).containsExactly(key)
         val replacement = newHandler()
-        replacement.onListenerConnected(arrival.plusSeconds(1), boundary.minusSeconds(3600))
+        replacement.onBatchTick(arrival.plusSeconds(1), boundary.minusSeconds(3600))
 
         assertThat(returnPost(key, input.copy(now = boundary), replacement)).isTrue()
         assertThat(platform.snoozedKeys()).isEmpty()
@@ -277,7 +277,7 @@ class SnoozeHandlerTest {
     fun `snooze removal is handled and leaves the return tracked`() = runTest {
         startSnooze()
         val removedAt = arrival.plusSeconds(1)
-        assertThat(handler.onRemoved(key, packageName, REASON_SNOOZED, removedAt.toEpochMilli())).isTrue()
+        assertThat(handler.onRemoved(key, REASON_SNOOZED, removedAt.toEpochMilli(), removedPostTime = arrival.toEpochMilli())).isTrue()
         assertThat(returnPost(key, input.copy(now = boundary))).isTrue()
 
         assertThat(budget.charges).containsExactly(returnAt(boundary))
@@ -395,7 +395,7 @@ class SnoozeHandlerTest {
         val foreignKey = "foreign"
         platform.keys += foreignKey
         val replacement = newHandler()
-        replacement.onListenerConnected(arrival.plusSeconds(1), boundary.minusSeconds(3600))
+        replacement.onBatchTick(arrival.plusSeconds(1), boundary.minusSeconds(3600))
 
         assertThat(post(foreignKey, input.copy(snoozeEnabled = false, now = boundary), replacement)).isFalse()
         assertThat(budget.checked).isEmpty()
@@ -411,7 +411,7 @@ class SnoozeHandlerTest {
     fun `reboot loss restores the saved text as pending and records lost`() = runTest {
         ledger.upsert(snoozedRow())
         val now = nextPeriod
-        newHandler(bootCount = 11).onListenerConnected(now, nextHour)
+        newHandler(bootCount = 11).onBatchTick(now, nextHour)
 
         val row = ledger.rows.getValue(key)
         assertThat(row.snoozeDeadline).isNull()
@@ -429,7 +429,7 @@ class SnoozeHandlerTest {
     fun `expired missing snooze on the same boot clears the saved row`() = runTest {
         ledger.upsert(snoozedRow())
 
-        newHandler().onListenerConnected(nextPeriod, nextHour)
+        newHandler().onBatchTick(nextPeriod, nextHour)
 
         val row = ledger.rows.getValue(key)
         assertThat(row.isCleared).isTrue()
@@ -455,7 +455,7 @@ class SnoozeHandlerTest {
         assertThat(ledger.rows[key]?.snoozeDeadline).isNull()
         assertThat(events.recent().any { it.fallbackReason == UNCONFIRMED }).isTrue()
 
-        handler.onRemoved(key, packageName, REASON_SNOOZED, nextHour.plusSeconds(1).toEpochMilli())
+        handler.onRemoved(key, REASON_SNOOZED, nextHour.plusSeconds(1).toEpochMilli(), removedPostTime = arrival.toEpochMilli())
         handler.onBatchTick(nextHour.plusSeconds(3600), nextHour)
         assertThat(fallback.map { it.id }).containsExactly(key)
         assertThat(ledger.rows[key]?.snoozeDeadline).isNull()
@@ -470,7 +470,7 @@ class SnoozeHandlerTest {
         ledger.upsert(snoozedRow())
         platform.active[key] = boundary.toEpochMilli()
         val now = boundary.plusSeconds(1)
-        handler.onListenerConnected(now, boundary.minusSeconds(3600))
+        handler.onBatchTick(now, boundary.minusSeconds(3600))
         handler.onBatchTick(nextHour, boundary)
 
         assertThat(budget.charges).containsExactly(Return(key, boundary.toEpochMilli(), now))
@@ -488,7 +488,7 @@ class SnoozeHandlerTest {
         platform.keys += key
         ledger.upsert(held.copy(id = "missing"))
         val replacement = newHandler(bootCount = 11)
-        replacement.onListenerConnected(nextPeriod, nextHour)
+        replacement.onBatchTick(nextPeriod, nextHour)
 
         assertThat(ledger.rows[key]).isEqualTo(held)
         assertThat(ledger.rows["missing"]?.snoozeDeadline).isNull() // Scan positive control.
@@ -551,8 +551,14 @@ class SnoozeHandlerTest {
             exclusionFlags = input.exclusionFlags.copy(isGroupSummary = true, hasGroupKey = true),
         )
         platform.active[key] = arrival.toEpochMilli()
-        assertThat(post(key, grouped.copy(snoozeEnabled = false))).isFalse()
-        assertThat(post(key, grouped)).isTrue()
+        suspend fun route(enabled: Boolean) = routeSnoozeAdmission(
+            enabled,
+            grouped.exclusionFlags,
+            admit = { post(key, grouped) },
+            onAdmitted = { error("Summary must not capture actions") },
+        )
+        assertThat(route(enabled = false)).isFalse()
+        assertThat(route(enabled = true)).isTrue()
         assertThat(platform.active).containsEntry(key, arrival.toEpochMilli())
         assertThat(ledger.rows).isEmpty()
         assertThat(fallbackOrder).isEmpty()
@@ -565,7 +571,7 @@ class SnoozeHandlerTest {
     fun `recorded Farhan summary cancel restores an uncharged grouped child as pending`() = runTest {
         ledger.upsert(snoozedRow().copy(snoozeGroupKey = "group"))
         val at = boundary.toEpochMilli()
-        assertThat(handler.onRemoved(key, packageName, 12, at, farhanCancelledSummary = true)).isTrue()
+        assertThat(handler.onRemoved(key, 12, at, farhanCancelledSummary = true, removedPostTime = at)).isTrue()
         val row = ledger.rows.getValue(key)
         assertThat(row.snoozeDeadline).isNull()
         assertThat(row.isDelivered).isFalse()
@@ -581,7 +587,8 @@ class SnoozeHandlerTest {
         val row = snoozedRow().copy(isDelivered = true,
             snoozeDeadline = null, snoozePriority = null, snoozeBootCount = null)
         ledger.upsert(row)
-        assertThat(handler.onRemoved(key, packageName, 12, boundary.toEpochMilli(), farhanCancelledSummary = true)).isTrue()
+        assertThat(handler.onRemoved(key, 12, boundary.toEpochMilli(), farhanCancelledSummary = true,
+            removedPostTime = boundary.toEpochMilli())).isTrue()
         assertThat(refreshed).containsExactly(row)
         assertThat(budget.checked).isEmpty()
         assertThat(fallback).isEmpty()
@@ -592,7 +599,7 @@ class SnoozeHandlerTest {
     @Test
     fun `external reason twelve clears an uncharged grouped child`() = runTest {
         ledger.upsert(snoozedRow().copy(snoozeGroupKey = "group"))
-        assertThat(handler.onRemoved(key, packageName, 12, boundary.toEpochMilli())).isTrue()
+        assertThat(handler.onRemoved(key, 12, boundary.toEpochMilli(), removedPostTime = boundary.toEpochMilli())).isTrue()
         val row = ledger.rows.getValue(key)
         assertThat(row.isCleared).isTrue()
         assertThat(row.snoozeDeadline).isNull()

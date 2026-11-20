@@ -86,7 +86,7 @@ fun AutomationAndExperimentsSection(
         ) { onEvent(NotificationSettingsEvent.SetSourceIconExperiment(it)) }
         ExperimentRow(
             "Snooze (pilot)",
-            "Android hides eligible notifications until the next delivery time for their priority. Your budget decides what happens when they return, and a denied return can beep once. Farhan cannot release or cancel a notification Android is holding, even if you turn snooze off or change the schedule. Android can lose a snoozed notification at reboot. If the app does not post it again, Farhan can deliver its saved copy. Calls, alarms, ongoing notifications, exceptions and critical notifications are never snoozed.",
+            "Android hides eligible notifications until the next delivery time for their priority. Your budget decides what happens when they return, and a denied return can beep once. The daily retry limit resets when Farhan restarts. Farhan cannot release or cancel a notification Android is holding, even if you turn snooze off or change the schedule. Android can lose a snoozed notification at reboot. If the app does not post it again, Farhan can deliver its saved copy. Calls, alarms, ongoing notifications, exceptions and critical notifications are never snoozed.",
             state.snoozeExperiment,
         ) { onEvent(NotificationSettingsEvent.SetSnoozeExperiment(it)) }
         if (state.snoozeExperiment || state.snoozeEvents.isNotEmpty()) {
@@ -94,7 +94,7 @@ fun AutomationAndExperimentsSection(
             state.snoozeNext.forEach { (priority, next) ->
                 val moment = when {
                     priority in state.snoozeImmediate -> "immediately"
-                    next == null -> "no funded time in the next 48 hours"
+                    next == null -> "no time with budget left in the next 48 hours"
                     else -> dateTime.format(Date.from(next))
                 }
                 Text("${priority.displayName()} · $moment", style = MaterialTheme.typography.bodySmall)
@@ -104,7 +104,9 @@ fun AutomationAndExperimentsSection(
                 "${counts[ExperimentEventKind.SNOOZED] ?: 0} snoozed · " +
                     "${counts[ExperimentEventKind.RETURNED] ?: 0} returned · " +
                     "${counts[ExperimentEventKind.RESNOOZED] ?: 0} snoozed again · " +
-                    "${counts[ExperimentEventKind.REMOVED] ?: 0} removed",
+                    "${counts[ExperimentEventKind.REMOVED] ?: 0} removed · " +
+                    "${counts[ExperimentEventKind.FAILED] ?: 0} failed · " +
+                    "${counts[ExperimentEventKind.LOST] ?: 0} lost",
                 style = MaterialTheme.typography.bodySmall,
             )
             state.snoozeEvents.forEach { event ->

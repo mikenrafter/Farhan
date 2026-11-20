@@ -18,6 +18,7 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import androidx.core.app.RemoteInput as AndroidXRemoteInput
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -119,7 +120,6 @@ class NotificationService : NotificationListenerService() {
         data class CustodyCheck(val key: String, val postTime: Long) : Work
         data class NativeRemoval(
             val key: String,
-            val packageName: String,
             val reason: Int,
             val at: Long,
             val farhanCancelledSummary: Boolean,
@@ -136,6 +136,13 @@ class NotificationService : NotificationListenerService() {
             intake.consume { work ->
                 try {
                     snoozeWork.withLock {
+                        if (work is Work.NativeRemoval && work.reason == REASON_GROUP_SUMMARY_CANCELED &&
+                            !work.farhanCancelledSummary
+                        ) {
+                            processNativeRemoval(work)
+                            drainSnoozeReturns()
+                            return@withLock
+                        }
                         drainSnoozeReturns()
                         when (work) {
                             Work.Return -> Unit
@@ -147,7 +154,7 @@ class NotificationService : NotificationListenerService() {
                                 VisibleNotificationSource(work.pkg, resolveApplicationName(work.pkg), work.channel, null)))
                         }
                     }
-                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                } catch (cancelled: CancellationException) { throw cancelled }
                 catch (_: Exception) { NotificationDiagnostics.increment("farhan.intake.failure") }
             }
         }
@@ -169,7 +176,7 @@ class NotificationService : NotificationListenerService() {
         fun removeIntentFromHashmap(key: String) { actionStore.remove(key) }
         fun getActionsForNotification(id: String): List<CapturedAction> = actionStore.get(id)?.replies.orEmpty()
         fun removeActionsForNotification(id: String) { actionStore.remove(id) }
-        fun hasNativeSnoozes(): Boolean = connectedInstance?.snoozeHandler?.hasOwnedRows() == true
+        fun hasNativeSnoozes(): Boolean = connectedInstance?.snoozeHandler?.needsReconciliation() == true
 
         suspend fun reconcileNativeSnoozes() {
             connectedInstance?.reconcileSnoozes()
@@ -340,23 +347,22 @@ class NotificationService : NotificationListenerService() {
         }
     }
 
-    private suspend fun returnInput(now: Instant): SnoozeInput {
-        return SnoozeInput(
-            packageName = "", ownPackageName = packageName,
-            snoozeEnabled = preferences.isExperimentEnabled(Experiments.SNOOZE),
-            filterEnabled = snoozeReturnFilterEnabled(preferences),
-            platformSupportsSnooze = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O,
-            setting = PriorityDeliverySetting.defaultFor(NotificationPriority.MEDIUM),
-            now = now, zone = DeliveryClock.systemClock.zone, testingMode = preferences.isDeliveryTestingMode(),
-            isPassthrough = false, isExceptedPackage = false, priority = NotificationPriority.MEDIUM,
-            exclusionFlags = SnoozeExclusionFlags.fromNotification(0, null, null),
-            scheduleAt = { at, zone -> preferences.getScheduleSnapshot().book.scheduleAt(at, zone) },
-            alreadyDelivered = false, liveSnoozes = 0,
-        )
-    }
+    private suspend fun returnInput(now: Instant) = SnoozeReturnInput(
+        snoozeEnabled = preferences.isExperimentEnabled(Experiments.SNOOZE),
+        filterEnabled = snoozeReturnFilterEnabled(preferences),
+        now = now,
+        zone = DeliveryClock.systemClock.zone,
+        testingMode = preferences.isDeliveryTestingMode(),
+    )
 
-    private suspend fun drainSnoozeReturns() = snoozeIntake.drain {
-        snoozeRouting.settle(it, Instant.now())
+    private suspend fun drainSnoozeReturns() {
+        try {
+            snoozeIntake.drain { snoozeRouting.settle(it, Instant.now()) }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            NotificationDiagnostics.increment("farhan.snooze.return.failure")
+        }
     }
 
     private suspend fun reconcileSnoozes() {
@@ -398,26 +404,29 @@ class NotificationService : NotificationListenerService() {
             NotificationDiagnostics.counter("farhan.actions.retained", actionStore.size())
         }
         val snoozeEnabled = preferences.isExperimentEnabled(Experiments.SNOOZE)
-        if (snoozeEnabled) {
-            if (fields.exclusionFlags.isGroupSummary) return
+        val handled = routeSnoozeAdmission(snoozeEnabled, fields.exclusionFlags, admit = {
+            if (activeSourcePostTimes()[item.id] != item.timestamp) return@routeSnoozeAdmission false
             val setting = preferences.getPriorityDeliverySettings()[priority] ?: PriorityDeliverySetting.defaultFor(priority)
-            val handled = coordinator.withSnoozeAdmission(item.id, fields.order) { liveRows, budget ->
-                if (activeSourcePostTimes()[item.id] != item.timestamp) return@withSnoozeAdmission true
-                val context = returnInput(Instant.now()).copy(
-                    packageName = pkg, setting = setting, priority = priority,
-                    exclusionFlags = fields.exclusionFlags, isPassthrough = passThrough,
-                    isExceptedPackage = excepted, alreadyDelivered = notificationDao.find(item.id)?.isDelivered == true,
+            val filterEnabled = snoozeReturnFilterEnabled(preferences)
+            val testingMode = preferences.isDeliveryTestingMode()
+            coordinator.withSnoozeAdmission(item.id, fields.order) { liveRows, budget ->
+                if (activeSourcePostTimes()[item.id] != item.timestamp) return@withSnoozeAdmission false
+                val previous = notificationDao.find(item.id)
+                val context = SnoozeInput(
+                    packageName = pkg, ownPackageName = packageName, snoozeEnabled = snoozeEnabled,
+                    filterEnabled = filterEnabled, platformSupportsSnooze = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O,
+                    setting = setting, now = Instant.now(), zone = DeliveryClock.systemClock.zone, testingMode = testingMode,
+                    priority = priority, exclusionFlags = fields.exclusionFlags, isPassthrough = passThrough,
+                    isExceptedPackage = excepted, alreadyDelivered = previous?.isDelivered == true && !previous.isCleared,
+                    scheduleAt = { at, zone -> preferences.getScheduleSnapshot().book.scheduleAt(at, zone) },
                     liveSnoozes = liveRows.size, budget = budget, ownedRows = liveRows,
-                    // CLAIM(snooze-group-device): passed grouped return and collateral cases [research/snooze-evidence/groups].
+                    // CLAIM(snooze-group-device): grouped children return with their summary [F1-F3, F5 hidden-child].
                     groupSnoozeVerified = true,
                 )
                 snoozeHandler.onPosted(item.copy(snoozeGroupKey = fields.groupKey), context)
             }
-            if (handled) {
-                captureActions()
-                return
-            }
-        }
+        }, onAdmitted = captureActions)
+        if (handled) return
         val outcome = coordinator.onArrival(item, priority, fields.order, passThrough, captureActions,
             sourceStillCurrent = { activeSourcePostTimes()[item.id] == item.timestamp })
         if (!passThrough && outcome !is DeliveryOutcome.Cleared && activeSourcePostTimes()[item.id] == item.timestamp) {
@@ -444,7 +453,7 @@ class NotificationService : NotificationListenerService() {
     }
 
     private suspend fun processNativeRemoval(removal: Work.NativeRemoval) {
-        snoozeRouting.handleRemoval(removal.key, removal.packageName, removal.reason, removal.at,
+        snoozeRouting.handleRemoval(removal.key, removal.reason, removal.at,
             removal.farhanCancelledSummary, removal.postTime)
     }
 
@@ -460,7 +469,7 @@ class NotificationService : NotificationListenerService() {
                     coordinator.captureEvent(sbn.key, removed = true)
                     actionStore.remove(sbn.key)
                 }
-                val removal = Work.NativeRemoval(sbn.key, sbn.packageName, reason, System.currentTimeMillis(),
+                val removal = Work.NativeRemoval(sbn.key, reason, System.currentTimeMillis(),
                     collateral, sbn.postTime)
                 if (!intake.offer(removal)) {
                     serviceScope.launch {
