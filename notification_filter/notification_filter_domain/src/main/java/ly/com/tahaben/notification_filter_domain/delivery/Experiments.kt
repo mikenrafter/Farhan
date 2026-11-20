@@ -8,6 +8,8 @@ object Experiments {
     /** Delivered proxies show the source app's small icon when it is a usable resource icon; identity stays Farhan. */
     const val SOURCE_ICON = "source_icon"
 
+    const val SNOOZE = "snooze"
+
     /** Android's timed snooze, for Farhan's own demo apps only. Outside the budget, with no unsnooze. */
     const val SNOOZE_DEMO = "snooze_demo"
 
@@ -27,10 +29,15 @@ object Experiments {
     fun maySnoozeInDemo(packageName: String): Boolean = packageName in SNOOZE_DEMO_PACKAGES
 }
 
-enum class ExperimentEventKind { SNOOZED, RETURNED, REMOVED }
+enum class ExperimentEventKind { SNOOZED, RETURNED, REMOVED, FAILED }
 
 /** One platform callback seen during the snooze demo. No notification text, title or key. [removalReason] is Android's code. */
-data class ExperimentEvent(val atEpochMillis: Long, val kind: ExperimentEventKind, val removalReason: Int? = null)
+data class ExperimentEvent(
+    val atEpochMillis: Long,
+    val kind: ExperimentEventKind,
+    val removalReason: Int? = null,
+    val packageName: String = "",
+)
 
 /** Bounded, newest-first record of the snooze demo's callbacks, for the settings screen. */
 interface ExperimentEventLog {

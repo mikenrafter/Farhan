@@ -157,6 +157,7 @@ private fun describeExperimentEvent(event: ExperimentEvent): String {
     return when (event.kind) {
         ExperimentEventKind.SNOOZED -> "$time  snoozed for one minute"
         ExperimentEventKind.RETURNED -> "$time  Android showed it again"
+        ExperimentEventKind.FAILED -> ""
         ExperimentEventKind.REMOVED -> "$time  removed, Android reason ${event.removalReason}"
     }
 }
