@@ -3,10 +3,15 @@ package ly.com.tahaben.notification_filter_data.local
 /** SQL shared with executable SQLite query fixtures. All row results are bounded before domain mapping. */
 object NotificationQueries {
     const val INVALIDATE = "UPDATE notificationitementity SET deliveryInvalidated = 1, priorityReason = 'Not proxied after intake overflow. Open the source app.' WHERE sourceSession = :session AND sourceEventOrder > 0 AND sourceEventOrder <= :order AND isDelivered = 0 AND isCleared = 0"
-    const val INBOX = """SELECT * FROM notificationitementity WHERE isCleared = :cleared
+    // CLAIM(inbox-clear-membership): listing, ID selection and deletion share one scope at the same cutoff [NotificationQueriesTest].
+    private const val INBOX_PREDICATE = """isCleared = :cleared
         AND (:priority IS NULL OR (CASE WHEN isRead = 0 AND priority != 1 AND timestamp < :standingCutoff THEN MIN(priority + 1, 4) ELSE priority END) = :priority)
-        AND (:search = '' OR instr(lower(coalesce(title,'') || ' ' || coalesce(text,'') || ' ' || coalesce(appName,'') || ' ' || creatorPackage), lower(:search)) > 0)
+        AND (:search = '' OR instr(lower(coalesce(title,'') || ' ' || coalesce(text,'') || ' ' || coalesce(appName,'') || ' ' || creatorPackage), lower(:search)) > 0)"""
+    // ↳ CLAIM(inbox-clear-membership)
+    const val INBOX = """SELECT * FROM notificationitementity WHERE $INBOX_PREDICATE
         ORDER BY timestamp DESC, id DESC LIMIT :limit OFFSET :offset"""
+    const val INBOX_CLEAR_IDS = "SELECT id FROM notificationitementity WHERE $INBOX_PREDICATE"
+    const val INBOX_CLEAR = "DELETE FROM notificationitementity WHERE $INBOX_PREDICATE"
     const val COUNTS = """SELECT COUNT(*) AS total,
         coalesce(SUM(CASE WHEN timestamp >= :dayStart THEN 1 ELSE 0 END),0) AS today,
         coalesce(SUM(CASE WHEN isRead = 0 THEN 1 ELSE 0 END),0) AS unread,

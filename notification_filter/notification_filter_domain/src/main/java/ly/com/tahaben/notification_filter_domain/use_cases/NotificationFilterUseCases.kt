@@ -15,7 +15,7 @@ data class NotificationFilterUseCases(
     val checkIfNotificationAccessIsGranted: CheckIfNotificationAccessIsGranted,
     val deleteNotificationFromDB: DeleteNotificationFromDB,
     val deleteNotificationIntentFromHashmap: DeleteNotificationIntentFromHashmap,
-    val deleteAllNotifications: DeleteAllNotifications,
+    val clearInbox: ClearInbox,
     val enableNotificationService: EnableNotificationService,
     val insertNotificationToDB: InsertNotificationToDB,
     val getNotificationsFromDB: GetNotificationsFromDB,

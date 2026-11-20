@@ -1,5 +1,6 @@
 package ly.com.tahaben.notification_filter_presentation
 
+import ly.com.tahaben.notification_filter_domain.inbox.InboxClearScope
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 
@@ -10,7 +11,7 @@ sealed class NotificationFilterEvent {
     data class OnDismissNotification(val notificationItem: NotificationItem) :
         NotificationFilterEvent()
 
-    object OnDeleteAllNotifications : NotificationFilterEvent()
+    data class OnClearNotifications(val scope: InboxClearScope, val standingCutoff: Long, val search: String) : NotificationFilterEvent()
     data class OnExcludeAppClick(val appPackageName: String) : NotificationFilterEvent()
     data class OnLaunchAppInfoClick(val appPackageName: String) : NotificationFilterEvent()
     data class OnSetPriorityFilter(val priority: NotificationPriority?) : NotificationFilterEvent()

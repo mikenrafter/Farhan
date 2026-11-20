@@ -9,11 +9,12 @@ object NotificationInboxFilter {
         item: NotificationItem,
         standingThresholdHours: Int,
         nowMillis: Long = System.currentTimeMillis(),
-    ): NotificationPriority {
-        val standingCutoffMillis = standingThresholdHours * 3_600_000L
+    ): NotificationPriority = effectivePriorityAtCutoff(item, nowMillis - standingThresholdHours * 3_600_000L)
+
+    fun effectivePriorityAtCutoff(item: NotificationItem, standingCutoff: Long): NotificationPriority {
         val isStanding = !item.isRead
             && item.priority != NotificationPriority.CRITICAL
-            && (nowMillis - item.timestamp) > standingCutoffMillis
+            && item.timestamp < standingCutoff
         return if (isStanding) item.priority.degraded(1) else item.priority
     }
 

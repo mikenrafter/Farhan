@@ -16,7 +16,7 @@ import ly.com.tahaben.notification_filter_domain.repository.NotificationReposito
 
 class NotificationRepositoryImpl(private val dao: NotificationDao) : NotificationRepository {
     override fun observeInbox(query: InboxQuery): Flow<List<NotificationItem>> =
-        dao.observeInbox(query.cleared, query.priority?.level, query.standingCutoff, query.search, query.limit, query.offset)
+        dao.observeInbox(query.selection.cleared, query.selection.priority?.level, query.selection.standingCutoff, query.selection.search, query.limit, query.offset)
             .map { rows -> rows.map { it.toNotificationItem() } }
 
     override fun observeDashboard(query: DashboardQuery): Flow<NotificationDashboardSummary> = combine(
@@ -53,6 +53,10 @@ class NotificationRepositoryImpl(private val dao: NotificationDao) : Notificatio
     override suspend fun deleteNotificationItemEntity(notificationItem: NotificationItem) {
         dao.deleteNotificationItem(notificationItem.toNotificationEntity())
     }
+
+    override suspend fun deleteInboxNotifications(
+        selection: InboxSelection,
+    ): List<String> = dao.clearInbox(selection.cleared, selection.priority?.level, selection.standingCutoff, selection.search)
 
     override suspend fun deleteAllNotificationsFromDB() {
         dao.deleteAllNotifications()

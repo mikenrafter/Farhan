@@ -56,6 +56,9 @@ class ServiceUtilImpl(
 
     override fun clearNotificationActions() = NotificationService.cancelAllProxies(context)
 
+    override fun clearNotificationActions(notificationIds: List<String>) =
+        NotificationService.cancelProxies(context, notificationIds)
+
     override fun getNotificationIntent(notificationKey: String): PendingIntent? {
         val pendingIntent = NotificationService.getIntentForNotification(notificationKey)
         return pendingIntent

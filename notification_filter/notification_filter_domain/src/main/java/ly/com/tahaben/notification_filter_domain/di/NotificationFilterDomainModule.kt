@@ -49,7 +49,7 @@ object NotificationFilterDomainModule {
             CheckIfNotificationAccessIsGranted(serviceUtil),
             DeleteNotificationFromDB(notificationRepository, core, serviceUtil),
             DeleteNotificationIntentFromHashmap(serviceUtil),
-            DeleteAllNotifications(notificationRepository, core, serviceUtil),
+            ClearInbox(notificationRepository, core, serviceUtil),
             EnableNotificationService(serviceUtil),
             InsertNotificationToDB(notificationRepository),
             GetNotificationsFromDB(notificationRepository),

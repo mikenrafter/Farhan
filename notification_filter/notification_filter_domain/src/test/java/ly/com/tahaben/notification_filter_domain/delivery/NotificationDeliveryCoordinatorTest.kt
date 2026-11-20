@@ -13,6 +13,7 @@ import ly.com.tahaben.notification_filter_domain.delivery.DeliveryOutcome.Delive
 import ly.com.tahaben.notification_filter_domain.model.BudgetBehavior
 import ly.com.tahaben.notification_filter_domain.model.DeliveryCadence
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority.HIGH
+import ly.com.tahaben.notification_filter_domain.model.NotificationPriority.LOW
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority.MEDIUM
 import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
 import ly.com.tahaben.notification_filter_domain.testsupport.item
@@ -39,6 +40,60 @@ class NotificationDeliveryCoordinatorTest {
 
     private val immediateHigh = PriorityDeliverySetting.DEFAULTS +
         (HIGH to PriorityDeliverySetting(DeliveryCadence.IMMEDIATELY, BudgetBehavior.RESPECTING))
+
+    // why: CLAIM(scoped-delivery-clear) discards stale arrivals for cleared ids and preserves other pending deliveries.
+    // catches: global invalidation, evicting High to track an older Low, or allowing a cleared row's stale callback.
+    @Test
+    fun `clearing Low preserves pending High and rejects a stale Low callback`() = runTest {
+        val h = DeliveryHarness(dayWindows)
+        val coordinator = NotificationDeliveryCoordinator(h.rows, h.budget, h.poster, h.environment, eventCapacity = 2)
+        val high = item("high", timestamp = 200, priority = HIGH)
+        val low = item("low", timestamp = 100, priority = LOW)
+        assertThat(coordinator.onArrival(high, HIGH, coordinator.captureEvent(high.id))).isEqualTo(Deferred(high.id))
+        assertThat(coordinator.onArrival(low, LOW, coordinator.captureEvent(low.id))).isEqualTo(Deferred(low.id))
+        val staleLow = coordinator.captureEvent(low.id)
+
+        val olderLow = item("older-low", timestamp = 50, priority = LOW)
+        h.rows.upsert(olderLow)
+        coordinator.clearScoped(
+            delete = {
+                h.rows.rows.remove(low.id)
+                h.rows.rows.remove(olderLow.id)
+                listOf(low.id, olderLow.id)
+            },
+            clearActions = { },
+        )
+
+        assertThat(coordinator.onArrival(low, LOW, staleLow)).isEqualTo(Cleared(low.id))
+        assertThat(h.rows.rows.keys).containsExactly(high.id)
+        assertThat(coordinator.onBatchTick()).containsExactly(Delivered(high.id))
+        assertThat(h.poster.posted.map { it.id }).containsExactly(high.id)
+    }
+
+    // why: CLAIM(scoped-delivery-clear) preserves a fresh arrival captured while the delete is in progress.
+    // catches: removing the event.order <= clearOrder guard, which invalidates the fresh callback.
+    @Test
+    fun `callback captured during scoped delete can deliver afterward`() = runTest {
+        val h = DeliveryHarness(dayWindows, immediateHigh)
+        val id = "reposted"
+        val old = item(id, timestamp = 100, priority = LOW)
+        assertThat(h.coordinator.onArrival(old, LOW, h.coordinator.captureEvent(id))).isEqualTo(Deferred(id))
+        var freshOrder = 0L
+
+        h.coordinator.clearScoped(
+            delete = {
+                h.rows.rows.remove(id)
+                freshOrder = h.coordinator.captureEvent(id)
+                listOf(id)
+            },
+            clearActions = {},
+        )
+
+        val fresh = item(id, timestamp = 200, priority = HIGH)
+        assertThat(freshOrder).isGreaterThan(0L)
+        assertThat(h.coordinator.onArrival(fresh, HIGH, freshOrder)).isEqualTo(Delivered(id))
+        assertThat(h.poster.posted.map { it.id }).containsExactly(id)
+    }
 
     // why: a source app posts then cancels in quick succession; the removal callback's coroutine can run before
     //      the posting coroutine. A REPLACE upsert of the late arrival would resurrect the row and spend on it.

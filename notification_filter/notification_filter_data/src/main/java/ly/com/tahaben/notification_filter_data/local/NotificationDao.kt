@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 import ly.com.tahaben.notification_filter_data.local.entity.NotificationItemEntity
 
@@ -46,6 +47,20 @@ interface NotificationDao {
 
     @Delete
     suspend fun deleteNotificationItem(notificationItemEntity: NotificationItemEntity)
+
+    @Query(NotificationQueries.INBOX_CLEAR_IDS)
+    suspend fun inboxIds(cleared: Boolean, priority: Int?, standingCutoff: Long, search: String): List<String>
+
+    @Query(NotificationQueries.INBOX_CLEAR)
+    suspend fun deleteInbox(cleared: Boolean, priority: Int?, standingCutoff: Long, search: String)
+
+    // ↳ CLAIM(inbox-clear-membership)
+    @Transaction
+    suspend fun clearInbox(cleared: Boolean, priority: Int?, standingCutoff: Long, search: String): List<String> {
+        val ids = inboxIds(cleared, priority, standingCutoff, search)
+        deleteInbox(cleared, priority, standingCutoff, search)
+        return ids
+    }
 
     @Query("DELETE  FROM notificationitementity")
     suspend fun deleteAllNotifications()
