@@ -13,7 +13,7 @@ class SnoozeReturnIntakeTest {
         val keys = (1..200).map { "key-$it" }
         val expected = keys.map { SnoozeReturn(it, 1_000L) }
         val flags = FakeFlags(keys)
-        val intake = SnoozeReturnIntake(flags)
+        val intake = SnoozeReturnIntake(flags) { true }
         val mailbox = ListenerIntake<SnoozeReturn>(128)
         val offers = mutableListOf<Boolean>()
         val settled = mutableListOf<SnoozeReturn>()
@@ -36,7 +36,7 @@ class SnoozeReturnIntakeTest {
     @Test
     fun `a later drain settles an unqueued return once`() = runTest {
         val flags = FakeFlags(listOf("owned"))
-        val intake = SnoozeReturnIntake(flags)
+        val intake = SnoozeReturnIntake(flags) { true }
         val settled = mutableListOf<SnoozeReturn>()
 
         assertThat(intake.onPosted("owned", 200L) { false }).isTrue()
@@ -52,7 +52,7 @@ class SnoozeReturnIntakeTest {
     @Test
     fun `owned return bypasses the new arrival rate window even on overflow`() {
         val flags = FakeFlags(listOf("owned"))
-        val intake = SnoozeReturnIntake(flags)
+        val intake = SnoozeReturnIntake(flags) { true }
         val rate = NotificationRateWindow(now = { 120_000L })
         val pkg = "com.whatsapp"
         fun callback(key: String) {

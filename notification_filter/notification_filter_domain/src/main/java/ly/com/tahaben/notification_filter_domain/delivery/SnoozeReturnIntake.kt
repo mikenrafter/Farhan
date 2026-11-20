@@ -9,10 +9,13 @@ interface SnoozeReturnFlags {
     fun clear(returned: SnoozeReturn)
 }
 
-class SnoozeReturnIntake(private val flags: SnoozeReturnFlags) {
+class SnoozeReturnIntake(
+    private val flags: SnoozeReturnFlags,
+    private val custodyVouched: (String) -> Boolean,
+) {
     // CLAIM(snooze-intake): mailbox pressure cannot drop an owned return [Snooze pilot spec V5].
     fun onPosted(key: String, postTime: Long, offer: (SnoozeReturn) -> Boolean): Boolean {
-        if (!flags.flagIfOwned(key, postTime)) return false
+        if (!custodyVouched(key) || !flags.flagIfOwned(key, postTime)) return false
         offer(SnoozeReturn(key, postTime))
         return true
     }

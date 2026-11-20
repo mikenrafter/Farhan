@@ -256,6 +256,15 @@ class NotificationDeliveryCoordinator(
 
     fun acceptSnoozeEvent(id: String, order: Long) = accept(id, order)
 
+    /**
+     * CLAIM(snooze-custody-vouched): the flag route carries no post fields, so a return may take it only while this
+     * coordinator still stands behind the custody: the key has an event and no removal is newer than the last accepted
+     * order. [removalApplied] writes appliedRemoval only, so a row clear leaves lastRemoval above accepted until a newer
+     * post is accepted. A missing event (Clear all, eviction, restart) fails safe to the stored path, which has fields.
+     */
+    @Synchronized
+    fun vouchesForSnoozeCustody(id: String): Boolean = events[id]?.let { it.lastRemoval <= it.accepted } == true
+
     suspend fun withSnoozeAdmission(
         id: String,
         order: Long,

@@ -102,7 +102,7 @@ class NotificationService : NotificationListenerService() {
             inputAt = ::returnInput,
         )
     }
-    private val snoozeIntake by lazy { SnoozeReturnIntake(snoozeHandler) }
+    private val snoozeIntake by lazy { SnoozeReturnIntake(snoozeHandler, coordinator::vouchesForSnoozeCustody) }
     private val snoozeRouting by lazy {
         SnoozeServiceRouting(coordinator, snoozeHandler, { notificationDao.find(it)?.toNotificationItem() }, ::returnInput)
     }
