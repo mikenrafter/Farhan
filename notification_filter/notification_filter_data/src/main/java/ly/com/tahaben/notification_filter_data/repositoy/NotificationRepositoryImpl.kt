@@ -54,6 +54,12 @@ class NotificationRepositoryImpl(private val dao: NotificationDao) : Notificatio
         dao.deleteNotificationItem(notificationItem.toNotificationEntity())
     }
 
+    override suspend fun deleteInboxNotifications(
+        cleared: Boolean,
+        priority: NotificationPriority?,
+        standingCutoff: Long,
+    ): List<String> = dao.clearInbox(cleared, priority?.level, standingCutoff, search = "")
+
     override suspend fun deleteAllNotificationsFromDB() {
         dao.deleteAllNotifications()
     }

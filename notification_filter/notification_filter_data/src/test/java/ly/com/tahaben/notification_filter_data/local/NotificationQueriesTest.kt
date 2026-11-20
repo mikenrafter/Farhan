@@ -16,12 +16,13 @@ class NotificationQueriesTest {
             q.executeUpdate()
         }
     }
-    private fun rows(db: java.sql.Connection, sql: String, arguments: Map<String, Any?>): List<Map<String, Any?>> {
-        val bound = Regex(":([A-Za-z]+)").replace(sql) { match ->
+    private fun bind(sql: String, arguments: Map<String, Any?>): String =
+        Regex(":([A-Za-z]+)").replace(sql) { match ->
             val arg = arguments.getValue(match.groupValues[1])
             when (arg) { null -> "NULL"; is String -> "'" + arg.replace("'", "''") + "'"; is Boolean -> if (arg) "1" else "0"; else -> arg.toString() }
         }
-        return db.createStatement().use { statement -> statement.executeQuery(bound).use { result -> buildList {
+    private fun rows(db: java.sql.Connection, sql: String, arguments: Map<String, Any?>): List<Map<String, Any?>> {
+        return db.createStatement().use { statement -> statement.executeQuery(bind(sql, arguments)).use { result -> buildList {
             while (result.next()) add((1..result.metaData.columnCount).associate { result.metaData.getColumnName(it) to result.getObject(it) })
         } } }
     }
@@ -58,6 +59,40 @@ class NotificationQueriesTest {
         val standing = args + mapOf("priority" to 3, "standingCutoff" to 500, "limit" to 2, "offset" to 0)
         assertThat(rows(db, NotificationQueries.INBOX, standing).map { it["id"] }).containsExactly("row249", "row247").inOrder()
         assertThat(rows(db, NotificationQueries.INBOX, standing + ("cleared" to 1)).map { it["id"] }).containsExactly("row248", "row246").inOrder()
+    }
+
+    // why: CLAIM(inbox-clear-membership) covers every page of the selected view at one standing cutoff.
+    // catches: deleting the whole inbox, deleting one page, ignoring standing or read status, and including the cutoff boundary.
+    @Test fun `scoped clear deletes exactly the ids on all pages of the selected view`() = database { db ->
+        val pageOfLow = (0..100).map { "low$it" }
+        pageOfLow.forEachIndexed { index, id -> insert(db, id, 600L + index, priority = 4) }
+        insert(db, "aged-medium", 499, priority = 3)
+        insert(db, "boundary-medium", 500, priority = 3)
+        insert(db, "read-medium", 499, priority = 3, read = 1)
+        insert(db, "aged-high", 499, priority = 2)
+        insert(db, "critical", 499, priority = 1)
+        insert(db, "cleared-aged-medium", 499, priority = 3, cleared = 1)
+        insert(db, "cleared-high", 501, priority = 2, cleared = 1)
+
+        fun clearView(cleared: Boolean, expected: List<String>) {
+            val args = mapOf("cleared" to cleared, "priority" to 4, "standingCutoff" to 500, "search" to "")
+            val displayed = listOf(0, 100).flatMap { offset ->
+                rows(db, NotificationQueries.INBOX, args + mapOf("limit" to 100, "offset" to offset))
+                    .map { it["id"] }
+            }
+            assertThat(displayed).containsExactlyElementsIn(expected)
+            assertThat(rows(db, NotificationQueries.INBOX_CLEAR_IDS, args).map { it["id"] })
+                .containsExactlyElementsIn(displayed)
+
+            val allIds = "SELECT id FROM notificationitementity"
+            val before = rows(db, allIds, emptyMap()).map { it["id"] }.toSet()
+            db.createStatement().use { it.executeUpdate(bind(NotificationQueries.INBOX_CLEAR, args)) }
+            val after = rows(db, allIds, emptyMap()).map { it["id"] }.toSet()
+            assertThat(after).containsExactlyElementsIn(before - displayed.toSet())
+        }
+
+        clearView(cleared = true, expected = listOf("cleared-aged-medium"))
+        clearView(cleared = false, expected = pageOfLow + "aged-medium")
     }
 
     // why: dashboard counts include all retained active history while excluding cleared rows and critical standing.

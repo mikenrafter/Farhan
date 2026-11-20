@@ -333,7 +333,7 @@ class NotificationService : NotificationListenerService() {
         if (sbn != null) {
             val ownProxy = sbn.packageName == packageName && sbn.tag?.startsWith(PROXY_TAG) == true
             val originalId = if (ownProxy) sbn.tag!!.removePrefix(PROXY_TAG) else sbn.key
-            val removal = NotificationRemovalMapper.fromReason(reason)
+            val removal = NotificationRemovalMapper.fromReason(reason, ownProxy)
             if (removal != null && (ownProxy || sbn.packageName != packageName)) {
                 // A removal remains visible to batch authorization even when the bounded mailbox is full.
                 val order = coordinator.captureEvent(originalId, removed = true)

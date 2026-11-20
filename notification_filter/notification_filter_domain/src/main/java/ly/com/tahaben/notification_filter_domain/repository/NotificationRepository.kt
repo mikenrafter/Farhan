@@ -3,6 +3,7 @@ package ly.com.tahaben.notification_filter_domain.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
+import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 
 interface NotificationRepository {
     fun observeInbox(query: ly.com.tahaben.notification_filter_domain.inbox.InboxQuery): Flow<List<NotificationItem>> =
@@ -17,6 +18,8 @@ interface NotificationRepository {
 
     suspend fun insertNotificationItemEntity(notificationItem: NotificationItem)
     suspend fun deleteNotificationItemEntity(notificationItem: NotificationItem)
+    /** Deletes all matching pages in one transaction and returns the IDs deleted by that transaction. */
+    suspend fun deleteInboxNotifications(cleared: Boolean, priority: NotificationPriority?, standingCutoff: Long): List<String>
     suspend fun deleteAllNotificationsFromDB()
     fun getNotifications(): Flow<List<NotificationItem>>
     fun getClearedNotifications(): Flow<List<NotificationItem>>

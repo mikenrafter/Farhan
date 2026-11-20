@@ -426,9 +426,9 @@ fun NotificationFilterScreen(
                                         horizontal = spacing.spaceMedium
                                     )
                                     .align(Alignment.BottomCenter),
-                                onClick = { viewModel.onEvent(NotificationFilterEvent.OnDeleteAllNotifications) }) {
+                                onClick = { state.dispatchClear(viewModel::onEvent) }) {
                                 Text(
-                                    text = stringResource(id = R.string.clear_all),
+                                    text = stringResource(state.clearLabel),
                                     style = MaterialTheme.typography.labelLarge,
                                     textAlign = TextAlign.Center
                                 )

@@ -1,5 +1,7 @@
 package ly.com.tahaben.notification_filter_domain.delivery
 
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import ly.com.tahaben.notification_filter_domain.model.BudgetSpendEntry
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
@@ -204,6 +206,30 @@ class NotificationDeliveryCoordinator(
         val order = captureEvent(id, removed = true)
         gate.run { rows.markCleared(id); delete(); removalApplied(id, order) }
     }
+    // CLAIM(scoped-delivery-clear): clearing updates only tracked events for deleted rows [NotificationDeliveryCoordinatorTest].
+    suspend fun clearScoped(delete: suspend () -> List<String>, clearActions: (List<String>) -> Unit) {
+        gate.run {
+            withContext(NonCancellable) {
+                val clearOrder = synchronized(this@NotificationDeliveryCoordinator) { ++sequence }
+                val ids = delete()
+                invalidateDeleted(ids, clearOrder)
+                clearActions(ids)
+            }
+        }
+    }
+
+    // ↳ CLAIM(scoped-delivery-clear)
+    @Synchronized
+    private fun invalidateDeleted(ids: List<String>, clearOrder: Long) {
+        for (id in ids) {
+            val event = events[id] ?: continue
+            if (event.order <= clearOrder) {
+                // CLAIM(scoped-clear-watermark): preserve the capture order used by eviction [captureEvent].
+                events[id] = event.copy(removed = true, lastRemoval = clearOrder, appliedRemoval = clearOrder)
+            }
+        }
+    }
+
     suspend fun clearAll(delete: suspend () -> Unit) {
         invalidateAll()
         gate.run { delete() }

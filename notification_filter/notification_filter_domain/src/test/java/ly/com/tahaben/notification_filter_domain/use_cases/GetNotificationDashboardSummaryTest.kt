@@ -72,6 +72,12 @@ class GetNotificationDashboardSummaryTest {
         override fun getNotifications() = flowOf(notifications)
         override suspend fun insertNotificationItemEntity(notificationItem: NotificationItem) = Unit
         override suspend fun deleteNotificationItemEntity(notificationItem: NotificationItem) = Unit
+        override suspend fun deleteInboxNotifications(
+            cleared: Boolean,
+            priority: NotificationPriority?,
+            standingCutoff: Long,
+        ): List<String> = error("Dashboard summary only reads notifications")
+
         override suspend fun deleteAllNotificationsFromDB() = Unit
         override suspend fun markNotificationRead(id: String) = Unit
         override suspend fun markAppNotificationsRead(packageName: String) = Unit

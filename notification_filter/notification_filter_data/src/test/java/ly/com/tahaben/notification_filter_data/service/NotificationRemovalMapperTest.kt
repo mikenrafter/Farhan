@@ -17,4 +17,13 @@ class NotificationRemovalMapperTest {
         assertThat(NotificationRemovalMapper.fromReason(NotificationListenerService.REASON_LISTENER_CANCEL)).isNull()
         assertThat(NotificationRemovalMapper.fromReason(NotificationListenerService.REASON_SNOOZED)).isNull()
     }
+
+    // why: CLAIM(scoped-proxy-clear) treats app cancellation of a Farhan proxy as cleanup after a clear.
+    // catches: feeding Farhan's own cleanup back into the bounded delivery callback history, or ignoring a user swipe.
+    @Test fun `Farhan cancelling its own proxy is cleanup and a user swipe is a removal`() {
+        assertThat(NotificationRemovalMapper.fromReason(NotificationListenerService.REASON_APP_CANCEL, ownProxy = true)).isNull()
+        assertThat(NotificationRemovalMapper.fromReason(NotificationListenerService.REASON_APP_CANCEL_ALL, ownProxy = true)).isNull()
+        assertThat(NotificationRemovalMapper.fromReason(NotificationListenerService.REASON_CANCEL, ownProxy = true))
+            .isEqualTo(NotificationRemovalReason.USER_DISMISSED)
+    }
 }
