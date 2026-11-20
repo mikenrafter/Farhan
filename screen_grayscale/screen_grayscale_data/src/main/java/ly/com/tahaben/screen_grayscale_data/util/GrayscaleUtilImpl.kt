@@ -28,7 +28,7 @@ class GrayscaleUtilImpl(
 
     override fun getSecureSettingsPermissionWithRoot(): Boolean {
         val cmds =
-            arrayOf("pm grant ly.com.tahaben.farhan android.permission.WRITE_SECURE_SETTINGS")
+            arrayOf("pm grant ${context.packageName} android.permission.WRITE_SECURE_SETTINGS")
         try {
             Timber.d("excuting command")
             val p = Runtime.getRuntime().exec("su")

@@ -78,7 +78,7 @@ class WidgetWorker constructor(
         Timber.d("get usage data")
         val filteredData = useCases.filterUsageEvents(usageData).dropLast(1).filterNot {
             (filterLaunchers && it.appCategory == UsageDataItem.Category.LAUNCHER) ||
-                    (filterFarhan && it.packageName == "ly.com.tahaben.farhan")
+                    (filterFarhan && it.packageName == context.packageName)
         }
         Timber.d("filter usage data  ...")
         val usage = useCases.calculateUsageDuration(
@@ -98,7 +98,7 @@ class WidgetWorker constructor(
         Timber.d("get usage data")
         val filteredData = useCases.filterUsageEvents(usageData).filterNot {
             (filterLaunchers && it.appCategory == UsageDataItem.Category.LAUNCHER) ||
-                    (filterFarhan && it.packageName == "ly.com.tahaben.farhan")
+                    (filterFarhan && it.packageName == context.packageName)
         }
         Timber.d("filter usage data  ...")
         val usage = useCases.calculateUsageDuration(

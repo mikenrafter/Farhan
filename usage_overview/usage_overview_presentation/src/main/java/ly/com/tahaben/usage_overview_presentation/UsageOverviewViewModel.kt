@@ -37,6 +37,7 @@ class UsageOverviewViewModel @Inject constructor(
         private set
 
     private var filterFarhan = false
+    private val ownPackageName = usageOverviewUseCases.getOwnPackageName()
     private var filterLaunchers = false
 
     private val _uiEvent = Channel<UiEvent>()
@@ -142,12 +143,12 @@ class UsageOverviewViewModel @Inject constructor(
             val filteredList = if (state.isDateToday) {
                 usageOverviewUseCases.filterUsageEvents(usageDataList).dropLast(1).filterNot {
                     (filterLaunchers && it.appCategory == UsageDataItem.Category.LAUNCHER) ||
-                            (filterFarhan && it.packageName == "ly.com.tahaben.farhan")
+                            (filterFarhan && it.packageName == ownPackageName)
                 }
             } else {
                 usageOverviewUseCases.filterUsageEvents(usageDataList).filterNot {
                     (filterLaunchers && it.appCategory == UsageDataItem.Category.LAUNCHER) ||
-                            (filterFarhan && it.packageName == "ly.com.tahaben.farhan")
+                            (filterFarhan && it.packageName == ownPackageName)
                 }
             }
             Timber.d("filtered data size: ${filteredList.size}")
@@ -368,12 +369,12 @@ class UsageOverviewViewModel @Inject constructor(
                     val filteredList = if (usageOverviewUseCases.isDateToDay(date)){
                         usageOverviewUseCases.filterUsageEvents(usageDataList).dropLast(1).filterNot {
                             (filterLaunchers && it.appCategory == UsageDataItem.Category.LAUNCHER) ||
-                                    (filterFarhan && it.packageName == "ly.com.tahaben.farhan")
+                                    (filterFarhan && it.packageName == ownPackageName)
                         }
                     } else {
                         usageOverviewUseCases.filterUsageEvents(usageDataList).filterNot {
                             (filterLaunchers && it.appCategory == UsageDataItem.Category.LAUNCHER) ||
-                                    (filterFarhan && it.packageName == "ly.com.tahaben.farhan")
+                                    (filterFarhan && it.packageName == ownPackageName)
                         }
                     }
                     val filteredListWithDuration =
