@@ -32,6 +32,9 @@ enum class NotificationRemovalReason {
     INBOX_CLEARED,
 }
 
+/** The poster reports this reason before publishing, so a normal-channel attempt is safe. */
+const val BREAKTHROUGH_BYPASS_LOST = "breakthrough_bypass_lost"
+
 sealed interface PostResult {
     data object Posted : PostResult
     data class Failed(val reason: String) : PostResult
@@ -402,7 +405,16 @@ class NotificationDeliveryCoordinator(
         refresh: Boolean = false,
         alert: ProxyAlert = ProxyAlert.Normal,
     ): PostResult = try {
-        if (refresh) poster.refresh(item) else poster.post(item, alert)
+        if (refresh) {
+            poster.refresh(item)
+        } else {
+            val first = poster.post(item, alert)
+            if (alert == ProxyAlert.Breakthrough && first == PostResult.Failed(BREAKTHROUGH_BYPASS_LOST)) {
+                poster.post(item, ProxyAlert.Normal)
+            } else {
+                first
+            }
+        }
     } catch (cancelled: kotlinx.coroutines.CancellationException) {
         throw cancelled
     } catch (_: Exception) {

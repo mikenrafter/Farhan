@@ -24,6 +24,7 @@ internal class SoundControlFixture(var intent: SoundIntent = SoundIntent(), vara
     var crashBeforeRemove = false
     var crashAfterAdd = false
     var refuseCommit = false
+    var commitFailure: Exception? = null
     var statusVisible = existing.any { it.active && it.ownerPackage == OWNER }
     var recoveryVisible = false
     var addedPolicy: MutePolicy? = null
@@ -91,6 +92,7 @@ internal class SoundControlFixture(var intent: SoundIntent = SoundIntent(), vara
         override fun read() = intent
         override fun commit(intent: SoundIntent): Boolean {
             events += "commit:${intent.desiredOn}:${intent.generation}"
+            commitFailure?.let { throw it }
             if (refuseCommit) return false
             this@SoundControlFixture.intent = intent
             return true

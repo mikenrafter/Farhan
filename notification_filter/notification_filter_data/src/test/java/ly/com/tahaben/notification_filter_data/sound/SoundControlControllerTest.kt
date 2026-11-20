@@ -192,4 +192,47 @@ class SoundControlControllerTest {
         assertThat(fixture.statusVisible).isTrue()
         assertThat(fixture.recoveryVisible).isTrue()
     }
+
+    // why: F2 makes Off release a held mode even when the synchronous journal throws.
+    // catches: aborting on a save exception or reporting Held after the rule has been removed.
+    @Test
+    fun `off releases matching rules and clears status when saving throws`() = runTest {
+        val fixture = SoundControlFixture(HELD_INTENT, OWNED, FOREIGN)
+        val controller = fixture.controller()
+        assertThat(controller.onAppStart()).isEqualTo(SoundControlState.Held("ours"))
+        // Introduce a matching orphan after the held-state witness.
+        fixture.rules["duplicate"] = OWNED.copy(id = "duplicate")
+        fixture.mutations.clear()
+        fixture.events.clear()
+        fixture.commitFailure = IllegalStateException("disk unavailable")
+
+        val state = runCatching { controller.off() }.getOrNull()
+        assertThat(fixture.rules.values).containsExactly(FOREIGN)
+        assertThat(fixture.mutations).containsExactly("remove:ours", "remove:duplicate")
+        assertThat(fixture.events).containsAtLeast("commit:false:8", "remove:ours", "status:clear").inOrder()
+        assertThat(state).isEqualTo(SoundControlState.Suspended(SuspensionReason.STORAGE_FAILED))
+        assertThat(controller.state.value).isEqualTo(SoundControlState.Suspended(SuspensionReason.STORAGE_FAILED))
+        assertThat(fixture.statusVisible).isFalse()
+        assertThat(fixture.intent).isEqualTo(HELD_INTENT)
+
+        assertThat(fixture.controller().onAppStart())
+            .isEqualTo(SoundControlState.Suspended(SuspensionReason.STOPPED_IN_SETTINGS))
+        assertThat(fixture.rules.values).containsExactly(FOREIGN)
+    }
+
+    // why: F2 also applies to SharedPreferences.commit returning false. A surviving mute still needs recovery.
+    // catches: returning early on false without attempting removal or hiding status after a refused removal.
+    @Test
+    fun `refused Off save still attempts release and retains recovery when removal fails`() = runTest {
+        val fixture = SoundControlFixture(HELD_INTENT, OWNED).apply {
+            refuseCommit = true
+            refuseRemoval = true
+        }
+
+        assertThat(fixture.controller().off()).isEqualTo(SoundControlState.Suspended(SuspensionReason.STORAGE_FAILED))
+        assertThat(fixture.events).containsAtLeast("commit:false:8", "remove:ours").inOrder()
+        assertThat(fixture.rules.values).containsExactly(OWNED)
+        assertThat(fixture.statusVisible).isTrue()
+        assertThat(fixture.recoveryVisible).isTrue()
+    }
 }

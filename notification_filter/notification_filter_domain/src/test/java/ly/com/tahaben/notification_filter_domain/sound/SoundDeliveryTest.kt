@@ -13,8 +13,15 @@ import ly.com.tahaben.notification_filter_domain.testsupport.window
 import org.junit.Test
 
 class SoundDeliveryTest {
-    private class Fixture(points: Int, soundControl: Boolean, immediate: Boolean = false) {
+    private class Fixture(
+        points: Int,
+        soundControl: Boolean,
+        immediate: Boolean = false,
+        singleHead: Boolean = false,
+        private val breakthroughFailure: String? = null,
+    ) {
         val posts = mutableListOf<Pair<String, ProxyAlert>>()
+        val published = mutableListOf<Pair<NotificationItem, ProxyAlert>>()
         val budget = FakeBudgetStore()
         val rows = FakeRowStore()
         private val environment = FakeEnvironment(
@@ -24,11 +31,19 @@ class SoundDeliveryTest {
             ) else PriorityDeliverySetting.DEFAULTS,
         )
         val coordinator = NotificationDeliveryCoordinator(
-            rows, budget,
+            if (singleHead) object : DeliveryRowStore by rows {
+                override suspend fun pending(maxPriorityLevel: Int) = rows.pending(maxPriorityLevel).take(1)
+                override suspend fun nextHead(after: NotificationItem) = rows.pending(HIGH.level).firstOrNull()
+            } else rows,
+            budget,
             object : ProxyNotificationPoster {
                 override suspend fun post(item: NotificationItem) = post(item, ProxyAlert.Normal)
                 override suspend fun post(item: NotificationItem, alert: ProxyAlert): PostResult {
                     posts += item.id to alert
+                    if (alert == ProxyAlert.Breakthrough && breakthroughFailure != null) {
+                        return PostResult.Failed(breakthroughFailure)
+                    }
+                    published += item to alert
                     return PostResult.Posted
                 }
                 override suspend fun refresh(item: NotificationItem) = post(item, ProxyAlert.Silent)
@@ -87,5 +102,56 @@ class SoundDeliveryTest {
         assertThat(fixture.coordinator.onArrival(message.copy(text = "updated"), HIGH)).isEqualTo(DeliveryOutcome.Delivered("K"))
         assertThat(fixture.posts).containsExactly("K" to ProxyAlert.Breakthrough, "K" to ProxyAlert.Silent).inOrder()
         assertThat(fixture.budget.state.spentPoints).isEqualTo(2) // One HIGH delivery, no charge for refresh.
+    }
+
+    // why: F1 loses an Immediately item from the shade if intake cancels its source after a failed proxy.
+    // catches: returning bypass loss to intake or retrying via a later tick that cannot deliver Immediately.
+    @Test
+    fun `bypass loss posts the same immediately delivered item once on the normal channel`() = runTest {
+        val fixture = Fixture(2, soundControl = true, immediate = true, breakthroughFailure = "breakthrough_bypass_lost")
+        val message = item("K", timestamp = 100, text = "Original message")
+
+        assertThat(fixture.coordinator.onArrival(message, HIGH)).isEqualTo(DeliveryOutcome.Delivered("K"))
+        assertThat(fixture.posts).containsExactly("K" to ProxyAlert.Breakthrough, "K" to ProxyAlert.Normal).inOrder()
+        assertThat(fixture.published).containsExactly(message to ProxyAlert.Normal)
+        assertThat(fixture.rows.find("K")).isEqualTo(message.copy(isDelivered = true))
+        assertThat(fixture.coordinator.onBatchTick()).isEmpty()
+        assertThat(fixture.budget.state.spentPoints).isEqualTo(2) // One completed HIGH post costs two points.
+    }
+
+    // why: F1 must drain a same-app queue head and spend the tick's one audible opportunity.
+    // catches: holding the next head until another tick or counting the successful Normal fallback as silent.
+    @Test
+    fun `fallback drains the next app head silently in the same tick`() = runTest {
+        val fixture = Fixture(4, soundControl = true, singleHead = true, breakthroughFailure = "breakthrough_bypass_lost")
+        val head = item("head", timestamp = 100)
+        val next = item("next", timestamp = 101)
+        assertThat(fixture.coordinator.onArrival(head, HIGH)).isEqualTo(DeliveryOutcome.Deferred("head"))
+        assertThat(fixture.coordinator.onArrival(next, HIGH)).isEqualTo(DeliveryOutcome.Deferred("next"))
+        assertThat(fixture.rows.pendingIds()).containsExactly("head", "next")
+
+        assertThat(fixture.coordinator.onBatchTick())
+            .containsExactly(DeliveryOutcome.Delivered("head"), DeliveryOutcome.Delivered("next")).inOrder()
+        assertThat(fixture.posts).containsExactly(
+            "head" to ProxyAlert.Breakthrough, "head" to ProxyAlert.Normal, "next" to ProxyAlert.Silent,
+        ).inOrder()
+        assertThat(fixture.published).containsExactly(head to ProxyAlert.Normal, next to ProxyAlert.Silent).inOrder()
+        assertThat(fixture.rows.pendingIds()).isEmpty()
+        assertThat(fixture.budget.state.spentPoints).isEqualTo(4) // Two completed HIGH posts cost four points.
+    }
+
+    // why: F1 authorizes a second attempt only when the poster guarantees bypass loss happened before publishing.
+    // catches: retrying every Breakthrough failure on the normal channel.
+    @Test
+    fun `other breakthrough failure returns unchanged without a second attempt`() = runTest {
+        val fixture = Fixture(2, soundControl = true, immediate = true, breakthroughFailure = "proxy_capacity_reached")
+        val message = item("K", timestamp = 100)
+
+        assertThat(fixture.coordinator.onArrival(message, HIGH))
+            .isEqualTo(DeliveryOutcome.PostFailed("K", "proxy_capacity_reached"))
+        assertThat(fixture.posts).containsExactly("K" to ProxyAlert.Breakthrough)
+        assertThat(fixture.published).isEmpty()
+        assertThat(fixture.rows.pendingIds()).containsExactly("K")
+        assertThat(fixture.budget.state.spentPoints).isEqualTo(0) // The failed post spends no points.
     }
 }
