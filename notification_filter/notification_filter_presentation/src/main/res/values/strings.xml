@@ -1,5 +1,4 @@
 <resources>
-    <string name="clear_inbox_all">Clear all</string>
     <string name="clear_inbox_critical">Clear critical</string>
     <string name="clear_inbox_high">Clear high</string>
     <string name="clear_inbox_medium">Clear medium</string>

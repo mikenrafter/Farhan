@@ -10,7 +10,7 @@ import org.junit.Test
 
 class NotificationFilterClearEventTest {
     // why: CLAIM(inbox-clear-event) carries the visible filter and does not limit the operation to its page.
-    // catches: emitting All unconditionally, losing the priority on the Cleared tab, or reading the page as the scope.
+    // catches: emitting All unconditionally, using a stale priority on the Cleared tab, or reading the page as the scope.
     @Test fun `clear click dispatches the selected tab scope`() {
         val events = mutableListOf<NotificationFilterEvent>()
         NotificationFilterState().dispatchClear { events += it }
@@ -21,15 +21,15 @@ class NotificationFilterClearEventTest {
         assertThat(events).containsExactly(
             NotificationFilterEvent.OnClearNotifications(InboxClearScope.All, 0),
             NotificationFilterEvent.OnClearNotifications(InboxClearScope.Priority(LOW), 500),
-            NotificationFilterEvent.OnClearNotifications(InboxClearScope.Cleared(HIGH), 700),
-            NotificationFilterEvent.OnClearNotifications(InboxClearScope.Cleared(null), 0),
+            NotificationFilterEvent.OnClearNotifications(InboxClearScope.Cleared, 700),
+            NotificationFilterEvent.OnClearNotifications(InboxClearScope.Cleared, 0),
         ).inOrder()
     }
 
     // why: CLAIM(inbox-clear-event) names the scope before the user presses the button.
     // catches: a generic Clear all label on any scoped view, or focusing on the prior priority in Cleared.
     @Test fun `clear button label names the selected tab`() {
-        assertThat(NotificationFilterState().clearLabel).isEqualTo(R.string.clear_inbox_all)
+        assertThat(NotificationFilterState().clearLabel).isEqualTo(ly.com.tahaben.core.R.string.clear_all)
         assertThat(NotificationFilterState(priorityFilter = CRITICAL).clearLabel).isEqualTo(R.string.clear_inbox_critical)
         assertThat(NotificationFilterState(priorityFilter = HIGH).clearLabel).isEqualTo(R.string.clear_inbox_high)
         assertThat(NotificationFilterState(priorityFilter = MEDIUM).clearLabel).isEqualTo(R.string.clear_inbox_medium)

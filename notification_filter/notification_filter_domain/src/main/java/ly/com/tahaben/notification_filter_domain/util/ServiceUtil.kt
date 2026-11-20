@@ -4,9 +4,7 @@ import android.app.PendingIntent
 
 interface ServiceUtil {
     fun clearNotificationActions() {}
-    fun clearNotificationActions(notificationIds: List<String>) {
-        notificationIds.forEach(::deleteNotificationIntent)
-    }
+    fun clearNotificationActions(notificationIds: List<String>)
 
     suspend fun isNotificationServiceEnabled(): Boolean
     fun isNotificationAccessPermissionGranted(): Boolean

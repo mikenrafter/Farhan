@@ -70,6 +70,31 @@ class NotificationDeliveryCoordinatorTest {
         assertThat(h.poster.posted.map { it.id }).containsExactly(high.id)
     }
 
+    // why: CLAIM(scoped-delivery-clear) preserves a fresh arrival captured while the delete is in progress.
+    // catches: removing the event.order <= clearOrder guard, which invalidates the fresh callback.
+    @Test
+    fun `callback captured during scoped delete can deliver afterward`() = runTest {
+        val h = DeliveryHarness(dayWindows, immediateHigh)
+        val id = "reposted"
+        val old = item(id, timestamp = 100, priority = LOW)
+        assertThat(h.coordinator.onArrival(old, LOW, h.coordinator.captureEvent(id))).isEqualTo(Deferred(id))
+        var freshOrder = 0L
+
+        h.coordinator.clearScoped(
+            delete = {
+                h.rows.rows.remove(id)
+                freshOrder = h.coordinator.captureEvent(id)
+                listOf(id)
+            },
+            clearActions = {},
+        )
+
+        val fresh = item(id, timestamp = 200, priority = HIGH)
+        assertThat(freshOrder).isGreaterThan(0L)
+        assertThat(h.coordinator.onArrival(fresh, HIGH, freshOrder)).isEqualTo(Delivered(id))
+        assertThat(h.poster.posted.map { it.id }).containsExactly(id)
+    }
+
     // why: a source app posts then cancels in quick succession; the removal callback's coroutine can run before
     //      the posting coroutine. A REPLACE upsert of the late arrival would resurrect the row and spend on it.
     // catches: arrival that upserts and delivers without consulting earlier removals; permanent-or-absent tombstone.

@@ -236,10 +236,7 @@ fun NotificationFilterScreen(
                         ).forEach { (priority, label) ->
                             FilterChip(
                                 selected = !state.showCleared && state.priorityFilter == priority,
-                                onClick = {
-                                    if (state.showCleared) viewModel.onEvent(NotificationFilterEvent.OnToggleClearedView)
-                                    viewModel.onEvent(NotificationFilterEvent.OnSetPriorityFilter(priority))
-                                },
+                                onClick = { viewModel.onEvent(NotificationFilterEvent.OnSetPriorityFilter(priority)) },
                                 label = { Text(label, style = MaterialTheme.typography.labelSmall) }
                             )
                         }
@@ -249,6 +246,8 @@ fun NotificationFilterScreen(
                             label = { Text("Cleared", style = MaterialTheme.typography.labelSmall) }
                         )
                     }
+
+                    if (state.isLoading) return@Column
 
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = spacing.spaceMedium), horizontalArrangement = Arrangement.SpaceBetween) {
                         androidx.compose.material3.TextButton(onClick = viewModel::previousPage, enabled = state.page > 0) { Text("Newer") }

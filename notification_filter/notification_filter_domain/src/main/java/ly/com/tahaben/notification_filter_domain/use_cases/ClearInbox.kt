@@ -2,26 +2,26 @@ package ly.com.tahaben.notification_filter_domain.use_cases
 
 import ly.com.tahaben.notification_filter_domain.delivery.NotificationCore
 import ly.com.tahaben.notification_filter_domain.inbox.InboxClearScope
-import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
+import ly.com.tahaben.notification_filter_domain.inbox.InboxSelection
 import ly.com.tahaben.notification_filter_domain.repository.NotificationRepository
 import ly.com.tahaben.notification_filter_domain.util.ServiceUtil
 
-class DeleteAllNotifications(
+class ClearInbox(
     private val repository: NotificationRepository,
     private val core: NotificationCore,
     private val service: ServiceUtil,
 ) {
-    // CLAIM(inbox-clear-routing): a scoped clear removes actions only for IDs committed by storage [DeleteAllNotificationsTest].
-    suspend operator fun invoke(scope: InboxClearScope, standingCutoff: Long) = when (scope) {
+    // CLAIM(inbox-clear-routing): a scoped clear removes actions only for IDs committed by storage [ClearInboxTest].
+    suspend operator fun invoke(scope: InboxClearScope, standingCutoff: Long, search: String = "") = when (scope) {
         InboxClearScope.All -> invoke()
-        is InboxClearScope.Priority -> clearScoped(false, scope.priority, standingCutoff)
-        is InboxClearScope.Cleared -> clearScoped(true, scope.priority, standingCutoff)
+        is InboxClearScope.Priority -> clearScoped(InboxSelection(priority = scope.priority, search = search, standingCutoff = standingCutoff))
+        InboxClearScope.Cleared -> clearScoped(InboxSelection(cleared = true, search = search, standingCutoff = standingCutoff))
     }
 
     // ↳ CLAIM(inbox-clear-routing)
-    private suspend fun clearScoped(cleared: Boolean, priority: NotificationPriority?, standingCutoff: Long) =
+    private suspend fun clearScoped(selection: InboxSelection) =
         core.coordinator.clearScoped(
-            delete = { repository.deleteInboxNotifications(cleared, priority, standingCutoff) },
+            delete = { repository.deleteInboxNotifications(selection) },
             clearActions = service::clearNotificationActions,
         )
 

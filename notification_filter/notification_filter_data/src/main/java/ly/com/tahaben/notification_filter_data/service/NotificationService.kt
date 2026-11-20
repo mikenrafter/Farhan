@@ -94,7 +94,6 @@ class NotificationService : NotificationListenerService() {
     companion object {
         private data class Actions(val tap: PendingIntent?, val replies: List<CapturedAction>, val smallIcon: android.graphics.drawable.Icon? = null)
         private val actionStore = NotificationActionStore<Actions>()
-        private const val PROXY_TAG = "farhan:"
 
         @Volatile
         private var connectedInstance: NotificationService? = null
@@ -114,6 +113,15 @@ class NotificationService : NotificationListenerService() {
             (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(PROXY_TAG + id, 1)
             actionStore.remove(id)
         }
+        fun cancelProxies(context: Context, ids: List<String>) {
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            clearScopedProxies(
+                ids, actionStore,
+                activeNotifications = { manager.activeNotifications.map { PostedNotification(it.tag, it.id) } },
+                cancel = manager::cancel,
+            )
+        }
+
         fun cancelAllProxies(context: Context) {
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.activeNotifications.filter { it.tag?.startsWith(PROXY_TAG) == true }.forEach { manager.cancel(it.tag, it.id) }

@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import ly.com.tahaben.notification_filter_domain.repository.NotificationRepository
+import ly.com.tahaben.notification_filter_domain.inbox.InboxSelection
 import org.junit.Test
 
 class GetNotificationDashboardSummaryTest {
@@ -73,9 +74,7 @@ class GetNotificationDashboardSummaryTest {
         override suspend fun insertNotificationItemEntity(notificationItem: NotificationItem) = Unit
         override suspend fun deleteNotificationItemEntity(notificationItem: NotificationItem) = Unit
         override suspend fun deleteInboxNotifications(
-            cleared: Boolean,
-            priority: NotificationPriority?,
-            standingCutoff: Long,
+            selection: InboxSelection,
         ): List<String> = error("Dashboard summary only reads notifications")
 
         override suspend fun deleteAllNotificationsFromDB() = Unit

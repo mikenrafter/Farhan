@@ -201,7 +201,7 @@ class NotificationDashboardViewModel @Inject constructor(
             NotificationDashboardEvent.OnDeleteAll -> {
                 viewModelScope.launch {
                     withContext(Dispatchers.IO) {
-                        useCases.deleteAllNotifications()
+                        useCases.clearInbox()
                     }
                 }
             }
