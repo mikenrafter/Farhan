@@ -21,7 +21,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -45,6 +44,7 @@ import ly.com.tahaben.usage_overview_domain.use_case.FilterDuration
 import ly.com.tahaben.usage_overview_domain.use_case.FilterUsageEvents
 import ly.com.tahaben.usage_overview_domain.use_case.GetDurationFromMilliseconds
 import ly.com.tahaben.usage_overview_domain.use_case.GetEnabledUsageReports
+import ly.com.tahaben.usage_overview_domain.use_case.GetOwnPackageName
 import ly.com.tahaben.usage_overview_domain.use_case.GetUpdatedDays
 import ly.com.tahaben.usage_overview_domain.use_case.GetUsageDataForDate
 import ly.com.tahaben.usage_overview_domain.use_case.GetUsageEventsFromDb
@@ -108,7 +108,8 @@ class UsageOverviewE2E {
             getUpdatedDays = GetUpdatedDays(repositoryFake),
             isDayDataFullyUpdated = IsDayDataFullyUpdated(repositoryFake),
             mergeDaysUsageDuration = MergeDaysUsageDuration(),
-            isDayOver = IsDayOver()
+            isDayOver = IsDayOver(),
+            getOwnPackageName = GetOwnPackageName(repositoryFake)
         )
         usageSettingsUseCases = UsageSettingsUseCases(
             openAppSettings = OpenAppSettings(workerRepositoryFake),
@@ -120,7 +121,7 @@ class UsageOverviewE2E {
             setCachingEnabled = SetCachingEnabled(usagePreferences),
         )
         usageOverviewViewModel =
-            UsageOverviewViewModel(usageOverviewUseCases, usageSettingsUseCases, usagePreferences, InstrumentationRegistry.getInstrumentation().targetContext)
+            UsageOverviewViewModel(usageOverviewUseCases, usageSettingsUseCases, usagePreferences)
         repositoryFake.usageItems.add(
             UsageDataItem(
                 appName = "Farhan",

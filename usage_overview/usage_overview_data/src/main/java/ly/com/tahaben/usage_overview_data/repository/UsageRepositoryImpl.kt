@@ -187,6 +187,8 @@ class UsageRepositoryImpl(
      * so the name must be the installed application id, which is `farhan_alpha` for the alpha build and not the
      * Kotlin namespace. A hardcoded name made this always false, whatever the user granted.
      */
+    override fun getOwnPackageName(): String = context.packageName
+
     override fun checkUsagePermission(): Boolean {
         val appOpsManager =
             context.getSystemService(AppCompatActivity.APP_OPS_SERVICE) as AppOpsManager

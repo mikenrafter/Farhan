@@ -11,6 +11,7 @@ import ly.com.tahaben.usage_overview_domain.use_case.DeleteCacheForDay
 import ly.com.tahaben.usage_overview_domain.use_case.FilterDuration
 import ly.com.tahaben.usage_overview_domain.use_case.FilterUsageEvents
 import ly.com.tahaben.usage_overview_domain.use_case.GetDurationFromMilliseconds
+import ly.com.tahaben.usage_overview_domain.use_case.GetOwnPackageName
 import ly.com.tahaben.usage_overview_domain.use_case.GetUpdatedDays
 import ly.com.tahaben.usage_overview_domain.use_case.GetUsageDataForDate
 import ly.com.tahaben.usage_overview_domain.use_case.GetUsageEventsFromDb
@@ -46,7 +47,8 @@ object UsageOverviewDomainModule {
             mergeDaysUsageDuration = MergeDaysUsageDuration(),
             getUpdatedDays = GetUpdatedDays(usageRepository),
             deleteCacheForDay = DeleteCacheForDay(usageRepository),
-            isDayOver = IsDayOver()
+            isDayOver = IsDayOver(),
+            getOwnPackageName = GetOwnPackageName(usageRepository)
         )
     }
 }

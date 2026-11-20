@@ -13,6 +13,8 @@ class UsageRepositoryFake : UsageRepository {
 
     }
 
+    override fun getOwnPackageName(): String = "fake.own.package"
+
     override fun checkUsagePermission(): Boolean {
         return permissionGranted
     }

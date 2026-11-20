@@ -16,7 +16,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("label", help="Scenario and checkpoint, e.g. categories-before")
     parser.add_argument("--serial", help="ADB device serial when multiple devices are connected")
-    parser.add_argument("--package", default="ly.com.tahaben.farhan")
+    parser.add_argument("--package", default="ly.com.tahaben.farhan_alpha")
     parser.add_argument("--output", type=Path, default=Path("captures/notifications"))
     parser.add_argument("--note", default="", help="Build, enabled features, workload, and checkpoint")
     args = parser.parse_args()
