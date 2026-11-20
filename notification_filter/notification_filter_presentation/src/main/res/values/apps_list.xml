@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_list_search">Search apps</string>
+    <string name="app_list_all">All</string>
+    <string name="app_list_has_notifications">Has notifications</string>
+    <string name="app_list_loading">Loading apps</string>
+    <string name="app_list_no_matches">No matching apps</string>
+    <string name="app_list_notifications_disabled">Notifications appear disabled (e.g. work profile)</string>
+    <string name="app_list_empty">No apps found.\nInstall apps that send notifications to manage their priorities here.</string>
+    <string name="app_list_jump_to">Jump to %1$s</string>
+    <string name="app_list_communication">Communication</string>
+    <string name="app_list_social">Social</string>
+    <string name="app_list_productivity">Productivity</string>
+    <string name="app_list_finance">Finance</string>
+    <string name="app_list_health">Health</string>
+    <string name="app_list_entertainment">Entertainment</string>
+    <string name="app_list_system">System</string>
+    <string name="app_list_other">Other</string>
+</resources>
