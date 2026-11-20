@@ -42,12 +42,13 @@ class AppPriorityViewModel @Inject constructor(
     private fun publish(catalog: AppPriorityCatalog) {
         rows.clear(); rows.addAll(catalog.apps)
         rowIndices = catalog.indices
-        state = state.copy(apps = rows, isLoading = false)
+        state = state.copy(apps = rows, isLoading = state.isLoading && catalog.apps.isEmpty())
     }
     fun refresh() {
         if (refreshJob?.isActive == true) return
         refreshJob = viewModelScope.launch {
             catalogRefresh.refresh(::publish)
+            state = state.copy(isLoading = false)
         }
     }
 

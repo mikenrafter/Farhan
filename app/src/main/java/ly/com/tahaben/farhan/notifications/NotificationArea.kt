@@ -101,7 +101,7 @@ internal fun NotificationArea(
             }
             composable(NotificationTab.Apps.route) {
                 Column {
-                    NotificationTabAppBar(R.string.app_priorities, onNavigateUp, onOpenSettings)
+                    NotificationTabAppBar(R.string.notification_apps, onNavigateUp, onOpenSettings)
                     AppPriorityScreen()
                 }
             }
