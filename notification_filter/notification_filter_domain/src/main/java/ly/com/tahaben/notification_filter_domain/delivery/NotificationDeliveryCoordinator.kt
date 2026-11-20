@@ -60,6 +60,8 @@ interface DeliveryBudgetStore {
 /** Android-bound in production (NotificationManager). Must report failure, not hide it. */
 interface ProxyNotificationPoster {
     suspend fun post(item: NotificationItem): PostResult
+    suspend fun post(item: NotificationItem, alert: ly.com.tahaben.notification_filter_domain.sound.ProxyAlert): PostResult =
+        post(item)
     suspend fun refresh(item: NotificationItem): PostResult = PostResult.Posted
 }
 
@@ -70,6 +72,7 @@ interface DeliveryEnvironment {
     fun timeContext(): DeliveryTimeContext
     fun queuePreferences(): Map<String, AppQueuePreference>
     fun activeSourceKeys(): Set<String> = emptySet()
+    fun soundElection(item: NotificationItem): ly.com.tahaben.notification_filter_domain.sound.ElectionInput? = null
 }
 
 /**

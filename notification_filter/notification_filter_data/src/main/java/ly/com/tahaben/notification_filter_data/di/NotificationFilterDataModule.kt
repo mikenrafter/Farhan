@@ -13,6 +13,10 @@ import dagger.hilt.components.SingletonComponent
 import ly.com.tahaben.notification_filter_data.local.preferences.DefaultPreferences
 import ly.com.tahaben.notification_filter_data.local.preferences.KnownPackageSourceStore
 import ly.com.tahaben.notification_filter_data.service.ServiceUtilImpl
+import ly.com.tahaben.notification_filter_data.service.NotificationService
+import ly.com.tahaben.notification_filter_data.sound.AndroidBreakthroughChannel
+import ly.com.tahaben.notification_filter_data.sound.SoundProxyNotificationPoster
+import ly.com.tahaben.notification_filter_domain.delivery.Experiments
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
 import ly.com.tahaben.notification_filter_domain.util.KnownPackageSourceRegistry
 import ly.com.tahaben.notification_filter_domain.util.ServiceUtil
@@ -55,13 +59,14 @@ object NotificationFilterDataModule {
             override suspend fun write(state: ly.com.tahaben.notification_filter_domain.delivery.DeliveryBudgetState) = preferences.commitScheduleSnapshot(preferences.getScheduleSnapshot().copy(budget = state))
             override suspend fun appendSpend(entry: ly.com.tahaben.notification_filter_domain.model.BudgetSpendEntry) = preferences.addBudgetSpendEntry(entry)
         }
-        val poster = object : ly.com.tahaben.notification_filter_domain.delivery.ProxyNotificationPoster {
-            override suspend fun post(item: ly.com.tahaben.notification_filter_domain.model.NotificationItem) =
-                ly.com.tahaben.notification_filter_data.service.NotificationService.postProxyNotification(context, item, silent = false,
-                    useSourceIcon = preferences.isExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SOURCE_ICON))
-            override suspend fun refresh(item: ly.com.tahaben.notification_filter_domain.model.NotificationItem) =
-                ly.com.tahaben.notification_filter_data.service.NotificationService.postProxyNotification(context, item, silent = true,
-                    useSourceIcon = preferences.isExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SOURCE_ICON))
+        val poster = SoundProxyNotificationPoster(
+            NotificationService.PROXY_CHANNEL_ID, AndroidBreakthroughChannel(context),
+        ) { item, channelId, silent ->
+            NotificationService.postProxyNotification(
+                context, item, silent,
+                useSourceIcon = preferences.isExperimentEnabled(Experiments.SOURCE_ICON),
+                channelId = channelId,
+            )
         }
         val environment = object : ly.com.tahaben.notification_filter_domain.delivery.DeliveryEnvironment {
             override fun schedule() = preferences.getNotificationSchedule()

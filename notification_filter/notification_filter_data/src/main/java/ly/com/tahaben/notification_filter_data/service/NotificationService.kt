@@ -121,9 +121,15 @@ class NotificationService : NotificationListenerService() {
         }
         fun clearActions() { actionStore.clear(); NotificationDiagnostics.counter("farhan.actions.retained", 0) }
 
-        fun postProxyNotification(context: Context, item: NotificationItem, silent: Boolean, useSourceIcon: Boolean = false): PostResult = NotificationDiagnostics.trace("farhan.delivery.post") {
+        fun postProxyNotification(
+            context: Context,
+            item: NotificationItem,
+            silent: Boolean,
+            useSourceIcon: Boolean = false,
+            channelId: String = PROXY_CHANNEL_ID,
+        ): PostResult = NotificationDiagnostics.trace("farhan.delivery.post") {
             val capabilities = actionStore.get(item.id)
-            val builder = NotificationCompat.Builder(context, PROXY_CHANNEL_ID)
+            val builder = NotificationCompat.Builder(context, channelId)
                 .setContentTitle("Farhan · " + (item.title?.takeIf { it.isNotBlank() } ?: item.appName ?: "Notification"))
                 .setContentText(item.text).setSubText(item.appName).setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH).setOnlyAlertOnce(true).setSilent(silent)
@@ -148,7 +154,7 @@ class NotificationService : NotificationListenerService() {
             } else {
                 val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 if (Build.VERSION.SDK_INT >= 24 && !manager.areNotificationsEnabled()) PostResult.Failed("notifications_disabled")
-                else if (Build.VERSION.SDK_INT >= 26 && manager.getNotificationChannel(PROXY_CHANNEL_ID)?.importance == NotificationManager.IMPORTANCE_NONE)
+                else if (Build.VERSION.SDK_INT >= 26 && manager.getNotificationChannel(channelId)?.importance == NotificationManager.IMPORTANCE_NONE)
                     PostResult.Failed("notification_channel_disabled")
                 else {
                     val proxies = manager.activeNotifications.filter { it.tag?.startsWith(PROXY_TAG) == true }
