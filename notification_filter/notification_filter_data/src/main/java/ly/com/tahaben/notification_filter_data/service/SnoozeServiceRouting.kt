@@ -38,7 +38,7 @@ internal class SnoozeServiceRouting(
 }
 
 internal suspend fun snoozeReturnFilterEnabled(preferences: Preferences): Boolean =
-    preferences.isNotificationServiceStatsEnabled()
+    preferences.isServiceEnabled()
 
 internal fun previousSnoozeTick(now: Instant, zone: ZoneId, testingMode: Boolean): Instant {
     val interval = if (testingMode) DeliveryTimeContext.TESTING_BOUNDARY_MINUTES
