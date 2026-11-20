@@ -10,23 +10,7 @@ object Experiments {
 
     const val SNOOZE = "snooze"
 
-    /** Android's timed snooze, for Farhan's own demo apps only. Outside the budget, with no unsnooze. */
-    const val SNOOZE_DEMO = "snooze_demo"
-
-    const val SNOOZE_MILLIS = 60_000L
-
-    /**
-     * CLAIM(snooze-allowlist): the exact demo packages and nothing else; a real app is never snoozed
-     * [ExperimentsTest]. Membership, not a prefix, so `ly.com.tahaben.test.messenger.evil` does not qualify.
-     */
-    val SNOOZE_DEMO_PACKAGES: Set<String> = setOf(
-        "ly.com.tahaben.test.messenger",
-        "ly.com.tahaben.test.storm",
-        "ly.com.tahaben.test.social",
-        "ly.com.tahaben.test.calendar",
-    )
-
-    fun maySnoozeInDemo(packageName: String): Boolean = packageName in SNOOZE_DEMO_PACKAGES
+    const val SNOOZE_DEMO = SNOOZE
 }
 
 enum class ExperimentEventKind { SNOOZED, RETURNED, RESNOOZED, REMOVED, FAILED, LOST }
