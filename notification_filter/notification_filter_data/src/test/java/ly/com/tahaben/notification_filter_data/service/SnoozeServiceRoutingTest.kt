@@ -222,7 +222,7 @@ class SnoozeServiceRoutingTest {
             assertThat(rows.find(item.id)?.snoozeDeadline).isEqualTo(deadline.toEpochMilli())
         }
 
-        suspend fun clearInbox() = coordinator.clearInbox(source.id) { }
+        suspend fun clearInbox() = coordinator.markCleared(source.id) { }
 
         fun visibleOriginal(): NotificationItem {
             platform.hidden.remove(source.id)
