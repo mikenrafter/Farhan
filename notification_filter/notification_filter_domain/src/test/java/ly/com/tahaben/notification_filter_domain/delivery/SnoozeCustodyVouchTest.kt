@@ -32,7 +32,7 @@ class SnoozeCustodyVouchTest {
     fun `a key cleared from the inbox after admission is not vouched`() = runTest {
         val order = coordinator.captureEvent("K")
         coordinator.acceptSnoozeEvent("K", order)
-        coordinator.clearInbox("K") { }
+        coordinator.markCleared("K") { }
 
         assertThat(coordinator.vouchesForSnoozeCustody("K")).isFalse()
     }
