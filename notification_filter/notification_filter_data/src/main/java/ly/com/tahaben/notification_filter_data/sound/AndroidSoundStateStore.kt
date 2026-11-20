@@ -9,7 +9,7 @@ import ly.com.tahaben.notification_filter_domain.sound.SoundStateStore
 import ly.com.tahaben.notification_filter_domain.sound.SoundTime
 
 internal class AndroidSoundStateStore(context: Context, private val clock: SoundClock) : SoundStateStore {
-    private val preferences = context.getSharedPreferences("sound_control", Context.MODE_PRIVATE)
+    private val preferences = context.getSharedPreferences(SOUND_PREFS, Context.MODE_PRIVATE)
 
     override fun read(): SoundIntent {
         val values = preferences.all

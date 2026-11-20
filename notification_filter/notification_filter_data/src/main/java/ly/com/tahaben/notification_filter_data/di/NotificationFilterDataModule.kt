@@ -16,6 +16,8 @@ import ly.com.tahaben.notification_filter_data.service.ServiceUtilImpl
 import ly.com.tahaben.notification_filter_data.service.NotificationService
 import ly.com.tahaben.notification_filter_data.sound.AndroidBreakthroughChannel
 import ly.com.tahaben.notification_filter_data.sound.SoundProxyNotificationPoster
+import ly.com.tahaben.notification_filter_data.sound.SoundControlRuntime
+import ly.com.tahaben.notification_filter_domain.sound.SoundControl
 import ly.com.tahaben.notification_filter_domain.delivery.Experiments
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
 import ly.com.tahaben.notification_filter_domain.util.KnownPackageSourceRegistry
@@ -32,6 +34,7 @@ object NotificationFilterDataModule {
         preferences: Preferences,
         dao: ly.com.tahaben.notification_filter_data.local.NotificationDao,
         @ApplicationContext context: Context,
+        soundControl: SoundControlRuntime,
     ): ly.com.tahaben.notification_filter_domain.delivery.NotificationCore {
         val store = object : ly.com.tahaben.notification_filter_domain.schedule.ScheduleBookStore {
             override suspend fun read() = preferences.getScheduleSnapshot()
@@ -60,7 +63,7 @@ object NotificationFilterDataModule {
             override suspend fun appendSpend(entry: ly.com.tahaben.notification_filter_domain.model.BudgetSpendEntry) = preferences.addBudgetSpendEntry(entry)
         }
         val poster = SoundProxyNotificationPoster(
-            NotificationService.PROXY_CHANNEL_ID, AndroidBreakthroughChannel(context),
+            NotificationService.PROXY_CHANNEL_ID, AndroidBreakthroughChannel(context), soundControl::requestReconcile,
         ) { item, channelId, silent ->
             NotificationService.postProxyNotification(
                 context, item, silent,
@@ -69,6 +72,7 @@ object NotificationFilterDataModule {
             )
         }
         val environment = object : ly.com.tahaben.notification_filter_domain.delivery.DeliveryEnvironment {
+            override fun soundElection(item: ly.com.tahaben.notification_filter_domain.model.NotificationItem) = soundControl.electionFor(item)
             override fun schedule() = preferences.getNotificationSchedule()
             override fun settings() = preferences.getPriorityDeliverySettings()
             override fun timeContext() = ly.com.tahaben.notification_filter_domain.delivery.DeliveryClock.current(preferences.isDeliveryTestingMode())
@@ -78,6 +82,9 @@ object NotificationFilterDataModule {
         return ly.com.tahaben.notification_filter_domain.delivery.NotificationCore(store, rows, budget, poster, environment,
             ly.com.tahaben.notification_filter_domain.delivery.DeliveryClock.systemClock) { preferences.clearAllBudgetSpend() }
     }
+
+    @Provides
+    fun provideSoundControl(runtime: SoundControlRuntime): SoundControl = runtime
 
     @Provides @Singleton
     fun provideScheduleAutomation(core: ly.com.tahaben.notification_filter_domain.delivery.NotificationCore,

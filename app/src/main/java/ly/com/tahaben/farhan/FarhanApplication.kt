@@ -9,6 +9,7 @@ import androidx.work.Configuration
 import androidx.work.WorkManager
 import dagger.hilt.android.HiltAndroidApp
 import ly.com.tahaben.core.R
+import ly.com.tahaben.notification_filter_data.sound.SoundControlRuntime
 import org.acra.ACRA
 import org.acra.ReportField
 import org.acra.data.StringFormat
@@ -21,6 +22,8 @@ class FarhanApplication : Application() {
 
     @Inject
     lateinit var farhanWorkerConfiguration: Configuration
+
+    @Inject lateinit var soundControl: dagger.Lazy<SoundControlRuntime>
 
     init {
         if (BuildConfig.DEBUG) {
@@ -68,6 +71,7 @@ class FarhanApplication : Application() {
             notificationManager.createNotificationChannel(crashReportChannel)
         }
         WorkManager.initialize(this, farhanWorkerConfiguration)
+        soundControl.get().start()
     }
 
 }

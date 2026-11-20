@@ -24,6 +24,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import ly.com.tahaben.core.R
 import ly.com.tahaben.notification_filter_data.mapper.toNotificationItem
+import ly.com.tahaben.notification_filter_data.sound.SoundControlRuntime
 import ly.com.tahaben.notification_filter_domain.model.NotificationCategory
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
@@ -56,6 +57,8 @@ class NotificationService : NotificationListenerService() {
     @Inject lateinit var coordinator: NotificationDeliveryCoordinator
 
     @Inject lateinit var experimentLog: ExperimentEventLog
+
+    @Inject lateinit var soundControl: SoundControlRuntime
 
     /** Demo keys Android is holding for us. Bounded; main-thread callbacks only. */
     private val snoozedDemoKeys = LinkedHashSet<String>()
@@ -221,6 +224,7 @@ class NotificationService : NotificationListenerService() {
         super.onListenerConnected()
         connectedInstance = this
         createProxyNotificationChannel()
+        serviceScope.launch { soundControl.onListenerConnected() }
         serviceScope.launch {
             deliveryEngine.maintainDeliverySchedule(this@NotificationService)
         }
@@ -232,12 +236,19 @@ class NotificationService : NotificationListenerService() {
         channel: NotificationChannel,
         modificationType: Int,
     ) {
+        if (pkg == packageName) soundControl.requestReconcile()
         if (modificationType == NOTIFICATION_CHANNEL_OR_GROUP_DELETED) return
         intake.offer(Work.ChannelChanged(pkg, channel.id))
         super.onNotificationChannelModified(pkg, user, channel, modificationType)
     }
 
+    override fun onInterruptionFilterChanged(interruptionFilter: Int) {
+        super.onInterruptionFilterChanged(interruptionFilter)
+        soundControl.requestReconcile()
+    }
+
     override fun onListenerDisconnected() {
+        soundControl.requestReconcile()
         connectedInstance = null
         super.onListenerDisconnected()
     }

@@ -22,7 +22,7 @@ internal class AndroidSoundStatus(private val context: Context) : SoundStatusPor
             context, 0, Intent(context, SoundControlModeActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
         )
         val off = PendingIntent.getBroadcast(
-            context, 0, Intent().setClassName(context, "ly.com.tahaben.notification_filter_data.sound.SoundControlReceiver")
+            context, 0, Intent(context, SoundControlReceiver::class.java)
                 .setAction(SOUND_CONTROL_OFF), PendingIntent.FLAG_IMMUTABLE,
         )
         val message = context.getString(if (modesRecovery) R.string.sound_control_status_recovery else R.string.sound_control_status_message)
