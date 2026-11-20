@@ -5,6 +5,8 @@ import android.service.notification.NotificationListenerService.REASON_SNOOZED
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
+import ly.com.tahaben.notification_filter_domain.delivery.DeliveryTimeContext
 import kotlinx.coroutines.CancellationException
 import ly.com.tahaben.notification_filter_domain.delivery.ExperimentEvent
 import ly.com.tahaben.notification_filter_domain.delivery.ExperimentEventKind
@@ -55,7 +57,7 @@ class SnoozeHandler(
     private val inputAt: (Instant) -> SnoozeInput,
 ) : SnoozeReturnFlags {
     private data class Entry(var confirmed: Boolean = false, var returned: SnoozeReturn? = null)
-    private data class Attempts(val day: LocalDate, val count: Int, val boundary: Int, val retry: Boolean)
+    private data class Attempts(val day: LocalDate, val count: Int, val boundary: Instant, val retry: Boolean)
     private val owned = linkedMapOf<String, Entry>()
     private val attempts = mutableMapOf<String, Attempts>()
 
@@ -112,6 +114,7 @@ class SnoozeHandler(
             owned.keys.retainAll(keys)
             attempts.keys.retainAll(keys)
         }
+        if (rows.isEmpty()) return
         val active: Map<String, Long>
         val snoozed: Set<String>
         try {
@@ -173,8 +176,9 @@ class SnoozeHandler(
         if (previous?.retry == true && previous.day == current.first && previous.boundary == current.second) {
             return fallback(row, input.now, SAME_BOUNDARY)
         }
-        if (input.now.toEpochMilli() < deadline) return fallback(row, input.now, BEFORE_DEADLINE)
-        if (returned.postTime == row.timestamp) return fallback(row, input.now, NOT_A_RETURN)
+        val nowMillis = input.now.toEpochMilli()
+        if (returned.postTime == row.timestamp && nowMillis >= deadline) return fallback(row, input.now, NOT_A_RETURN)
+        if (returned.postTime < deadline || nowMillis < deadline) return fallback(row, input.now, BEFORE_DEADLINE)
         return when (val decision = budget.settleReturn(row.id, returned.postTime, input.now)) {
             SnoozeReturnDecision.Charged -> {
                 forget(row.id)
@@ -235,10 +239,12 @@ class SnoozeHandler(
         return true
     }
 
-    private fun boundary(input: SnoozeInput): Pair<LocalDate, Int> {
+    private fun boundary(input: SnoozeInput): Pair<LocalDate, Instant> {
         val local = input.now.atZone(input.zone)
-        val minute = local.hour * 60 + local.minute
-        return local.toLocalDate() to (minute / if (input.testingMode) 3 else 60)
+        val interval = if (input.testingMode) DeliveryTimeContext.TESTING_BOUNDARY_MINUTES
+            else DeliveryTimeContext.PRODUCTION_BOUNDARY_MINUTES
+        val boundary = input.now.truncatedTo(ChronoUnit.MINUTES).minusSeconds((local.minute % interval) * 60L)
+        return local.toLocalDate() to boundary
     }
 
     private suspend fun release(row: NotificationItem) {

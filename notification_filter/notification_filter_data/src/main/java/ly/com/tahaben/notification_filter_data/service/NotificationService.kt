@@ -70,8 +70,14 @@ class NotificationService : NotificationListenerService() {
     private val snoozeHandler by lazy {
         SnoozeHandler(
             platform = object : SnoozePlatform {
-                override fun snooze(key: String, millis: Long) = snoozeNotification(key, millis)
-                override fun snoozedKeys() = snoozedNotifications.orEmpty().mapTo(hashSetOf()) { it.key }
+                override fun snooze(key: String, millis: Long) {
+                    check(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    snoozeNotification(key, millis)
+                }
+                override fun snoozedKeys(): Set<String> =
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        snoozedNotifications.orEmpty().mapTo(hashSetOf()) { it.key }
+                    } else emptySet()
                 override fun activePostTimes() = activeSourcePostTimes()
                 override fun cancelVisible(key: String) = cancelNotification(key)
             },
@@ -331,14 +337,17 @@ class NotificationService : NotificationListenerService() {
         snoozeHandler.settle(it, returnInput(Instant.now()))
     }
 
-    private suspend fun reconcileSnoozes() = snoozeWork.withLock {
-        val now = Instant.now()
-        val input = returnInput(now)
-        val minute = now.atZone(input.zone).minute
-        val interval = if (input.testingMode) 3 else 60
-        val previous = now.truncatedTo(ChronoUnit.MINUTES).minusSeconds((minute % interval + interval) * 60L)
-        drainSnoozeReturns()
-        snoozeHandler.onBatchTick(now, previous)
+    private suspend fun reconcileSnoozes() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        snoozeWork.withLock {
+            val now = Instant.now()
+            val input = returnInput(now)
+            val minute = now.atZone(input.zone).minute
+            val interval = if (input.testingMode) 3 else 60
+            val previous = now.truncatedTo(ChronoUnit.MINUTES).minusSeconds((minute % interval + interval) * 60L)
+            drainSnoozeReturns()
+            snoozeHandler.onBatchTick(now, previous)
+        }
     }
 
     private suspend fun processNotificationPosted(fields: PostedFields) {
@@ -381,6 +390,8 @@ class NotificationService : NotificationListenerService() {
                     exclusionFlags = fields.exclusionFlags, isPassthrough = passThrough,
                     isExceptedPackage = excepted, alreadyDelivered = notificationDao.find(item.id)?.isDelivered == true,
                     liveSnoozes = liveRows.size, budget = budget, ownedRows = liveRows,
+                    // CLAIM(snooze-group-device): passed grouped return and collateral cases [research/snooze-evidence/groups].
+                    groupSnoozeVerified = true,
                 )
                 snoozeHandler.onPosted(item.copy(snoozeGroupKey = fields.groupKey), context)
             }
