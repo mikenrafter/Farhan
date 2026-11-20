@@ -1,5 +1,7 @@
 package ly.com.tahaben.notification_filter_domain.delivery
 
+import java.time.Instant
+import java.time.ZoneId
 import ly.com.tahaben.notification_filter_domain.model.BudgetSpendEntry
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
@@ -66,6 +68,7 @@ interface ProxyNotificationPoster {
 /** Reads of settings that can change between calls. */
 interface DeliveryEnvironment {
     fun schedule(): List<NotificationSchedulePeriod>
+    fun scheduleAt(instant: Instant, zone: ZoneId): List<NotificationSchedulePeriod> = schedule()
     fun settings(): Map<NotificationPriority, PriorityDeliverySetting>
     fun timeContext(): DeliveryTimeContext
     fun queuePreferences(): Map<String, AppQueuePreference>
@@ -92,7 +95,7 @@ class NotificationDeliveryCoordinator(
     private var discardedBefore = 0L
     private val sourceSession = java.util.UUID.randomUUID().toString()
     private var persistedInvalidation = 0L
-    private data class Completion(val id: String, val state: DeliveryBudgetState, val entry: BudgetSpendEntry?,
+    private data class Completion(val id: String?, val state: DeliveryBudgetState, val entry: BudgetSpendEntry?,
         var rowSaved: Boolean = false, var budgetSaved: Boolean = false)
     private var completion: Completion? = null
 
@@ -111,7 +114,7 @@ class NotificationDeliveryCoordinator(
 
     private suspend fun finishCompletion() {
         val pending = completion ?: return
-        if (!pending.rowSaved) { rows.markDelivered(pending.id); pending.rowSaved = true }
+        if (!pending.rowSaved) { pending.id?.let { rows.markDelivered(it) }; pending.rowSaved = true }
         if (!pending.budgetSaved) { budget.write(pending.state); pending.budgetSaved = true }
         pending.entry?.let { budget.appendSpend(it) }
         completion = null
@@ -184,6 +187,10 @@ class NotificationDeliveryCoordinator(
         if (stale(item.id, eventOrder, item.timestamp)) DeliveryOutcome.Cleared(item.id)
         else if (sourceStillCurrent?.invoke() == false) DeliveryOutcome.Deferred(item.id) else deliver(updated)
     }
+
+    // CLAIM(snooze-return-budget): settle against the stored snooze priority under DeliveryGate [Snooze pilot spec V4].
+    suspend fun settleSnoozeReturn(key: String, postTime: Long, now: Instant): SnoozeReturnDecision =
+        SnoozeReturnDecision.NoFundedMoment
 
     suspend fun onRemoved(id: String, reason: NotificationRemovalReason, atMillis: Long, eventOrder: Long? = null) {
         if (reason != NotificationRemovalReason.SOURCE_APP_CANCELLED && reason != NotificationRemovalReason.USER_DISMISSED && reason != NotificationRemovalReason.INBOX_CLEARED) return

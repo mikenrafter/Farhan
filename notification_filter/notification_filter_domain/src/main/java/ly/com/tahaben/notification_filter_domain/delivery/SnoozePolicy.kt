@@ -3,6 +3,7 @@ package ly.com.tahaben.notification_filter_domain.delivery
 import java.time.Instant
 import java.time.ZoneId
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
+import ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod
 import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
 
 data class SnoozeInput(
@@ -15,15 +16,29 @@ data class SnoozeInput(
     val now: Instant,
     val zone: ZoneId,
     val testingMode: Boolean = false,
-    val isPassthrough: Boolean = false,
-    val isExceptedPackage: Boolean = false,
-    val priority: NotificationPriority = NotificationPriority.MEDIUM,
-    val isSystemExemptCategory: Boolean = false,
-    val isOngoing: Boolean = false,
-    val isForegroundService: Boolean = false,
-    val isNonClearable: Boolean = false,
-    val isGroupSummary: Boolean = false,
+    val isPassthrough: Boolean,
+    val isExceptedPackage: Boolean,
+    val priority: NotificationPriority,
+    val exclusionFlags: SnoozeExclusionFlags,
+    val scheduleAt: (Instant, ZoneId) -> List<NotificationSchedulePeriod>,
+    val alreadyDelivered: Boolean,
+    val liveSnoozes: Int,
 )
+
+data class SnoozeExclusionFlags(
+    val isSystemExemptCategory: Boolean,
+    val isOngoing: Boolean,
+    val isForegroundService: Boolean,
+    val isNonClearable: Boolean,
+    val isGroupSummary: Boolean,
+    val hasGroupKey: Boolean,
+) {
+    companion object {
+        // CLAIM(snooze-raw-flags): map Android flags, category, and grouping at intake [Snooze pilot spec V7].
+        fun fromNotification(flags: Int, category: String?, groupKey: String?): SnoozeExclusionFlags =
+            SnoozeExclusionFlags(false, false, false, false, false, false)
+    }
+}
 
 sealed interface SnoozeDecision {
     data class Snooze(val durationMillis: Long) : SnoozeDecision
@@ -44,6 +59,10 @@ enum class SnoozeSkipReason {
     FOREGROUND_SERVICE,
     NON_CLEARABLE,
     GROUP_SUMMARY,
+    GROUP_KEY,
+    ALREADY_DELIVERED,
+    AT_CAPACITY,
+    NO_FUNDED_MOMENT,
 }
 
 object SnoozePolicy {

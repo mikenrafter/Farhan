@@ -6,13 +6,11 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
+import ly.com.tahaben.notification_filter_domain.delivery.BatchCadence.EVERY_HOUR
+import ly.com.tahaben.notification_filter_domain.delivery.BatchCadence.EVERY_OTHER_HOUR
+import ly.com.tahaben.notification_filter_domain.delivery.BatchCadence.EVERY_THIRD_HOUR
+import ly.com.tahaben.notification_filter_domain.delivery.BatchCadence.ONCE_DAILY
 import ly.com.tahaben.notification_filter_domain.model.DeliveryCadence
-import ly.com.tahaben.notification_filter_domain.model.DeliveryCadence.EVERY_HOUR
-import ly.com.tahaben.notification_filter_domain.model.DeliveryCadence.EVERY_OTHER_HOUR
-import ly.com.tahaben.notification_filter_domain.model.DeliveryCadence.EVERY_THIRD_HOUR
-import ly.com.tahaben.notification_filter_domain.model.DeliveryCadence.ONCE_DAILY
-import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
-import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
 import org.junit.Test
 
 class SnoozeTimingTest {
@@ -28,7 +26,7 @@ class SnoozeTimingTest {
     // catches: accepting the current tick or taking the very next hour for every-other-hour cadence.
     @Test
     fun `every other hour skips the current boundary and the intervening hour`() =
-        assertTick(EVERY_OTHER_HOUR, "2026-11-20T08:00:00Z", "2026-11-20T10:00:00Z", priority = NotificationPriority.MEDIUM)
+        assertTick(EVERY_OTHER_HOUR, "2026-11-20T08:00:00Z", "2026-11-20T10:00:00Z")
 
     // why: owners can configure a cadence other than the priority's default.
     // proves: CLAIM(snooze-next-tick)
@@ -42,7 +40,7 @@ class SnoozeTimingTest {
     // catches: using UTC midnight, the next local hour, or a fixed 24-hour delay.
     @Test
     fun `daily cadence crosses midnight in the clock zone`() =
-        assertTick(ONCE_DAILY, "2026-11-21T04:17:00Z", "2026-11-21T07:00:00Z", denver, priority = NotificationPriority.LOW)
+        assertTick(ONCE_DAILY, "2026-11-21T04:17:00Z", "2026-11-21T07:00:00Z", denver)
 
     // why: Denver jumps from 01:59 MST to 03:00 MDT on 2026-03-08.
     // proves: CLAIM(snooze-next-tick)
@@ -66,17 +64,15 @@ class SnoozeTimingTest {
         assertTick(EVERY_OTHER_HOUR, "2026-11-20T10:05:59Z", "2026-11-20T10:06:00Z", testingMode = true)
 
     private fun assertTick(
-        cadence: DeliveryCadence,
+        cadence: BatchCadence,
         from: String,
         expected: String,
         zone: ZoneId = ZoneOffset.UTC,
         testingMode: Boolean = false,
-        priority: NotificationPriority = NotificationPriority.HIGH,
     ) {
         val now = Instant.parse(from)
         val expectedTick = Instant.parse(expected)
-        val setting = PriorityDeliverySetting.defaultFor(priority).copy(cadence = cadence)
-        val delay = SnoozeTiming.delayUntilNextMoment(priority, setting, now, zone, testingMode)
+        val delay = SnoozeTiming.delayUntilNextMoment(cadence, now, zone, testingMode)
 
         assertThat(delay).isGreaterThan(0L)
         assertThat(delay).isEqualTo(Duration.between(now, expectedTick).toMillis())
@@ -86,7 +82,7 @@ class SnoozeTimingTest {
         assertThat(local.second).isEqualTo(0)
         assertThat(local.nano).isEqualTo(0)
         assertThat(context.minuteOfDay % context.boundaryIntervalMinutes).isEqualTo(0)
-        assertThat(NotificationDeliveryPolicy.isBatchTickForCadence(setting.cadence, context)).isTrue()
+        assertThat(NotificationDeliveryPolicy.isBatchTickForCadence(DeliveryCadence.valueOf(cadence.name), context)).isTrue()
     }
 
     private val denver = ZoneId.of("America/Denver")

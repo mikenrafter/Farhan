@@ -29,14 +29,15 @@ object Experiments {
     fun maySnoozeInDemo(packageName: String): Boolean = packageName in SNOOZE_DEMO_PACKAGES
 }
 
-enum class ExperimentEventKind { SNOOZED, RETURNED, RESNOOZED, REMOVED, FAILED }
+enum class ExperimentEventKind { SNOOZED, RETURNED, RESNOOZED, REMOVED, FAILED, LOST }
 
-/** One platform callback seen during the snooze demo. No notification text, title or key. [removalReason] is Android's code. */
+/** One platform callback seen during the snooze demo. [removalReason] is Android's code. */
 data class ExperimentEvent(
     val atEpochMillis: Long,
     val kind: ExperimentEventKind,
     val removalReason: Int? = null,
     val packageName: String = "",
+    val skipReason: SnoozeSkipReason? = null,
 )
 
 /** Bounded, newest-first record of the snooze demo's callbacks, for the settings screen. */

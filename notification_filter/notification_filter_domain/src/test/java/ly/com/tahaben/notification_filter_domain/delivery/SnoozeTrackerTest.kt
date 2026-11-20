@@ -53,6 +53,19 @@ class SnoozeTrackerTest {
         assertRetainedKeys(3..1026)
     }
 
+    // why: a successful re-snooze refreshes the key's position in the bounded cache.
+    // catches: LinkedHashSet.add retaining the key's old insertion position.
+    @Test
+    fun `recording a snoozed key again makes it newest for eviction`() {
+        (0..1023).forEach { tracker.recordSnoozed("key-$it") }
+        tracker.recordSnoozed("key-0")
+        tracker.recordSnoozed("key-1024")
+
+        assertThat(tracker.consumeIfSnoozed("key-1")).isFalse()
+        assertThat(tracker.consumeIfSnoozed("key-0")).isTrue()
+        assertRetainedKeys(2..1024)
+    }
+
     private fun assertRetainedKeys(indices: IntRange) {
         for (index in indices) {
             assertWithMessage("key-%s should still be tracked", index)

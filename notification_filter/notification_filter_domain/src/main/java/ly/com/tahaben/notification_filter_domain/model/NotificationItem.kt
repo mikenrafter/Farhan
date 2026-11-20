@@ -18,4 +18,7 @@ data class NotificationItem(
     val sourceSession: String = "",
     val sourceEventOrder: Long = 0,
     val deliveryInvalidated: Boolean = false,
+    val snoozeDeadline: Long? = null,
+    val snoozePriority: NotificationPriority? = null,
+    val snoozeBootCount: Int? = null,
 )

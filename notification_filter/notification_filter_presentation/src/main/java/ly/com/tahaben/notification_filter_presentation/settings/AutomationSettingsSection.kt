@@ -89,7 +89,7 @@ fun AutomationAndExperimentsSection(
             state.snoozeDemoExperiment,
         ) { onEvent(NotificationSettingsEvent.SetSnoozeDemoExperiment(it)) }
         if (state.snoozeDemoEvents.isNotEmpty()) {
-            Text("Recent snooze callbacks (newest first, no text kept)", style = MaterialTheme.typography.labelMedium)
+            Text("Recent snooze callbacks (newest first)", style = MaterialTheme.typography.labelMedium)
             state.snoozeDemoEvents.take(8).forEach { Text(describeExperimentEvent(it), style = MaterialTheme.typography.bodySmall) }
         }
     }
@@ -157,7 +157,7 @@ private fun describeExperimentEvent(event: ExperimentEvent): String {
     return when (event.kind) {
         ExperimentEventKind.SNOOZED -> "$time  snoozed for one minute"
         ExperimentEventKind.RETURNED -> "$time  Android showed it again"
-        ExperimentEventKind.FAILED, ExperimentEventKind.RESNOOZED -> ""
+        ExperimentEventKind.FAILED, ExperimentEventKind.RESNOOZED, ExperimentEventKind.LOST -> ""
         ExperimentEventKind.REMOVED -> "$time  removed, Android reason ${event.removalReason}"
     }
 }

@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import java.time.Instant
 import java.time.ZoneOffset
+import ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod
 import ly.com.tahaben.notification_filter_domain.model.DeliveryCadence
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
@@ -20,6 +21,12 @@ class SnoozePolicyTest {
         setting = PriorityDeliverySetting.defaultFor(NotificationPriority.HIGH),
         now = Instant.parse("2026-11-20T08:55:00Z"),
         zone = ZoneOffset.UTC,
+        isPassthrough = false,
+        isExceptedPackage = false,
+        exclusionFlags = SnoozeExclusionFlags.fromNotification(0, null, null),
+        scheduleAt = { _, _ -> NotificationSchedulePeriod.DEFAULT_SCHEDULE },
+        alreadyDelivered = false,
+        liveSnoozes = 0,
     )
 
     private val exclusions = mapOf(
@@ -33,11 +40,20 @@ class SnoozePolicyTest {
             setting = eligible.setting.copy(cadence = DeliveryCadence.IMMEDIATELY),
         ),
         SnoozeSkipReason.PASSTHROUGH to eligible.copy(isPassthrough = true),
-        SnoozeSkipReason.SYSTEM_EXEMPT_CATEGORY to eligible.copy(isSystemExemptCategory = true),
-        SnoozeSkipReason.ONGOING to eligible.copy(isOngoing = true),
-        SnoozeSkipReason.FOREGROUND_SERVICE to eligible.copy(isForegroundService = true),
-        SnoozeSkipReason.NON_CLEARABLE to eligible.copy(isNonClearable = true),
-        SnoozeSkipReason.GROUP_SUMMARY to eligible.copy(isGroupSummary = true),
+        SnoozeSkipReason.SYSTEM_EXEMPT_CATEGORY to eligible.copy(exclusionFlags = eligible.exclusionFlags.copy(isSystemExemptCategory = true)),
+        SnoozeSkipReason.ONGOING to eligible.copy(exclusionFlags = eligible.exclusionFlags.copy(isOngoing = true)),
+        SnoozeSkipReason.FOREGROUND_SERVICE to eligible.copy(exclusionFlags = eligible.exclusionFlags.copy(isForegroundService = true)),
+        SnoozeSkipReason.NON_CLEARABLE to eligible.copy(exclusionFlags = eligible.exclusionFlags.copy(isNonClearable = true)),
+        SnoozeSkipReason.GROUP_SUMMARY to eligible.copy(exclusionFlags = eligible.exclusionFlags.copy(isGroupSummary = true)),
+        SnoozeSkipReason.GROUP_KEY to eligible.copy(
+            exclusionFlags = SnoozeExclusionFlags.fromNotification(0, null, "linked-group"),
+        ),
+        SnoozeSkipReason.ALREADY_DELIVERED to eligible.copy(alreadyDelivered = true),
+        SnoozeSkipReason.AT_CAPACITY to eligible.copy(liveSnoozes = 400),
+        SnoozeSkipReason.NO_FUNDED_MOMENT to eligible.copy(
+            priority = NotificationPriority.LOW,
+            setting = PriorityDeliverySetting.defaultFor(NotificationPriority.LOW),
+        ),
     )
 
     // why: the policy must skip when snooze is off, even with all other inputs eligible.
@@ -117,6 +133,29 @@ class SnoozePolicyTest {
     // catches: the policy treats a summary as an ordinary child.
     @Test
     fun `skip when the notification is a group summary`() = assertSkip(SnoozeSkipReason.GROUP_SUMMARY)
+
+    // why: a child with a group key can be lost if Android drops the summary.
+    // catches: checking only the group summary flag.
+    @Test
+    fun `skip a grouped child without a summary flag`() = assertSkip(SnoozeSkipReason.GROUP_KEY)
+
+    // why: an update to a delivered proxy row must keep its ordinary update path.
+    // catches: claiming a row already delivered through the proxy.
+    @Test
+    fun `skip an already delivered row`() = assertSkip(SnoozeSkipReason.ALREADY_DELIVERED)
+
+    // why: 400 owned snoozes is the pilot limit and the prior slot remains usable.
+    // catches: counting the boundary incorrectly or applying the limit one slot too early.
+    @Test
+    fun `skip at four hundred owned snoozes`() {
+        assertSkip(SnoozeSkipReason.AT_CAPACITY)
+        assertThat(SnoozePolicy.decide(eligible.copy(liveSnoozes = 399))).isEqualTo(SnoozeDecision.Snooze(300_000L))
+    }
+
+    // why: LOW costs 8 and its midnight tick has only 2 points under the shipped schedule.
+    // catches: delaying LOW to an unfunded tick or reusing a non-cadence period start.
+    @Test
+    fun `default low cadence skips when no funded moment exists`() = assertSkip(SnoozeSkipReason.NO_FUNDED_MOMENT)
 
     // why: D1 makes both an arbitrary app and a package that resembles a former fixture eligible.
     // catches: keeping the four-package allowlist or substituting a package-prefix rule.
