@@ -41,7 +41,7 @@ fun interface GrantsPort {
 interface SoundStateStore {
     fun read(): SoundIntent
 
-    /** Returns true after the entire intent is durable. False forbids the dependent rule effect. */
+    /** Returns true after the entire intent is durable. Rule activation requires a successful commit. */
     fun commit(intent: SoundIntent): Boolean
 }
 

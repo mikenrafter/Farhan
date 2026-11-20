@@ -1,5 +1,6 @@
 package ly.com.tahaben.notification_filter_data.sound
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
@@ -92,15 +93,39 @@ class SoundControlController(
 
     suspend fun off(): SoundControlState = operation {
         val previous = store.read()
-        if (!store.commit(previous.copy(desiredOn = false, generation = previous.generation + 1))) {
-            return@operation if (previous.ruleId != null || hasRecoveryStatus) recovery(SuspensionReason.STORAGE_FAILED)
-                else suspended(SuspensionReason.STORAGE_FAILED)
+        val saved = try {
+            store.commit(previous.copy(desiredOn = false, generation = previous.generation + 1))
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            false
+        }
+        if (!saved) {
+            return@operation releaseAfterFailedOffSave(previous)
         }
         val released = reconcile()
         if (released == SoundControlState.Off && setPilotFlag?.invoke(false) == false) {
             return@operation suspended(SuspensionReason.STORAGE_FAILED)
         }
         released
+    }
+
+    private fun releaseAfterFailedOffSave(previous: SoundIntent): SoundControlState {
+        // A stale On journal cannot reactivate a removed rule [pilot spec v2, release-only reconciler].
+        val released = try {
+            var allRemoved = true
+            for (rule in reconciler.matchingRules(rules.ownedRules())) {
+                if (!removeConfirmed(rule.id)) allRemoved = false
+            }
+            allRemoved
+        } catch (_: AccessLost) {
+            removalBlockedByAccess = true
+            if (previous.ruleId != null || hasRecoveryStatus) return recovery(SuspensionReason.STORAGE_FAILED)
+            return suspended(SuspensionReason.STORAGE_FAILED)
+        }
+        if (!released) return recovery(SuspensionReason.STORAGE_FAILED)
+        clearStatus()
+        return suspended(SuspensionReason.STORAGE_FAILED)
     }
 
     suspend fun onAppStart(): SoundControlState = operation { reconcile() }

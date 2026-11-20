@@ -1,5 +1,6 @@
 package ly.com.tahaben.notification_filter_data.sound
 
+import ly.com.tahaben.notification_filter_domain.delivery.BREAKTHROUGH_BYPASS_LOST
 import ly.com.tahaben.notification_filter_domain.delivery.PostResult
 import ly.com.tahaben.notification_filter_domain.delivery.ProxyNotificationPoster
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
@@ -24,7 +25,7 @@ internal class SoundProxyNotificationPoster(
             if (breakthrough.read()?.usable == true) publish(item, BREAKTHROUGH_CHANNEL_ID, false)
             else {
                 bypassLost()
-                PostResult.Failed("breakthrough_bypass_lost")
+                PostResult.Failed(BREAKTHROUGH_BYPASS_LOST)
             }
         }
     }
