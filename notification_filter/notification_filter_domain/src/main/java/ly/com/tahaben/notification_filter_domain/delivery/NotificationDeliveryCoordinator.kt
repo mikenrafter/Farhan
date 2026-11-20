@@ -242,6 +242,9 @@ class NotificationDeliveryCoordinator(
 
     fun acceptSnoozeEvent(id: String, order: Long) = accept(id, order)
 
+    // RED SEAM: the old rule (every owned key takes the flag route). The next commit replaces it.
+    @Synchronized fun vouchesForSnoozeCustody(id: String): Boolean = true
+
     suspend fun withSnoozeAdmission(
         id: String,
         order: Long,

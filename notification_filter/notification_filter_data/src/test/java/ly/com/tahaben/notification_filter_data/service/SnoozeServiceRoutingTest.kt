@@ -170,6 +170,226 @@ class SnoozeServiceRoutingTest {
         assertThat(rig.budget.entries).hasSize(1)
     }
 
+
+    // why: S5. Android folds a follow-up into the hidden record of a cleared key and returns the updated record
+    //      with no callback, so a cleared return whose text changed is a new message, not the owner's dismissed one.
+    // proves: CLAIM(snooze-cleared-return-content)
+    // catches: cancelling every cleared return blind (the follow-up is never shown, stored or proxied), or
+    //          keeping the row cleared so the batch drops it.
+    @Test
+    fun `follow-up folded into a cleared snooze is stored and delivered once instead of cancelled`() = runTest {
+        val rig = Rig()
+        rig.admit()
+        rig.clearInbox()
+        rig.now = deadline
+        rig.snoozeEnabled = false
+
+        assertThat(rig.listenerPost(source.title, FOLLOW_UP)).isEqualTo(Route.NORMAL)
+
+        assertThat(rig.platform.canceled).isEmpty()
+        val row = rig.rows.find(source.id)!!
+        assertThat(row.isCleared).isFalse()
+        assertThat(row.text).isEqualTo(FOLLOW_UP)
+        assertThat(row.snoozeDeadline).isNull()
+        assertThat(rig.budget.entries).isEmpty()
+        assertThat(rig.coordinator.onBatchTick(deadline)).containsExactly(DeliveryOutcome.Delivered(source.id))
+        assertThat(rig.poster.postedItems.map { it.text }).containsExactly(FOLLOW_UP)
+        assertThat(rig.budget.entries).hasSize(1)
+        assertThat(rig.coordinator.onBatchTick(deadline)).isEmpty()
+        assertThat(rig.budget.entries).hasSize(1)
+    }
+
+    // why: with snooze on the follow-up is an ordinary arrival, so it is handed to Android again like any other.
+    // catches: leaving the custody columns of the cleared row in place, which makes the pre-check claim the post.
+    @Test
+    fun `follow-up folded into a cleared snooze is snoozed again as a new arrival`() = runTest {
+        val rig = Rig()
+        rig.admit()
+        rig.clearInbox()
+        rig.now = deadline
+
+        assertThat(rig.listenerPost(source.title, FOLLOW_UP)).isEqualTo(Route.NORMAL)
+
+        assertThat(rig.platform.canceled).isEmpty()
+        val row = rig.rows.find(source.id)!!
+        assertThat(row.isCleared).isFalse()
+        assertThat(row.text).isEqualTo(FOLLOW_UP)
+        assertThat(row.snoozeDeadline).isGreaterThan(deadline.toEpochMilli())
+        assertThat(rig.platform.requests).hasSize(2)
+        assertThat(rig.budget.entries).isEmpty()
+    }
+
+    // why: the title is half of what Farhan compares, and a chat app can rename the conversation title in place.
+    // catches: comparing only the text.
+    @Test
+    fun `a changed title alone makes a cleared return a new arrival`() = runTest {
+        val rig = Rig()
+        rig.admit()
+        rig.clearInbox()
+        rig.now = deadline
+        rig.snoozeEnabled = false
+
+        assertThat(rig.listenerPost("Someone else", source.text)).isEqualTo(Route.NORMAL)
+
+        assertThat(rig.platform.canceled).isEmpty()
+        assertThat(rig.rows.find(source.id)?.isCleared).isFalse()
+        assertThat(rig.rows.find(source.id)?.title).isEqualTo("Someone else")
+    }
+
+    // why: control for S5. An identical re-post is the owner's dismissed message and keeps today's disposal.
+    // catches: delivering what the owner already cleared, or charging for it.
+    @Test
+    fun `identical cleared return is cancelled and the row stays cleared`() = runTest {
+        val rig = Rig()
+        rig.admit()
+        rig.clearInbox()
+        rig.now = deadline
+
+        rig.listenerPost(source.title, source.text)
+
+        assertThat(rig.platform.canceled).containsExactly(source.id)
+        assertThat(rig.rows.find(source.id)?.isCleared).isTrue()
+        assertThat(rig.rows.find(source.id)?.snoozeDeadline).isNull()
+        assertThat(rig.budget.entries).isEmpty()
+        assertThat(rig.budget.state.spentPoints).isEqualTo(0)
+        assertThat(rig.events.recent().first().kind).isEqualTo(ExperimentEventKind.REMOVED)
+    }
+
+    // why: after the scan drops the owned entry (or a restart), only the stored row decides, from the post's own fields.
+    // catches: the stored path cancelling blind, or the scan-dropped entry being flagged anyway.
+    @Test
+    fun `restart variant - changed text after a scan dropped the owned entry is delivered`() = runTest {
+        val rig = Rig()
+        rig.admit()
+        rig.clearInbox()
+        rig.handler.onBatchTick(arrival.plusSeconds(1), arrival.minusSeconds(3600))
+        assertThat(rig.handler.owns(source.id)).isFalse()
+        rig.now = deadline
+        rig.snoozeEnabled = false
+
+        assertThat(rig.listenerPost(source.title, FOLLOW_UP)).isEqualTo(Route.NORMAL)
+
+        assertThat(rig.platform.canceled).isEmpty()
+        assertThat(rig.rows.find(source.id)?.isCleared).isFalse()
+        assertThat(rig.rows.find(source.id)?.text).isEqualTo(FOLLOW_UP)
+        assertThat(rig.coordinator.onBatchTick(deadline)).containsExactly(DeliveryOutcome.Delivered(source.id))
+        assertThat(rig.budget.entries).hasSize(1)
+    }
+
+    // why: control for the restart variant; the same words are still the cleared return.
+    // catches: the restart path treating identical text as new.
+    @Test
+    fun `restart variant - identical text after a scan dropped the owned entry is cancelled`() = runTest {
+        val rig = Rig()
+        rig.admit()
+        rig.clearInbox()
+        rig.handler.onBatchTick(arrival.plusSeconds(1), arrival.minusSeconds(3600))
+        rig.now = deadline
+
+        rig.listenerPost(source.title, source.text)
+
+        assertThat(rig.platform.canceled).containsExactly(source.id)
+        assertThat(rig.rows.find(source.id)?.isCleared).isTrue()
+        assertThat(rig.rows.find(source.id)?.snoozeDeadline).isNull()
+        assertThat(rig.budget.entries).isEmpty()
+    }
+
+    // why: the owner's row clear withdraws the coordinator's vouch, and the flag route carries no fields.
+    // catches: the listener flagging a cleared key (Work.Return) so the return is disposed without seeing its text.
+    @Test
+    fun `a cleared key leaves the flag route and a live key keeps it`() = runTest {
+        val cleared = Rig()
+        cleared.admit()
+        cleared.clearInbox()
+        cleared.now = deadline
+        assertThat(cleared.listenerPost(source.title, source.text)).isEqualTo(Route.STORED_RETURN)
+
+        val live = Rig()
+        live.admit()
+        live.now = deadline
+        assertThat(live.listenerPost(source.title, source.text)).isEqualTo(Route.FLAG)
+        assertThat(live.budget.entries).hasSize(1)
+        assertThat(live.platform.canceled).isEmpty()
+    }
+
+    // why: S5 callers with no fields (stats off sends only key and post time) cannot tell a follow-up from the
+    //      cleared return, so they must fail visible.
+    // catches: cancelling a cleared return from a caller that never saw its text.
+    @Test
+    fun `stats-off custody check closes cleared custody and leaves the post visible`() = runTest {
+        val rig = Rig()
+        rig.admit()
+        rig.clearInbox()
+        rig.now = deadline
+        val post = rig.visibleOriginal()
+
+        rig.routing.handleStoredPost(source.id, post.timestamp, rig.now)
+
+        assertThat(rig.platform.canceled).isEmpty()
+        assertThat(rig.platform.active).containsKey(source.id)
+        assertThat(rig.rows.find(source.id)?.snoozeDeadline).isNull()
+        assertThat(rig.rows.find(source.id)?.isCleared).isTrue()
+        assertThat(rig.budget.entries).isEmpty()
+    }
+
+    // why: control, the same fieldless entry still settles a live row, so the test above is about cleared rows only.
+    // catches: a fieldless caller that stops settling live returns.
+    @Test
+    fun `stats-off custody check still settles a live return`() = runTest {
+        val rig = Rig()
+        rig.admit()
+        rig.now = deadline
+        val post = rig.visibleOriginal()
+
+        assertThat(rig.routing.handleStoredPost(source.id, post.timestamp, rig.now)).isTrue()
+
+        assertThat(rig.budget.entries).hasSize(1)
+        assertThat(rig.platform.canceled).isEmpty()
+    }
+
+    // why: the reconcile scan only finds an active cleared return when the callback was dropped, and it has no fields.
+    // catches: the scan cancelling a visible cleared return it cannot read.
+    @Test
+    fun `scan closes cleared custody of a visible return and does not cancel it`() = runTest {
+        val rig = Rig()
+        rig.admit()
+        rig.clearInbox()
+        rig.now = deadline
+        rig.visibleOriginal()
+
+        rig.handler.onBatchTick(deadline.plusSeconds(1), deadline.minusSeconds(3600))
+
+        assertThat(rig.platform.canceled).isEmpty()
+        assertThat(rig.platform.active).containsKey(source.id)
+        assertThat(rig.rows.find(source.id)?.snoozeDeadline).isNull()
+        assertThat(rig.rows.find(source.id)?.isCleared).isTrue()
+    }
+
+    // why: a clear can land between the listener's flag decision and the drain; the settle has no fields either.
+    // catches: the settle cancelling a cleared return from the flag route.
+    @Test
+    fun `settle of a flagged key cleared in the meantime leaves the post visible`() = runTest {
+        val rig = Rig()
+        rig.admit()
+        rig.now = deadline
+        val post = rig.visibleOriginal()
+        assertThat(rig.handler.flagIfOwned(source.id, post.timestamp)).isTrue()
+        rig.clearInbox()
+
+        rig.routing.settle(SnoozeReturn(source.id, post.timestamp), rig.now)
+
+        assertThat(rig.platform.canceled).isEmpty()
+        assertThat(rig.platform.active).containsKey(source.id)
+        assertThat(rig.rows.find(source.id)?.snoozeDeadline).isNull()
+        assertThat(rig.budget.entries).isEmpty()
+    }
+
+    private companion object {
+        const val FOLLOW_UP = "Body, and a follow-up"
+    }
+
+    private enum class Route { FLAG, STORED_RETURN, NORMAL }
+
     private inner class Rig {
         var now = arrival
         var mainSwitch = true
@@ -204,6 +424,32 @@ class SnoozeServiceRoutingTest {
             inputAt = { at -> input(at).returnContext() },
         )
         val routing = SnoozeServiceRouting(coordinator, handler, rows::find) { at -> input(at).returnContext() }
+        val intake = SnoozeReturnIntake(handler, coordinator::vouchesForSnoozeCustody)
+
+        /**
+         * One post as NotificationService sees it: the flag route first (onNotificationPosted), else the stored
+         * pre-check with the post's own fields, else the normal arrival. The proxy path's cancel of the source
+         * is modelled by dropping it from the visible set without recording a disposal cancel.
+         */
+        suspend fun listenerPost(title: String?, text: String?): Route {
+            val post = visibleOriginal().copy(title = title, text = text)
+            var fresh = false
+            intake.routePosted(post.id, post.timestamp, offer = { true }) { fresh = true }
+            if (!fresh) {
+                intake.drain { routing.settle(it, now) }
+                return Route.FLAG
+            }
+            val order = coordinator.captureEvent(post.id)
+            if (routing.handleStoredPost(post, order, now)) return Route.STORED_RETURN
+            val snoozed = snoozeEnabled && coordinator.withSnoozeAdmission(post.id, order) { live, state ->
+                handler.onPosted(post, input(now).copy(ownedRows = live, budget = state))
+            }
+            if (!snoozed) {
+                coordinator.onArrival(post, HIGH, order)
+                platform.active.remove(post.id)
+            }
+            return Route.NORMAL
+        }
 
         suspend fun input(at: Instant) = SnoozeInput(
             packageName = source.packageName, ownPackageName = "farhan", snoozeEnabled = snoozeEnabled,
@@ -304,7 +550,8 @@ class SnoozeServiceRoutingTest {
     private class Poster : ProxyNotificationPoster {
         val posted = mutableListOf<String>()
         val refreshed = mutableListOf<String>()
-        override suspend fun post(item: NotificationItem): PostResult { posted += item.id; return PostResult.Posted }
+        val postedItems = mutableListOf<NotificationItem>()
+        override suspend fun post(item: NotificationItem): PostResult { posted += item.id; postedItems += item; return PostResult.Posted }
         override suspend fun refresh(item: NotificationItem): PostResult { refreshed += item.id; return PostResult.Posted }
     }
 }
