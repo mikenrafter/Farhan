@@ -10,6 +10,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
+import android.os.SystemClock
 import android.os.UserHandle
 import android.service.notification.NotificationListenerService
 import android.service.notification.NotificationListenerService.RankingMap
@@ -66,6 +67,7 @@ class NotificationService : NotificationListenerService() {
     @Inject lateinit var notificationDao: NotificationDao
 
     private val snoozeWork = Mutex()
+    private val summaryCancellations = SnoozeSummaryCancellations(SystemClock::elapsedRealtime)
     private val snoozeHandler by lazy {
         SnoozeHandler(
             platform = object : SnoozePlatform {
@@ -88,6 +90,8 @@ class NotificationService : NotificationListenerService() {
                 override suspend fun clearedRows() = notificationDao.clearedSnoozes().map { it.toNotificationItem() }
                 override suspend fun closeClearedSnooze(key: String, deadline: Long) =
                     notificationDao.closeClearedSnooze(key, deadline)
+                override suspend fun clearSourceRemoval(key: String, postTime: Long) =
+                    notificationDao.clearSnoozeSourceRemoval(key, postTime)
                 override suspend fun upsert(item: NotificationItem) = notificationDao.insertNotificationItem(item.toNotificationEntity())
             },
             bootCount = { android.provider.Settings.Global.getInt(contentResolver, android.provider.Settings.Global.BOOT_COUNT, -1) },
@@ -104,7 +108,7 @@ class NotificationService : NotificationListenerService() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private data class PostedFields(
         val item: NotificationItem, val androidCategory: String?, val exclusionFlags: SnoozeExclusionFlags,
-        val groupKey: String?,
+        val groupKey: String?, val androidGroupKey: String,
         val contentIntent: PendingIntent?, val actions: List<CapturedAction>, val order: Long,
         /** Only captured while the source-icon experiment is on. */
         val smallIcon: android.graphics.drawable.Icon? = null,
@@ -113,7 +117,14 @@ class NotificationService : NotificationListenerService() {
         data class Posted(val fields: PostedFields) : Work
         data object Return : Work
         data class CustodyCheck(val key: String, val postTime: Long) : Work
-        data class NativeRemoval(val key: String, val packageName: String, val reason: Int, val at: Long) : Work
+        data class NativeRemoval(
+            val key: String,
+            val packageName: String,
+            val reason: Int,
+            val at: Long,
+            val farhanCancelledSummary: Boolean,
+            val postTime: Long,
+        ) : Work
         data class Removed(val id: String, val reason: NotificationRemovalReason, val order: Long) : Work
         data class ChannelChanged(val pkg: String, val channel: String) : Work
     }
@@ -129,7 +140,7 @@ class NotificationService : NotificationListenerService() {
                         when (work) {
                             Work.Return -> Unit
                             is Work.CustodyCheck -> snoozeRouting.handleStoredPost(work.key, work.postTime, Instant.now())
-                            is Work.NativeRemoval -> snoozeHandler.onRemoved(work.key, work.packageName, work.reason, work.at)
+                            is Work.NativeRemoval -> processNativeRemoval(work)
                             is Work.Posted -> processNotificationPosted(work.fields)
                             is Work.Removed -> coordinator.onRemoved(work.id, work.reason, System.currentTimeMillis(), work.order)
                             is Work.ChannelChanged -> notificationFilterUseCases.registerKnownNotificationSources(listOf(
@@ -319,7 +330,8 @@ class NotificationService : NotificationListenerService() {
             CapturedAction(action.title?.toString()?.take(128).orEmpty(), intent, action.remoteInputs?.take(8)?.toTypedArray())
         }
         val smallIcon = if (preferences.isExperimentEnabled(Experiments.SOURCE_ICON)) notification.smallIcon else null
-        val fields = PostedFields(item, notification.category, flags, groupKey, notification.contentIntent, actions, order, smallIcon)
+        val fields = PostedFields(item, notification.category, flags, groupKey, sbn.groupKey,
+            notification.contentIntent, actions, order, smallIcon)
         if (!intake.offer(Work.Posted(fields))) {
             // Invalidate older queued updates to this key; this new notification remains in the source tray.
             coordinator.captureEvent(item.id, bypassed = true)
@@ -385,7 +397,8 @@ class NotificationService : NotificationListenerService() {
             actionStore.put(item.id, Actions(fields.contentIntent, fields.actions, fields.smallIcon))
             NotificationDiagnostics.counter("farhan.actions.retained", actionStore.size())
         }
-        if (preferences.isExperimentEnabled(Experiments.SNOOZE)) {
+        val snoozeEnabled = preferences.isExperimentEnabled(Experiments.SNOOZE)
+        if (snoozeEnabled) {
             if (fields.exclusionFlags.isGroupSummary) return
             val setting = preferences.getPriorityDeliverySettings()[priority] ?: PriorityDeliverySetting.defaultFor(priority)
             val handled = coordinator.withSnoozeAdmission(item.id, fields.order) { liveRows, budget ->
@@ -407,7 +420,12 @@ class NotificationService : NotificationListenerService() {
         }
         val outcome = coordinator.onArrival(item, priority, fields.order, passThrough, captureActions,
             sourceStillCurrent = { activeSourcePostTimes()[item.id] == item.timestamp })
-        if (!passThrough && outcome !is DeliveryOutcome.Cleared && activeSourcePostTimes()[item.id] == item.timestamp) cancelNotification(item.id)
+        if (!passThrough && outcome !is DeliveryOutcome.Cleared && activeSourcePostTimes()[item.id] == item.timestamp) {
+            if (fields.exclusionFlags.isGroupSummary) {
+                summaryCancellations.requested(fields.androidGroupKey, item.id, item.timestamp)
+            }
+            cancelNotification(item.id)
+        }
         if (outcome is DeliveryOutcome.Cleared) actionStore.remove(item.id)
         if (!passThrough && notificationFilterUseCases.getNotifyMeHour() != -1) {
             notificationFilterUseCases.createNotifyMeNotificationChannel()
@@ -425,13 +443,29 @@ class NotificationService : NotificationListenerService() {
         return (if (ai != null) pm.getApplicationLabel(ai) else appPackageName) as String?
     }
 
+    private suspend fun processNativeRemoval(removal: Work.NativeRemoval) {
+        snoozeRouting.handleRemoval(removal.key, removal.packageName, removal.reason, removal.at,
+            removal.farhanCancelledSummary, removal.postTime)
+    }
+
     override fun onNotificationRemoved(sbn: StatusBarNotification?, rankingMap: RankingMap?, reason: Int) {
-        if (sbn != null && sbn.packageName != packageName &&
-            (reason == REASON_SNOOZED && snoozeHandler.owns(sbn.key) || reason == REASON_GROUP_SUMMARY_CANCELED)) {
-            val removal = Work.NativeRemoval(sbn.key, sbn.packageName, reason, System.currentTimeMillis())
-            if (!intake.offer(removal)) {
-                serviceScope.launch {
-                    snoozeWork.withLock { snoozeHandler.onRemoved(removal.key, removal.packageName, removal.reason, removal.at) }
+        if (sbn != null && sbn.packageName != packageName) {
+            if (sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) {
+                summaryCancellations.summaryRemoved(sbn.groupKey, sbn.key, sbn.postTime, reason == REASON_LISTENER_CANCEL)
+            }
+            if (reason == REASON_SNOOZED && snoozeHandler.owns(sbn.key) || reason == REASON_GROUP_SUMMARY_CANCELED) {
+                val collateral = reason == REASON_GROUP_SUMMARY_CANCELED &&
+                    summaryCancellations.causedCascade(sbn.groupKey)
+                if (reason == REASON_GROUP_SUMMARY_CANCELED && !collateral) {
+                    coordinator.captureEvent(sbn.key, removed = true)
+                    actionStore.remove(sbn.key)
+                }
+                val removal = Work.NativeRemoval(sbn.key, sbn.packageName, reason, System.currentTimeMillis(),
+                    collateral, sbn.postTime)
+                if (!intake.offer(removal)) {
+                    serviceScope.launch {
+                        snoozeWork.withLock { processNativeRemoval(removal) }
+                    }
                 }
             }
         }

@@ -33,6 +33,15 @@ internal class SnoozeServiceRouting(
         return true
     }
 
+    suspend fun handleRemoval(
+        key: String,
+        packageName: String,
+        reason: Int,
+        at: Long,
+        farhanCancelledSummary: Boolean,
+        postTime: Long,
+    ): Boolean = handler.onRemoved(key, packageName, reason, at, farhanCancelledSummary, postTime)
+
     suspend fun settle(returned: SnoozeReturn, now: Instant): Boolean =
         handler.settle(returned, inputAt(now))
 }

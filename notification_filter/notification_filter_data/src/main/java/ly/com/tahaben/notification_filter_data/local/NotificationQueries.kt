@@ -3,7 +3,7 @@ package ly.com.tahaben.notification_filter_data.local
 /** SQL shared with executable SQLite query fixtures. All row results are bounded before domain mapping. */
 object NotificationQueries {
     const val LIVE_SNOOZES = "SELECT * FROM NotificationItemEntity WHERE snoozeDeadline IS NOT NULL AND isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0"
-    const val COMPLETE_SNOOZE_RETURN = "UPDATE notificationitementity SET isDelivered = 1, snoozeDeadline = NULL, snoozePriority = NULL, snoozeBootCount = NULL WHERE id = :id"
+    const val COMPLETE_SNOOZE_RETURN = "UPDATE notificationitementity SET isDelivered = 1, snoozeDeadline = NULL, snoozePriority = NULL, snoozeBootCount = NULL, snoozeGroupKey = NULL WHERE id = :id"
     const val PENDING_UP_TO_PRIORITY = "SELECT * FROM notificationitementity WHERE isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0 AND snoozeDeadline IS NULL AND priority <= :priorityLevel ORDER BY priority ASC, timestamp ASC"
     const val PENDING_HEAD = "SELECT * FROM notificationitementity WHERE creatorPackage = :packageName AND priority = :priority AND isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0 AND snoozeDeadline IS NULL ORDER BY CASE WHEN :oldest THEN timestamp END ASC, CASE WHEN NOT :oldest THEN timestamp END DESC, id ASC LIMIT 1"
     const val PENDING_GROUPS = "SELECT creatorPackage AS packageName, priority FROM notificationitementity WHERE isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0 AND snoozeDeadline IS NULL AND priority <= :maxPriority GROUP BY creatorPackage, priority ORDER BY priority ASC, creatorPackage ASC LIMIT 4096"

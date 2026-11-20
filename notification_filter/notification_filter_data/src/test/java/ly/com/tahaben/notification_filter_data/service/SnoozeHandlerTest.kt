@@ -578,7 +578,7 @@ class SnoozeHandlerTest {
     // catches: sending the child to normal accounting or dropping the saved notification.
     @Test
     fun `recorded Farhan summary cancel refreshes a charged grouped child without spending again`() = runTest {
-        val row = snoozedRow().copy(snoozeGroupKey = "group", isDelivered = true,
+        val row = snoozedRow().copy(isDelivered = true,
             snoozeDeadline = null, snoozePriority = null, snoozeBootCount = null)
         ledger.upsert(row)
         assertThat(handler.onRemoved(key, packageName, 12, boundary.toEpochMilli(), farhanCancelledSummary = true)).isTrue()
@@ -663,6 +663,13 @@ class SnoozeHandlerTest {
         override suspend fun find(key: String) = rows[key]
         override suspend fun liveRows() = rows.values.filter { it.hasLiveSnooze }
         override suspend fun clearedRows() = rows.values.filter { it.isCleared && it.snoozeDeadline != null }
+        override suspend fun clearSourceRemoval(key: String, postTime: Long) {
+            val row = rows[key] ?: return
+            if (row.timestamp <= postTime) {
+                rows[key] = row.copy(isCleared = true, snoozeDeadline = null, snoozePriority = null,
+                    snoozeBootCount = null, snoozeGroupKey = null)
+            }
+        }
         override suspend fun closeClearedSnooze(key: String, deadline: Long) {
             val row = rows[key] ?: return
             if (row.isCleared && row.snoozeDeadline == deadline) {
@@ -697,7 +704,7 @@ class SnoozeHandlerTest {
 
             state = NotificationDeliveryPolicy.recordPassthrough(priority, setting, schedule, time.scheduleMinuteOfDay, decision.updatedBudget)
             charges += returned
-            ledger.upsert(row.copy(isDelivered = true, snoozeDeadline = null, snoozePriority = null, snoozeBootCount = null))
+            ledger.upsert(row.copy(isDelivered = true, snoozeDeadline = null, snoozePriority = null, snoozeBootCount = null, snoozeGroupKey = null))
             return SnoozeReturnDecision.Charged
         }
     }

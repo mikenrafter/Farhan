@@ -88,6 +88,11 @@ interface NotificationDao {
         WHERE id = :id AND isCleared = 1 AND snoozeDeadline = :deadline""")
     suspend fun closeClearedSnooze(id: String, deadline: Long)
 
+    @Query("""UPDATE NotificationItemEntity SET isCleared = 1, snoozeDeadline = NULL, snoozePriority = NULL,
+        snoozeBootCount = NULL, snoozeGroupKey = NULL
+        WHERE id = :id AND timestamp <= :postTime""")
+    suspend fun clearSnoozeSourceRemoval(id: String, postTime: Long)
+
     @Query(NotificationQueries.PENDING_UP_TO_PRIORITY)
     suspend fun getUndeliveredNotificationsUpToPriority(priorityLevel: Int): List<NotificationItemEntity>
 

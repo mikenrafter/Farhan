@@ -40,6 +40,7 @@ interface SnoozeLedger {
     suspend fun liveRows(): List<NotificationItem>
     suspend fun clearedRows(): List<NotificationItem>
     suspend fun closeClearedSnooze(key: String, deadline: Long)
+    suspend fun clearSourceRemoval(key: String, postTime: Long)
     suspend fun upsert(item: NotificationItem)
 }
 
@@ -164,7 +165,7 @@ class SnoozeHandler(
                     synchronized(this) { owned[row.id]?.confirmed != true } -> fallback(row, now, UNCONFIRMED)
                 activePostTime == null && deadline < previousTick.toEpochMilli() -> {
                     val lost = row.snoozeBootCount != bootCount()
-                    release(row.copy(isCleared = !lost && row.snoozeGroupKey == null))
+                    release(row.copy(isCleared = !lost))
                     record(if (lost) LOST else REMOVED, row, now)
                 }
             }
@@ -291,14 +292,14 @@ class SnoozeHandler(
     }
 
     private suspend fun release(row: NotificationItem) {
-        ledger.upsert(row.copy(snoozeDeadline = null, snoozePriority = null, snoozeBootCount = null))
+        ledger.upsert(row.copy(snoozeDeadline = null, snoozePriority = null, snoozeBootCount = null, snoozeGroupKey = null))
         forget(row.id)
     }
 
     private suspend fun fallback(row: NotificationItem, now: Instant, reason: SnoozeFallbackReason): Boolean {
         release(row)
         platform.cancelVisible(row.id)
-        proxyArrival(row.copy(snoozeDeadline = null, snoozePriority = null, snoozeBootCount = null))
+        proxyArrival(row.copy(snoozeDeadline = null, snoozePriority = null, snoozeBootCount = null, snoozeGroupKey = null))
         events.record(ExperimentEvent(now.toEpochMilli(), FAILED, packageName = row.packageName, fallbackReason = reason))
         return false
     }
@@ -310,6 +311,7 @@ class SnoozeHandler(
         reason: Int,
         atEpochMillis: Long,
         farhanCancelledSummary: Boolean = false,
+        removedPostTime: Long = Long.MAX_VALUE,
     ): Boolean {
         val row = ledger.find(key) ?: return false
         val deadline = row.snoozeDeadline
@@ -317,9 +319,16 @@ class SnoozeHandler(
             remember(key, deadline, confirmed = true)
             return true
         }
-        if (reason == REASON_GROUP_SUMMARY_CANCELED && row.snoozeGroupKey != null) {
-            if (row.isDelivered && !row.isCleared) refreshProxy(row)
-            else if (row.snoozeDeadline != null) release(row.copy(isCleared = false))
+        if (reason == REASON_GROUP_SUMMARY_CANCELED) {
+            if (row.timestamp > removedPostTime) return false
+            if (!farhanCancelledSummary) {
+                ledger.clearSourceRemoval(key, removedPostTime)
+                forget(key)
+                record(REMOVED, row, Instant.ofEpochMilli(atEpochMillis))
+            } else if (!row.isCleared) {
+                if (row.isDelivered) refreshProxy(row)
+                else if (row.hasLiveSnooze && row.snoozeGroupKey != null) release(row)
+            }
             return true
         }
         return false

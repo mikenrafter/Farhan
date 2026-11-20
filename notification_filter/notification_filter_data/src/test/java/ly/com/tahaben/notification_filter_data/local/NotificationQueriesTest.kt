@@ -7,7 +7,7 @@ import java.sql.DriverManager
 /** Executes the exact SQL constants used by Room. Android driver/runtime remains a device check. */
 class NotificationQueriesTest {
     private fun <T> database(block: (java.sql.Connection) -> T): T = DriverManager.getConnection("jdbc:sqlite::memory:").use { db ->
-        db.createStatement().use { it.execute("""CREATE TABLE notificationitementity(id TEXT PRIMARY KEY, appName TEXT, title TEXT, text TEXT, time TEXT, creatorPackage TEXT, timestamp INTEGER, priority INTEGER, category TEXT, isRead INTEGER, channelId TEXT, isCleared INTEGER, isDelivered INTEGER, priorityReason TEXT, sourceSession TEXT NOT NULL DEFAULT '', sourceEventOrder INTEGER NOT NULL DEFAULT 0, deliveryInvalidated INTEGER NOT NULL DEFAULT 0, snoozeDeadline INTEGER, snoozePriority INTEGER, snoozeBootCount INTEGER)""") }
+        db.createStatement().use { it.execute("""CREATE TABLE notificationitementity(id TEXT PRIMARY KEY, appName TEXT, title TEXT, text TEXT, time TEXT, creatorPackage TEXT, timestamp INTEGER, priority INTEGER, category TEXT, isRead INTEGER, channelId TEXT, isCleared INTEGER, isDelivered INTEGER, priorityReason TEXT, sourceSession TEXT NOT NULL DEFAULT '', sourceEventOrder INTEGER NOT NULL DEFAULT 0, deliveryInvalidated INTEGER NOT NULL DEFAULT 0, snoozeDeadline INTEGER, snoozePriority INTEGER, snoozeBootCount INTEGER, snoozeGroupKey TEXT)""") }
         block(db)
     }
     private fun insert(db: java.sql.Connection, id: String, timestamp: Long, priority: Int = 2, cleared: Int = 0, read: Int = 0, pkg: String = "app", title: String = id) {
@@ -75,13 +75,14 @@ class NotificationQueriesTest {
             query.setString(1, "hiddenHead")
             assertThat(query.executeUpdate()).isEqualTo(1)
         }
-        val after = rows(db, "SELECT id, isDelivered, snoozeDeadline, snoozePriority, snoozeBootCount FROM notificationitementity", emptyMap())
+        val after = rows(db, "SELECT id, isDelivered, snoozeDeadline, snoozePriority, snoozeBootCount, snoozeGroupKey FROM notificationitementity", emptyMap())
             .associateBy { it["id"] }
         val completed = after.getValue("hiddenHead")
         assertThat((completed["isDelivered"] as Number).toInt()).isEqualTo(1)
         assertThat(completed["snoozeDeadline"]).isNull()
         assertThat(completed["snoozePriority"]).isNull()
         assertThat(completed["snoozeBootCount"]).isNull()
+        assertThat(completed["snoozeGroupKey"]).isNull()
         val untouched = after.getValue("hiddenOnly")
         assertThat((untouched["isDelivered"] as Number).toInt()).isEqualTo(0)
         assertThat((untouched["snoozeDeadline"] as Number).toLong()).isEqualTo(2000L)
@@ -108,7 +109,7 @@ class NotificationQueriesTest {
         insert(db, "onlyPastDeadline", 700, pkg = "deadline-past")
         insert(db, "pastDeadline", 500, pkg = "mixed")
         db.createStatement().use { sql ->
-            sql.executeUpdate("UPDATE notificationitementity SET snoozeDeadline=2000, snoozePriority=2, snoozeBootCount=10 WHERE id LIKE 'hidden%'")
+            sql.executeUpdate("UPDATE notificationitementity SET snoozeDeadline=2000, snoozePriority=2, snoozeBootCount=10, snoozeGroupKey='fixture-group' WHERE id LIKE 'hidden%'")
             sql.executeUpdate("UPDATE notificationitementity SET snoozeDeadline=1000 WHERE id IN ('atDeadline', 'onlyAtDeadline')")
             sql.executeUpdate("UPDATE notificationitementity SET snoozeDeadline=999 WHERE id IN ('pastDeadline', 'onlyPastDeadline')")
         }

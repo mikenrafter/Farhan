@@ -163,7 +163,8 @@ class SnoozeServiceRoutingTest {
         assertThat(rig.budget.entries).hasSize(1)
 
         rig.platform.active.remove(source.id)
-        assertThat(rig.handler.onRemoved(source.id, source.packageName, 12, deadline.plusMillis(2).toEpochMilli())).isTrue()
+        assertThat(rig.routing.handleRemoval(source.id, source.packageName, 12, deadline.plusMillis(2).toEpochMilli(),
+            farhanCancelledSummary = false, postTime = deadline.toEpochMilli())).isTrue()
         assertThat(rig.poster.refreshed).isEmpty()
         assertThat(rig.rows.find(source.id)?.isCleared).isTrue()
         assertThat(rig.budget.entries).hasSize(1)
@@ -258,11 +259,18 @@ class SnoozeServiceRoutingTest {
         override suspend fun markDelivered(id: String) { rows[id] = rows.getValue(id).copy(isDelivered = true) }
         override suspend fun completeSnoozeReturn(id: String) {
             rows[id] = rows.getValue(id).copy(isDelivered = true, snoozeDeadline = null,
-                snoozePriority = null, snoozeBootCount = null)
+                snoozePriority = null, snoozeBootCount = null, snoozeGroupKey = null)
         }
         override suspend fun liveSnoozes() = liveRows()
         override suspend fun liveRows() = rows.values.filter { it.hasLiveSnooze }
         override suspend fun clearedRows() = rows.values.filter { it.isCleared && it.snoozeDeadline != null }
+        override suspend fun clearSourceRemoval(key: String, postTime: Long) {
+            val row = rows[key] ?: return
+            if (row.timestamp <= postTime) {
+                rows[key] = row.copy(isCleared = true, snoozeDeadline = null, snoozePriority = null,
+                    snoozeBootCount = null, snoozeGroupKey = null)
+            }
+        }
         override suspend fun closeClearedSnooze(key: String, deadline: Long) {
             val row = rows[key] ?: return
             if (row.isCleared && row.snoozeDeadline == deadline) {
