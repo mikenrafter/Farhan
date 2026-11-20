@@ -40,6 +40,15 @@ class FakeRowStore : DeliveryRowStore {
         rows[id]?.let { rows[id] = it.copy(isDelivered = true) }
     }
 
+    override suspend fun completeSnoozeReturn(id: String) {
+        rows[id]?.let {
+            rows[id] = it.copy(isDelivered = true, snoozeDeadline = null, snoozePriority = null, snoozeBootCount = null)
+        }
+    }
+
+    override suspend fun liveSnoozes() =
+        rows.values.filter { !it.isCleared && !it.isDelivered && it.snoozeDeadline != null }
+
     override suspend fun pending(maxPriorityLevel: Int): List<NotificationItem> {
         val snapshot = rows.values.filter { !it.isDelivered && !it.isCleared && !it.deliveryInvalidated && it.priority.level <= maxPriorityLevel }
         val gate = pendingGate
@@ -99,7 +108,12 @@ class FakeEnvironment(
     var time: DeliveryTimeContext = productionContext(10),
     var preferences: Map<String, AppQueuePreference> = emptyMap(),
 ) : DeliveryEnvironment {
+    var schedulesByDate: ly.com.tahaben.notification_filter_domain.schedule.ScheduleBook? = null
+
     override fun schedule() = schedule
+    override fun zone() = java.time.ZoneOffset.UTC
+    override fun scheduleAt(instant: java.time.Instant, zone: java.time.ZoneId) =
+        schedulesByDate?.scheduleAt(instant, zone) ?: schedule
     override fun settings() = settings
     override fun timeContext() = time
     override fun queuePreferences() = preferences

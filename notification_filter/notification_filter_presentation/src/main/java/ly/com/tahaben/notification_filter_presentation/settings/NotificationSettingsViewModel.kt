@@ -1,6 +1,11 @@
 package ly.com.tahaben.notification_filter_presentation.settings
 
 import android.Manifest
+import ly.com.tahaben.notification_filter_domain.delivery.DeliveryClock
+import ly.com.tahaben.notification_filter_domain.delivery.SnoozeTiming
+import ly.com.tahaben.notification_filter_domain.model.DeliveryCadence
+import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
+import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,6 +45,12 @@ class NotificationSettingsViewModel @Inject constructor(
         performPermissionSilentChecks()
         shouldShowWarningDialog()
         refreshAutomation()
+        viewModelScope.launch(Dispatchers.IO) {
+            experimentLog.history.collect { history ->
+                _state.update { it.copy(snoozeEvents = history.recent, snoozeCounts = history.counts) }
+                refreshSnoozeTimes()
+            }
+        }
     }
 
 
@@ -211,9 +222,10 @@ class NotificationSettingsViewModel @Inject constructor(
                 preferences.setExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SOURCE_ICON, event.enabled)
                 _state.update { it.copy(sourceIconExperiment = event.enabled) }
             }
-            is NotificationSettingsEvent.SetSnoozeDemoExperiment -> {
-                preferences.setExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SNOOZE_DEMO, event.enabled)
-                _state.update { it.copy(snoozeDemoExperiment = event.enabled) }
+            is NotificationSettingsEvent.SetSnoozeExperiment -> {
+                preferences.setExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SNOOZE, event.enabled)
+                _state.update { it.copy(snoozeExperiment = event.enabled) }
+                viewModelScope.launch(Dispatchers.IO) { refreshSnoozeTimes() }
             }
 
             NotificationSettingsEvent.ClearBudgetSpend -> {
@@ -240,10 +252,34 @@ class NotificationSettingsViewModel @Inject constructor(
                 lastAutomationReceipt = receipts.last(),
                 automationError = error,
                 sourceIconExperiment = preferences.isExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SOURCE_ICON),
-                snoozeDemoExperiment = preferences.isExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SNOOZE_DEMO),
-                snoozeDemoEvents = experimentLog.recent(),
+                snoozeExperiment = preferences.isExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SNOOZE),
+                snoozeEvents = experimentLog.recent(),
             )
         }
+    }
+
+    private fun refreshSnoozeTimes() {
+        val clock = DeliveryClock.systemClock
+        val now = clock.instant()
+        val zone = clock.zone
+        val book = try {
+            preferences.getScheduleSnapshot().book
+        } catch (_: ly.com.tahaben.notification_filter_domain.schedule.ScheduleReadException) {
+            return
+        }
+        val settings = preferences.getPriorityDeliverySettings()
+        val testing = preferences.isDeliveryTestingMode()
+        val immediate = mutableSetOf<NotificationPriority>()
+        val moments = NotificationPriority.entries.associateWith { priority ->
+            val setting = settings[priority] ?: PriorityDeliverySetting.defaultFor(priority)
+            if (priority == NotificationPriority.CRITICAL || setting.cadence == DeliveryCadence.IMMEDIATELY) {
+                immediate.add(priority)
+                null
+            } else {
+                SnoozeTiming.nextDeliverableMoment(priority, setting, book::scheduleAt, now, zone, testing)
+            }
+        }
+        _state.update { it.copy(snoozeNext = moments, snoozeImmediate = immediate) }
     }
 
     /** For the copy button only. The value goes to the clipboard and is never stored in state or logged. */

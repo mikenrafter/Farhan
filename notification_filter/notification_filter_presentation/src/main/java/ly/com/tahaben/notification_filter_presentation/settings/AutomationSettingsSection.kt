@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -84,13 +85,34 @@ fun AutomationAndExperimentsSection(
             state.sourceIconExperiment,
         ) { onEvent(NotificationSettingsEvent.SetSourceIconExperiment(it)) }
         ExperimentRow(
-            "Timed snooze demo",
-            "Only for Farhan's own test apps (messenger, storm, social, calendar). Android hides each test notification for one minute and shows it again. This is outside your budget: nothing is counted or limited, and Farhan cannot cancel or bring back a snoozed notification. Real apps are never snoozed. Off by default.",
-            state.snoozeDemoExperiment,
-        ) { onEvent(NotificationSettingsEvent.SetSnoozeDemoExperiment(it)) }
-        if (state.snoozeDemoEvents.isNotEmpty()) {
-            Text("Recent snooze callbacks (newest first, no text kept)", style = MaterialTheme.typography.labelMedium)
-            state.snoozeDemoEvents.take(8).forEach { Text(describeExperimentEvent(it), style = MaterialTheme.typography.bodySmall) }
+            "Snooze (pilot)",
+            "Android hides eligible notifications until the next delivery time for their priority. Your budget decides what happens when they return, and a denied return can beep once. The daily retry limit resets when Farhan restarts. Farhan cannot release or cancel a notification Android is holding, even if you turn snooze off or change the schedule. Android can lose a snoozed notification at reboot. If the app does not post it again, Farhan can deliver its saved copy. Calls, alarms, ongoing notifications, exceptions and critical notifications are never snoozed.",
+            state.snoozeExperiment,
+        ) { onEvent(NotificationSettingsEvent.SetSnoozeExperiment(it)) }
+        if (state.snoozeExperiment || state.snoozeEvents.isNotEmpty()) {
+            val dateTime = remember { DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT) }
+            state.snoozeNext.forEach { (priority, next) ->
+                val moment = when {
+                    priority in state.snoozeImmediate -> "immediately"
+                    next == null -> "no time with budget left in the next 48 hours"
+                    else -> dateTime.format(Date.from(next))
+                }
+                Text("${priority.displayName()} · $moment", style = MaterialTheme.typography.bodySmall)
+            }
+            val counts = state.snoozeCounts
+            Text(
+                "${counts[ExperimentEventKind.SNOOZED] ?: 0} snoozed · " +
+                    "${counts[ExperimentEventKind.RETURNED] ?: 0} returned · " +
+                    "${counts[ExperimentEventKind.RESNOOZED] ?: 0} snoozed again · " +
+                    "${counts[ExperimentEventKind.REMOVED] ?: 0} removed · " +
+                    "${counts[ExperimentEventKind.FAILED] ?: 0} failed · " +
+                    "${counts[ExperimentEventKind.LOST] ?: 0} lost",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            state.snoozeEvents.forEach { event ->
+                val label = remember(event.packageName) { appLabel(context, event.packageName) }
+                Text(describeExperimentEvent(event, label), style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
 
@@ -152,11 +174,29 @@ internal fun describeError(error: AutomationError): String = when (error) {
     AutomationError.BUSY -> "too many requests at once, retry"
 }
 
-private fun describeExperimentEvent(event: ExperimentEvent): String {
+private fun NotificationPriority.displayName(): String = when (this) {
+    NotificationPriority.CRITICAL -> "Critical"
+    NotificationPriority.HIGH -> "High"
+    NotificationPriority.MEDIUM -> "Medium"
+    NotificationPriority.LOW -> "Low"
+}
+
+private fun appLabel(context: android.content.Context, packageName: String): String = try {
+    val manager = context.packageManager
+    manager.getApplicationLabel(manager.getApplicationInfo(packageName, 0)).toString()
+} catch (_: android.content.pm.PackageManager.NameNotFoundException) {
+    packageName
+}
+
+private fun describeExperimentEvent(event: ExperimentEvent, label: String): String {
     val time = DateFormat.getTimeInstance(DateFormat.MEDIUM).format(Date(event.atEpochMillis))
-    return when (event.kind) {
-        ExperimentEventKind.SNOOZED -> "$time  snoozed for one minute"
-        ExperimentEventKind.RETURNED -> "$time  Android showed it again"
-        ExperimentEventKind.REMOVED -> "$time  removed, Android reason ${event.removalReason}"
+    val action = when (event.kind) {
+        ExperimentEventKind.SNOOZED -> "snoozed"
+        ExperimentEventKind.RETURNED -> "returned"
+        ExperimentEventKind.RESNOOZED -> "snoozed again"
+        ExperimentEventKind.REMOVED -> "removed"
+        ExperimentEventKind.FAILED -> "could not snooze"
+        ExperimentEventKind.LOST -> "recovered after reboot"
     }
+    return "$time · $label · $action"
 }

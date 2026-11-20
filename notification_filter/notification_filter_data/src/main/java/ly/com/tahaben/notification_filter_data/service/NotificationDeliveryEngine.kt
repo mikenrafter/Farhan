@@ -14,11 +14,12 @@ class NotificationDeliveryEngine @Inject constructor(
     private val deliveryScheduler: NotificationDeliveryScheduler,
 ) {
     suspend fun maintainDeliverySchedule(context: Context) {
-        if (!preferences.isServiceEnabled()) return
         deliverPendingNotifications(context)
+        if (!preferences.isServiceEnabled() && !NotificationService.hasNativeSnoozes()) return
         deliveryScheduler.scheduleNextBoundaryDelivery(context)
     }
     suspend fun deliverPendingNotifications(context: Context) {
+        NotificationService.reconcileNativeSnoozes()
         if (preferences.isServiceEnabled()) coordinator.onBatchTick()
     }
 }

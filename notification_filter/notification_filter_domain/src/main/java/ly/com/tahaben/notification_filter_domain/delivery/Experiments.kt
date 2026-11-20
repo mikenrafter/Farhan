@@ -1,39 +1,40 @@
 package ly.com.tahaben.notification_filter_domain.delivery
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
 /**
- * Independent, default-off experiments. Neither changes the budgeted proxy path for real apps.
+ * Independent, default-off notification experiments.
  * Toggles live in [ly.com.tahaben.notification_filter_domain.preferences.Preferences.isExperimentEnabled].
  */
 object Experiments {
     /** Delivered proxies show the source app's small icon when it is a usable resource icon; identity stays Farhan. */
     const val SOURCE_ICON = "source_icon"
 
-    /** Android's timed snooze, for Farhan's own demo apps only. Outside the budget, with no unsnooze. */
-    const val SNOOZE_DEMO = "snooze_demo"
-
-    const val SNOOZE_MILLIS = 60_000L
-
-    /**
-     * CLAIM(snooze-allowlist): the exact demo packages and nothing else; a real app is never snoozed
-     * [ExperimentsTest]. Membership, not a prefix, so `ly.com.tahaben.test.messenger.evil` does not qualify.
-     */
-    val SNOOZE_DEMO_PACKAGES: Set<String> = setOf(
-        "ly.com.tahaben.test.messenger",
-        "ly.com.tahaben.test.storm",
-        "ly.com.tahaben.test.social",
-        "ly.com.tahaben.test.calendar",
-    )
-
-    fun maySnoozeInDemo(packageName: String): Boolean = packageName in SNOOZE_DEMO_PACKAGES
+    const val SNOOZE = "snooze"
 }
 
-enum class ExperimentEventKind { SNOOZED, RETURNED, REMOVED }
+enum class ExperimentEventKind { SNOOZED, RETURNED, RESNOOZED, REMOVED, FAILED, LOST }
 
-/** One platform callback seen during the snooze demo. No notification text, title or key. [removalReason] is Android's code. */
-data class ExperimentEvent(val atEpochMillis: Long, val kind: ExperimentEventKind, val removalReason: Int? = null)
+/** One platform callback seen during the snooze pilot. [removalReason] is Android's code. */
+data class ExperimentEvent(
+    val atEpochMillis: Long,
+    val kind: ExperimentEventKind,
+    val removalReason: Int? = null,
+    val packageName: String = "",
+    val skipReason: SnoozeSkipReason? = null,
+    val fallbackReason: SnoozeFallbackReason? = null,
+)
 
-/** Bounded, newest-first record of the snooze demo's callbacks, for the settings screen. */
+/** Bounded, newest-first record of the snooze pilot's callbacks, for the settings screen. */
+data class ExperimentHistory(
+    val recent: List<ExperimentEvent> = emptyList(),
+    val counts: Map<ExperimentEventKind, Long> = emptyMap(),
+)
+
 interface ExperimentEventLog {
+    val history: StateFlow<ExperimentHistory>
     fun record(event: ExperimentEvent)
     fun recent(): List<ExperimentEvent>
 }
@@ -41,10 +42,15 @@ interface ExperimentEventLog {
 /** In memory only: a restart clears it. Holds at most [capacity] events. */
 class InMemoryExperimentEventLog(private val capacity: Int = 20) : ExperimentEventLog {
     private val events = ArrayDeque<ExperimentEvent>()
+    private val updates = MutableStateFlow(ExperimentHistory())
+    override val history = updates.asStateFlow()
 
     @Synchronized override fun record(event: ExperimentEvent) {
         events.addFirst(event)
         while (events.size > capacity) events.removeLast()
+        val counts = updates.value.counts.toMutableMap()
+        counts[event.kind] = counts.getOrDefault(event.kind, 0) + 1
+        updates.value = ExperimentHistory(events.toList(), counts)
     }
 
     @Synchronized override fun recent(): List<ExperimentEvent> = events.toList()

@@ -26,6 +26,10 @@ fun NotificationItem.toNotificationEntity(): NotificationItemEntity {
         sourceSession = sourceSession,
         sourceEventOrder = sourceEventOrder,
         deliveryInvalidated = deliveryInvalidated,
+        snoozeDeadline = snoozeDeadline,
+        snoozePriority = snoozePriority?.level,
+        snoozeBootCount = snoozeBootCount,
+        snoozeGroupKey = snoozeGroupKey,
     )
 }
 
@@ -48,6 +52,10 @@ fun NotificationItemEntity.toNotificationItem(): NotificationItem {
         sourceSession = sourceSession,
         sourceEventOrder = sourceEventOrder,
         deliveryInvalidated = deliveryInvalidated,
+        snoozeDeadline = snoozeDeadline,
+        snoozePriority = snoozePriority?.let(ly.com.tahaben.notification_filter_domain.model.NotificationPriority::fromLevel),
+        snoozeBootCount = snoozeBootCount,
+        snoozeGroupKey = snoozeGroupKey,
     )
 }
 

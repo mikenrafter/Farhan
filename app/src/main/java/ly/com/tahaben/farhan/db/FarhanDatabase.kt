@@ -21,7 +21,7 @@ import ly.com.tahaben.usage_overview_data.local.entity.UsageDataItemEntity
 
 @Database(
     entities = [UsageDataItemEntity::class, NotificationItemEntity::class, AppEntity::class, TimeLimitEntity::class, DayLastUpdatedEntity::class, LaunchAttemptEntity::class],
-    version = 7,
+    version = 8,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
@@ -29,6 +29,7 @@ import ly.com.tahaben.usage_overview_data.local.entity.UsageDataItemEntity
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6),
         AutoMigration(from = 6, to = 7),
+        AutoMigration(from = 7, to = 8),
     ]
 )
 @TypeConverters(LocalDateTypeConverter::class)

@@ -10,6 +10,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
+import android.os.SystemClock
 import android.os.UserHandle
 import android.service.notification.NotificationListenerService
 import android.service.notification.NotificationListenerService.RankingMap
@@ -17,11 +18,18 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import androidx.core.app.RemoteInput as AndroidXRemoteInput
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.time.Instant
+import ly.com.tahaben.notification_filter_data.local.NotificationDao
+import ly.com.tahaben.notification_filter_data.mapper.toNotificationEntity
+import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
 import ly.com.tahaben.core.R
 import ly.com.tahaben.notification_filter_data.mapper.toNotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationCategory
@@ -57,18 +65,66 @@ class NotificationService : NotificationListenerService() {
 
     @Inject lateinit var experimentLog: ExperimentEventLog
 
-    /** Demo keys Android is holding for us. Bounded; main-thread callbacks only. */
-    private val snoozedDemoKeys = LinkedHashSet<String>()
+    @Inject lateinit var notificationDao: NotificationDao
+
+    private val snoozeWork = Mutex()
+    private val summaryCancellations = SnoozeSummaryCancellations(SystemClock::elapsedRealtime)
+    private val snoozeHandler by lazy {
+        SnoozeHandler(
+            platform = object : SnoozePlatform {
+                override fun snooze(key: String, millis: Long) {
+                    check(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    snoozeNotification(key, millis)
+                }
+                override fun snoozedKeys(): Set<String> =
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        snoozedNotifications.orEmpty().mapTo(hashSetOf()) { it.key }
+                    } else emptySet()
+                override fun activePostTimes() = activeSourcePostTimes()
+                override fun cancelVisible(key: String) = cancelNotification(key)
+            },
+            events = experimentLog,
+            budget = SnoozeReturnBudget(coordinator::settleSnoozeReturn),
+            ledger = object : SnoozeLedger {
+                override suspend fun find(key: String) = notificationDao.find(key)?.toNotificationItem()
+                override suspend fun liveRows() = notificationDao.liveSnoozes().map { it.toNotificationItem() }
+                override suspend fun clearedRows() = notificationDao.clearedSnoozes().map { it.toNotificationItem() }
+                override suspend fun closeClearedSnooze(key: String, deadline: Long) =
+                    notificationDao.closeClearedSnooze(key, deadline)
+                override suspend fun clearSourceRemoval(key: String, postTime: Long) =
+                    notificationDao.clearSnoozeSourceRemoval(key, postTime)
+                override suspend fun upsert(item: NotificationItem) = notificationDao.insertNotificationItem(item.toNotificationEntity())
+            },
+            bootCount = { android.provider.Settings.Global.getInt(contentResolver, android.provider.Settings.Global.BOOT_COUNT, -1) },
+            proxyArrival = { row -> coordinator.onArrival(row, row.priority) },
+            refreshProxy = { row -> coordinator.refreshSnoozeProxy(row) },
+            inputAt = ::returnInput,
+        )
+    }
+    private val snoozeIntake by lazy { SnoozeReturnIntake(snoozeHandler) }
+    private val snoozeRouting by lazy {
+        SnoozeServiceRouting(coordinator, snoozeHandler, { notificationDao.find(it)?.toNotificationItem() }, ::returnInput)
+    }
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private data class PostedFields(
-        val item: NotificationItem, val androidCategory: String?, val systemExempt: Boolean,
+        val item: NotificationItem, val androidCategory: String?, val exclusionFlags: SnoozeExclusionFlags,
+        val groupKey: String?, val androidGroupKey: String,
         val contentIntent: PendingIntent?, val actions: List<CapturedAction>, val order: Long,
         /** Only captured while the source-icon experiment is on. */
         val smallIcon: android.graphics.drawable.Icon? = null,
     )
     private sealed interface Work {
         data class Posted(val fields: PostedFields) : Work
+        data object Return : Work
+        data class CustodyCheck(val key: String, val postTime: Long) : Work
+        data class NativeRemoval(
+            val key: String,
+            val reason: Int,
+            val at: Long,
+            val farhanCancelledSummary: Boolean,
+            val postTime: Long,
+        ) : Work
         data class Removed(val id: String, val reason: NotificationRemovalReason, val order: Long) : Work
         data class ChannelChanged(val pkg: String, val channel: String) : Work
     }
@@ -79,13 +135,26 @@ class NotificationService : NotificationListenerService() {
         serviceScope.launch {
             intake.consume { work ->
                 try {
-                    when (work) {
-                        is Work.Posted -> processNotificationPosted(work.fields)
-                        is Work.Removed -> coordinator.onRemoved(work.id, work.reason, System.currentTimeMillis(), work.order)
-                        is Work.ChannelChanged -> notificationFilterUseCases.registerKnownNotificationSources(listOf(
-                            VisibleNotificationSource(work.pkg, resolveApplicationName(work.pkg), work.channel, null)))
+                    snoozeWork.withLock {
+                        if (work is Work.NativeRemoval && work.reason == REASON_GROUP_SUMMARY_CANCELED &&
+                            !work.farhanCancelledSummary
+                        ) {
+                            processNativeRemoval(work)
+                            drainSnoozeReturns()
+                            return@withLock
+                        }
+                        drainSnoozeReturns()
+                        when (work) {
+                            Work.Return -> Unit
+                            is Work.CustodyCheck -> snoozeRouting.handleStoredPost(work.key, work.postTime, Instant.now())
+                            is Work.NativeRemoval -> processNativeRemoval(work)
+                            is Work.Posted -> processNotificationPosted(work.fields)
+                            is Work.Removed -> coordinator.onRemoved(work.id, work.reason, System.currentTimeMillis(), work.order)
+                            is Work.ChannelChanged -> notificationFilterUseCases.registerKnownNotificationSources(listOf(
+                                VisibleNotificationSource(work.pkg, resolveApplicationName(work.pkg), work.channel, null)))
+                        }
                     }
-                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                } catch (cancelled: CancellationException) { throw cancelled }
                 catch (_: Exception) { NotificationDiagnostics.increment("farhan.intake.failure") }
             }
         }
@@ -106,6 +175,12 @@ class NotificationService : NotificationListenerService() {
         fun removeIntentFromHashmap(key: String) { actionStore.remove(key) }
         fun getActionsForNotification(id: String): List<CapturedAction> = actionStore.get(id)?.replies.orEmpty()
         fun removeActionsForNotification(id: String) { actionStore.remove(id) }
+        fun hasNativeSnoozes(): Boolean = connectedInstance?.snoozeHandler?.needsReconciliation() == true
+
+        suspend fun reconcileNativeSnoozes() {
+            connectedInstance?.reconcileSnoozes()
+        }
+
         fun activeSourcePostTimes(): Map<String, Long> = connectedInstance?.activeNotifications.orEmpty()
             .filter { it.packageName != connectedInstance?.packageName }.associate { it.key to it.postTime }
 
@@ -245,9 +320,19 @@ class NotificationService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
-        if (!preferences.isNotificationServiceStatsEnabled() || sbn == null || sbn.packageName == packageName) return
+        if (sbn == null || sbn.packageName == packageName) return
+        snoozeIntake.routePosted(sbn.key, sbn.postTime, offer = { intake.offer(Work.Return) }) {
+            if (preferences.isNotificationServiceStatsEnabled()) offerFreshPost(sbn)
+            else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                intake.offer(Work.CustodyCheck(sbn.key, sbn.postTime))
+            }
+        }
+    }
+
+    private fun offerFreshPost(sbn: StatusBarNotification) {
         val notification = sbn.notification ?: return
-        if (handleSnoozeDemo(sbn)) return
+        val groupKey = notification.group
+        val flags = SnoozeExclusionFlags.fromNotification(notification.flags, notification.category, groupKey)
         val order = coordinator.captureEvent(sbn.key)
         // Copy only relevant fields. The bounded mailbox never retains StatusBarNotification/Notification.
         val item = NotificationItem(sbn.key, null,
@@ -260,7 +345,8 @@ class NotificationService : NotificationListenerService() {
             CapturedAction(action.title?.toString()?.take(128).orEmpty(), intent, action.remoteInputs?.take(8)?.toTypedArray())
         }
         val smallIcon = if (preferences.isExperimentEnabled(Experiments.SOURCE_ICON)) notification.smallIcon else null
-        val fields = PostedFields(item, notification.category, isSystemExemptCategory(notification.category), notification.contentIntent, actions, order, smallIcon)
+        val fields = PostedFields(item, notification.category, flags, groupKey, sbn.groupKey,
+            notification.contentIntent, actions, order, smallIcon)
         if (!intake.offer(Work.Posted(fields))) {
             // Invalidate older queued updates to this key; this new notification remains in the source tray.
             coordinator.captureEvent(item.id, bypassed = true)
@@ -269,29 +355,38 @@ class NotificationService : NotificationListenerService() {
         }
     }
 
-    /**
-     * The snooze demo, for Farhan's own test apps only. Outside the budget path: a demo notification is handed to
-     * Android's timed snooze and, when Android returns it, left alone. Returns true when the callback is consumed.
-     * There is no unsnooze and no claim that Farhan can restore or cancel a snoozed notification.
-     */
-    private fun handleSnoozeDemo(sbn: StatusBarNotification): Boolean {
-        if (Build.VERSION.SDK_INT < 26 || !Experiments.maySnoozeInDemo(sbn.packageName) ||
-            !preferences.isExperimentEnabled(Experiments.SNOOZE_DEMO)) return false
-        val now = System.currentTimeMillis()
-        if (snoozedDemoKeys.remove(sbn.key)) {
-            experimentLog.record(ExperimentEvent(now, ExperimentEventKind.RETURNED))
-            NotificationDiagnostics.increment("farhan.experiment.snooze.returned")
-            return true
+    private suspend fun returnInput(now: Instant) = SnoozeReturnInput(
+        snoozeEnabled = preferences.isExperimentEnabled(Experiments.SNOOZE),
+        filterEnabled = snoozeReturnFilterEnabled(preferences),
+        now = now,
+        zone = DeliveryClock.systemClock.zone,
+        testingMode = preferences.isDeliveryTestingMode(),
+    )
+
+    private suspend fun drainSnoozeReturns() {
+        try {
+            snoozeIntake.drain { snoozeRouting.settle(it, Instant.now()) }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            NotificationDiagnostics.increment("farhan.snooze.return.failure")
         }
-        if (snoozedDemoKeys.size >= 64) snoozedDemoKeys.remove(snoozedDemoKeys.first())
-        snoozedDemoKeys.add(sbn.key)
-        snoozeNotification(sbn.key, Experiments.SNOOZE_MILLIS)
-        experimentLog.record(ExperimentEvent(now, ExperimentEventKind.SNOOZED))
-        NotificationDiagnostics.increment("farhan.experiment.snooze.started")
-        return true
+    }
+
+    private suspend fun reconcileSnoozes() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        snoozeWork.withLock {
+            val now = Instant.now()
+            val input = returnInput(now)
+            val previous = previousSnoozeTick(now, input.zone, input.testingMode)
+            drainSnoozeReturns()
+            snoozeHandler.onBatchTick(now, previous)
+        }
     }
 
     private suspend fun processNotificationPosted(fields: PostedFields) {
+        // A callback can arrive before the scan restores the binder-side cache.
+        if (snoozeRouting.handleStoredPost(fields.item, fields.order, Instant.now())) return
         if (!notificationFilterUseCases.checkIfNotificationServiceIsEnabled()) return
         val pkg = fields.item.packageName
         val name = knownPackageSourceRegistry.get(pkg)?.appName ?: resolveApplicationName(pkg)
@@ -309,13 +404,45 @@ class NotificationService : NotificationListenerService() {
             locked -> base to "Locked by user"
             else -> applyDynamicAdjustments(base, pkg)
         }
-        val passThrough = fields.systemExempt || preferences.isPackageInNotificationExceptions(pkg) || priority == NotificationPriority.CRITICAL
+        val excepted = preferences.isPackageInNotificationExceptions(pkg)
+        val passThrough = fields.exclusionFlags.isSystemExemptCategory || excepted || priority == NotificationPriority.CRITICAL
         val item = fields.item.copy(appName = name, priority = priority, category = category, priorityReason = reason)
-        val outcome = coordinator.onArrival(item, priority, fields.order, passThrough, captureActions = {
+        val captureActions = {
             actionStore.put(item.id, Actions(fields.contentIntent, fields.actions, fields.smallIcon))
             NotificationDiagnostics.counter("farhan.actions.retained", actionStore.size())
-        }, sourceStillCurrent = { activeSourcePostTimes()[item.id] == item.timestamp })
-        if (!passThrough && outcome !is DeliveryOutcome.Cleared && activeSourcePostTimes()[item.id] == item.timestamp) cancelNotification(item.id)
+        }
+        val snoozeEnabled = preferences.isExperimentEnabled(Experiments.SNOOZE)
+        val handled = routeSnoozeAdmission(snoozeEnabled, fields.exclusionFlags, admit = {
+            if (activeSourcePostTimes()[item.id] != item.timestamp) return@routeSnoozeAdmission false
+            val setting = preferences.getPriorityDeliverySettings()[priority] ?: PriorityDeliverySetting.defaultFor(priority)
+            val filterEnabled = snoozeReturnFilterEnabled(preferences)
+            val testingMode = preferences.isDeliveryTestingMode()
+            coordinator.withSnoozeAdmission(item.id, fields.order) { liveRows, budget ->
+                if (activeSourcePostTimes()[item.id] != item.timestamp) return@withSnoozeAdmission false
+                val previous = notificationDao.find(item.id)
+                val context = SnoozeInput(
+                    packageName = pkg, ownPackageName = packageName, snoozeEnabled = snoozeEnabled,
+                    filterEnabled = filterEnabled, platformSupportsSnooze = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O,
+                    setting = setting, now = Instant.now(), zone = DeliveryClock.systemClock.zone, testingMode = testingMode,
+                    priority = priority, exclusionFlags = fields.exclusionFlags, isPassthrough = passThrough,
+                    isExceptedPackage = excepted, alreadyDelivered = previous?.isDelivered == true && !previous.isCleared,
+                    scheduleAt = { at, zone -> preferences.getScheduleSnapshot().book.scheduleAt(at, zone) },
+                    liveSnoozes = liveRows.size, budget = budget, ownedRows = liveRows,
+                    // CLAIM(snooze-group-device): grouped children return with their summary [F1-F3, F5 hidden-child].
+                    groupSnoozeVerified = true,
+                )
+                snoozeHandler.onPosted(item.copy(snoozeGroupKey = fields.groupKey), context)
+            }
+        }, onAdmitted = captureActions)
+        if (handled) return
+        val outcome = coordinator.onArrival(item, priority, fields.order, passThrough, captureActions,
+            sourceStillCurrent = { activeSourcePostTimes()[item.id] == item.timestamp })
+        if (!passThrough && outcome !is DeliveryOutcome.Cleared && activeSourcePostTimes()[item.id] == item.timestamp) {
+            if (fields.exclusionFlags.isGroupSummary) {
+                summaryCancellations.requested(fields.androidGroupKey, item.id, item.timestamp)
+            }
+            cancelNotification(item.id)
+        }
         if (outcome is DeliveryOutcome.Cleared) actionStore.remove(item.id)
         if (!passThrough && notificationFilterUseCases.getNotifyMeHour() != -1) {
             notificationFilterUseCases.createNotifyMeNotificationChannel()
@@ -333,10 +460,31 @@ class NotificationService : NotificationListenerService() {
         return (if (ai != null) pm.getApplicationLabel(ai) else appPackageName) as String?
     }
 
+    private suspend fun processNativeRemoval(removal: Work.NativeRemoval) {
+        snoozeRouting.handleRemoval(removal.key, removal.reason, removal.at,
+            removal.farhanCancelledSummary, removal.postTime)
+    }
+
     override fun onNotificationRemoved(sbn: StatusBarNotification?, rankingMap: RankingMap?, reason: Int) {
-        if (sbn != null && Experiments.maySnoozeInDemo(sbn.packageName) && preferences.isExperimentEnabled(Experiments.SNOOZE_DEMO)) {
-            experimentLog.record(ExperimentEvent(System.currentTimeMillis(), ExperimentEventKind.REMOVED, reason))
-            NotificationDiagnostics.increment("farhan.experiment.snooze.removed")
+        if (sbn != null && sbn.packageName != packageName) {
+            if (sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) {
+                summaryCancellations.summaryRemoved(sbn.groupKey, sbn.key, sbn.postTime, reason == REASON_LISTENER_CANCEL)
+            }
+            if (reason == REASON_SNOOZED && snoozeHandler.owns(sbn.key) || reason == REASON_GROUP_SUMMARY_CANCELED) {
+                val collateral = reason == REASON_GROUP_SUMMARY_CANCELED &&
+                    summaryCancellations.causedCascade(sbn.groupKey)
+                if (reason == REASON_GROUP_SUMMARY_CANCELED && !collateral) {
+                    coordinator.captureEvent(sbn.key, removed = true)
+                    actionStore.remove(sbn.key)
+                }
+                val removal = Work.NativeRemoval(sbn.key, reason, System.currentTimeMillis(),
+                    collateral, sbn.postTime)
+                if (!intake.offer(removal)) {
+                    serviceScope.launch {
+                        snoozeWork.withLock { processNativeRemoval(removal) }
+                    }
+                }
+            }
         }
         if (sbn != null) {
             val ownProxy = sbn.packageName == packageName && sbn.tag?.startsWith(PROXY_TAG) == true
@@ -378,13 +526,6 @@ class NotificationService : NotificationListenerService() {
 
         return Pair(base, "Category default")
     }
-
-    private fun isSystemExemptCategory(category: String?): Boolean =
-        category == Notification.CATEGORY_SERVICE ||
-            category == Notification.CATEGORY_CALL ||
-            category == Notification.CATEGORY_ALARM ||
-            category == Notification.CATEGORY_MISSED_CALL ||
-            category == Notification.CATEGORY_SYSTEM
 
     private fun createProxyNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

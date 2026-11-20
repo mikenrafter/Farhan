@@ -2,6 +2,11 @@ package ly.com.tahaben.notification_filter_domain.delivery
 
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
+import java.time.Instant
+import java.util.UUID
+import kotlinx.coroutines.CancellationException
+import ly.com.tahaben.notification_filter_domain.model.BudgetBehavior
+import java.time.ZoneId
 import ly.com.tahaben.notification_filter_domain.model.BudgetSpendEntry
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
@@ -48,6 +53,8 @@ interface DeliveryRowStore {
     suspend fun find(id: String): NotificationItem?
     suspend fun markCleared(id: String)
     suspend fun markDelivered(id: String)
+    suspend fun completeSnoozeReturn(id: String)
+    suspend fun liveSnoozes(): List<NotificationItem> = emptyList()
     suspend fun pending(maxPriorityLevel: Int): List<NotificationItem>
     suspend fun invalidateBefore(session: String, order: Long)
     suspend fun nextHead(after: NotificationItem): NotificationItem? = null
@@ -68,6 +75,8 @@ interface ProxyNotificationPoster {
 /** Reads of settings that can change between calls. */
 interface DeliveryEnvironment {
     fun schedule(): List<NotificationSchedulePeriod>
+    fun zone(): ZoneId = ZoneId.systemDefault()
+    fun scheduleAt(instant: Instant, zone: ZoneId): List<NotificationSchedulePeriod>
     fun settings(): Map<NotificationPriority, PriorityDeliverySetting>
     fun timeContext(): DeliveryTimeContext
     fun queuePreferences(): Map<String, AppQueuePreference>
@@ -95,7 +104,7 @@ class NotificationDeliveryCoordinator(
     private val sourceSession = java.util.UUID.randomUUID().toString()
     private var persistedInvalidation = 0L
     private data class Completion(val id: String, val state: DeliveryBudgetState, val entry: BudgetSpendEntry?,
-        var rowSaved: Boolean = false, var budgetSaved: Boolean = false)
+        val nativeReturn: Boolean = false, var rowSaved: Boolean = false, var budgetSaved: Boolean = false)
     private var completion: Completion? = null
 
     init { require(eventCapacity > 0); gate.recover = { finishCompletion(); persistInvalidations() } }
@@ -113,7 +122,10 @@ class NotificationDeliveryCoordinator(
 
     private suspend fun finishCompletion() {
         val pending = completion ?: return
-        if (!pending.rowSaved) { rows.markDelivered(pending.id); pending.rowSaved = true }
+        if (!pending.rowSaved) {
+            if (pending.nativeReturn) rows.completeSnoozeReturn(pending.id) else rows.markDelivered(pending.id)
+            pending.rowSaved = true
+        }
         if (!pending.budgetSaved) { budget.write(pending.state); pending.budgetSaved = true }
         pending.entry?.let { budget.appendSpend(it) }
         completion = null
@@ -151,7 +163,7 @@ class NotificationDeliveryCoordinator(
     @Synchronized private fun bypassed(id: String): Boolean = events[id]?.bypassed == true
     @Synchronized private fun unprocessed(id: String): Boolean = events[id]?.let { it.order > it.accepted && !it.removed } == true
     @Synchronized private fun accept(id: String, order: Long?) {
-        if (order != null) events[id]?.let { events[id] = it.copy(accepted = order) }
+        if (order != null) events[id]?.let { events[id] = it.copy(accepted = maxOf(it.accepted, order)) }
     }
 
     suspend fun onArrival(
@@ -185,6 +197,61 @@ class NotificationDeliveryCoordinator(
         if (!NotificationDeliveryPolicy.shouldDeliverOnArrival(setting)) return@run DeliveryOutcome.Deferred(item.id)
         if (stale(item.id, eventOrder, item.timestamp)) DeliveryOutcome.Cleared(item.id)
         else if (sourceStillCurrent?.invoke() == false) DeliveryOutcome.Deferred(item.id) else deliver(updated)
+    }
+
+    // CLAIM(snooze-return-crash): may undercharge one return after a crash, never double charge [Snooze pilot spec W2].
+    // The return row step, budget state and spend entry are committed in that order.
+    suspend fun settleSnoozeReturn(key: String, postTime: Long, now: Instant): SnoozeReturnDecision = try {
+        gate.run {
+            val row = rows.find(key) ?: return@run SnoozeReturnDecision.NotOwned
+            val priority = row.snoozePriority ?: return@run SnoozeReturnDecision.NotOwned
+            if (!row.hasLiveSnooze) return@run SnoozeReturnDecision.NotOwned
+            val time = environment.timeContext()
+            val schedule = environment.schedule()
+            val setting = environment.settings()[priority] ?: PriorityDeliverySetting.defaultFor(priority)
+            val decision = NotificationDeliveryPolicy.canDeliverNow(priority, setting, schedule, time, budget.read())
+            if (!decision.canDeliver) {
+                val zone = environment.zone()
+                val owned = rows.liveSnoozes().filterNot { it.id == key }
+                val next = SnoozeTiming.nextDeliverableMoment(priority, setting, environment::scheduleAt, now, zone, time.testingMode) { tick, _, _ ->
+                    hasSnoozeCapacity(priority, setting, decision.updatedBudget, owned, tick, zone, time.testingMode, environment.scheduleAt(tick, zone))
+                }
+                return@run next?.let(SnoozeReturnDecision::RetryAt) ?: SnoozeReturnDecision.NoFundedMoment
+            }
+            val charged = NotificationDeliveryPolicy.recordPassthrough(priority, setting, schedule, time.scheduleMinuteOfDay, decision.updatedBudget)
+            val spend = if (setting.budgetBehavior == BudgetBehavior.RESPECTING && priority.pointCost > 0) {
+                BudgetSpendEntry(row.appName.orEmpty(), row.title.orEmpty(), priority, priority.pointCost, now.toEpochMilli(),
+                    charged.periodStartMinute, charged.accountingId, UUID.nameUUIDFromBytes("snooze:$postTime:$key".encodeToByteArray()).toString())
+            } else null
+            completion = Completion(key, charged, spend, nativeReturn = true)
+            try {
+                finishCompletion()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                // The next gated operation resumes the steps that did not finish.
+            }
+            SnoozeReturnDecision.Charged
+        }
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (_: Exception) {
+        if (completion?.let { it.nativeReturn && it.id == key } == true) SnoozeReturnDecision.Charged
+        else SnoozeReturnDecision.NoFundedMoment
+    }
+
+    suspend fun refreshSnoozeProxy(item: NotificationItem) = gate.run { postSafely(item, refresh = true) }
+
+    fun acceptSnoozeEvent(id: String, order: Long) = accept(id, order)
+
+    suspend fun withSnoozeAdmission(
+        id: String,
+        order: Long,
+        block: suspend (List<NotificationItem>, DeliveryBudgetState) -> Boolean,
+    ): Boolean = gate.run {
+        val admitted = block(rows.liveSnoozes(), budget.read())
+        if (admitted) acceptSnoozeEvent(id, order)
+        admitted
     }
 
     suspend fun onRemoved(id: String, reason: NotificationRemovalReason, atMillis: Long, eventOrder: Long? = null) {
@@ -235,12 +302,17 @@ class NotificationDeliveryCoordinator(
         gate.run { delete() }
     }
 
-    suspend fun onBatchTick(): List<DeliveryOutcome> = gate.run {
+    suspend fun onBatchTick(now: Instant = Instant.now()): List<DeliveryOutcome> = gate.run {
         val removals = synchronized(this) { events.filterValues { it.lastRemoval > it.accepted && it.appliedRemoval < it.lastRemoval }.map { it.key to it.value.lastRemoval } }
         removals.forEach { (id, order) -> rows.markCleared(id); removalApplied(id, order) }
         val settings = environment.settings()
         val time = environment.timeContext()
         val visibleSources = environment.activeSourceKeys()
+        val tickInterval = time.boundaryIntervalMinutes * 60_000L
+        val owned = rows.liveSnoozes().filter {
+            val due = it.snoozeDeadline
+            due != null && due <= now.toEpochMilli() && now.toEpochMilli() - due < tickInterval
+        }
         val pending = rows.pending(NotificationPriority.LOW.level).filter {
             NotificationDeliveryPolicy.shouldDeliverOnBatchTick(it.priority, settings, time)
         }.toMutableList()
@@ -255,8 +327,8 @@ class NotificationDeliveryCoordinator(
             } else if (current.deliveryInvalidated || ambiguous(current)) {
                 persistInvalidations()
                 DeliveryOutcome.Invalidated(candidate.id)
-            } else if (current.isDelivered || bypassed(candidate.id) || candidate.id in visibleSources) DeliveryOutcome.Deferred(candidate.id)
-            else deliver(current)
+            } else if (current.isDelivered || current.snoozeDeadline != null || bypassed(candidate.id) || candidate.id in visibleSources) DeliveryOutcome.Deferred(candidate.id)
+            else deliver(current, owned)
             outcomes += outcome
             if (outcome is DeliveryOutcome.CommitPending) break
             if (outcome is DeliveryOutcome.Delivered) {
@@ -266,7 +338,7 @@ class NotificationDeliveryCoordinator(
         outcomes
     }
 
-    private suspend fun deliver(item: NotificationItem): DeliveryOutcome {
+    private suspend fun deliver(item: NotificationItem, reserved: List<NotificationItem> = emptyList()): DeliveryOutcome {
         // Recheck callback-side tombstones at the effect boundary, even if removal work is queued.
         if (explicitlyRemoved(item.id) || rows.find(item.id)?.isCleared != false) {
             rows.markCleared(item.id)
@@ -278,6 +350,11 @@ class NotificationDeliveryCoordinator(
         val schedule = environment.schedule()
         val setting = environment.settings()[item.priority] ?: PriorityDeliverySetting.defaultFor(item.priority)
         val decision = NotificationDeliveryPolicy.canDeliverNow(item.priority, setting, schedule, time, budget.read())
+        if (setting.budgetBehavior == BudgetBehavior.RESPECTING && reserved.isNotEmpty()) {
+            val points = reserved.sumOf { it.snoozePriority?.pointCost ?: 0 }
+            val limit = NotificationDeliveryPolicy.findActivePeriod(schedule, time.scheduleMinuteOfDay)?.budgetPoints ?: 0
+            if (decision.updatedBudget.spentPoints.toLong() + points + item.priority.pointCost > limit) return DeliveryOutcome.Deferred(item.id)
+        }
         if (!decision.canDeliver) return DeliveryOutcome.Deferred(item.id)
         if (explicitlyRemoved(item.id) || rows.find(item.id)?.isCleared != false) {
             rows.markCleared(item.id)

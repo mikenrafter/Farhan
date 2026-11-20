@@ -7,7 +7,7 @@ import java.sql.DriverManager
 /** Executes the exact SQL constants used by Room. Android driver/runtime remains a device check. */
 class NotificationQueriesTest {
     private fun <T> database(block: (java.sql.Connection) -> T): T = DriverManager.getConnection("jdbc:sqlite::memory:").use { db ->
-        db.createStatement().use { it.execute("""CREATE TABLE notificationitementity(id TEXT PRIMARY KEY, appName TEXT, title TEXT, text TEXT, time TEXT, creatorPackage TEXT, timestamp INTEGER, priority INTEGER, category TEXT, isRead INTEGER, channelId TEXT, isCleared INTEGER, isDelivered INTEGER, priorityReason TEXT, sourceSession TEXT NOT NULL DEFAULT '', sourceEventOrder INTEGER NOT NULL DEFAULT 0, deliveryInvalidated INTEGER NOT NULL DEFAULT 0)""") }
+        db.createStatement().use { it.execute("""CREATE TABLE notificationitementity(id TEXT PRIMARY KEY, appName TEXT, title TEXT, text TEXT, time TEXT, creatorPackage TEXT, timestamp INTEGER, priority INTEGER, category TEXT, isRead INTEGER, channelId TEXT, isCleared INTEGER, isDelivered INTEGER, priorityReason TEXT, sourceSession TEXT NOT NULL DEFAULT '', sourceEventOrder INTEGER NOT NULL DEFAULT 0, deliveryInvalidated INTEGER NOT NULL DEFAULT 0, snoozeDeadline INTEGER, snoozePriority INTEGER, snoozeBootCount INTEGER, snoozeGroupKey TEXT)""") }
         block(db)
     }
     private fun insert(db: java.sql.Connection, id: String, timestamp: Long, priority: Int = 2, cleared: Int = 0, read: Int = 0, pkg: String = "app", title: String = id) {
@@ -46,6 +46,75 @@ class NotificationQueriesTest {
         assertThat(retained).hasSize(5)
         assertThat(retained.filter { (it["deliveryInvalidated"] as Number).toInt() == 1 }.map { it["id"] }).containsExactly("old")
         assertThat(retained.single { it["id"] == "old" }["priorityReason"]).isEqualTo("Not proxied after intake overflow. Open the source app.")
+    }
+
+    // why: a package whose only pending row is natively snoozed cannot head a batch group.
+    // catches: grouping on future snoozes before choosing app heads.
+    @Test fun `pending groups exclude packages whose rows still have snooze deadlines`() = pendingSnoozes { db ->
+        assertThat(rows(db, NotificationQueries.PENDING_GROUPS, mapOf("now" to 1000L, "maxPriority" to 4))
+            .map { it["packageName"] }).containsExactly("mixed")
+    }
+
+    // why: a future snooze must not hide an ordinary pending row from the app-head query.
+    // catches: applying the snooze filter after ordering and LIMIT 1.
+    @Test fun `pending head selects the ordinary row over a newer snoozed row`() = pendingSnoozes { db ->
+        val arguments = mapOf("now" to 1000L, "packageName" to "mixed", "priority" to 2, "oldest" to false)
+        assertThat(rows(db, NotificationQueries.PENDING_HEAD, arguments).map { it["id"] }).containsExactly("ordinary")
+    }
+
+    // why: ungrouped priority reads must leave future native snoozes in Android's custody too.
+    // catches: fixing the grouped pending queries while still leaking rows from the full priority query.
+    @Test fun `pending priority query excludes any nonnull snooze deadline`() = pendingSnoozes { db ->
+        assertThat(rows(db, NotificationQueries.PENDING_UP_TO_PRIORITY, mapOf("now" to 1000L, "priorityLevel" to 4))
+            .map { it["id"] }).containsExactly("ordinary")
+    }
+
+    // why: the row step must atomically close custody so a restarted scan cannot charge it again.
+    // catches: using markDelivered alone, forgetting one snooze column, or changing an unrelated row.
+    @Test fun `return completion atomically clears all snooze columns on only the returned row`() = pendingSnoozes { db ->
+        db.prepareStatement(NotificationQueries.COMPLETE_SNOOZE_RETURN).use { query ->
+            query.setString(1, "hiddenHead")
+            assertThat(query.executeUpdate()).isEqualTo(1)
+        }
+        val after = rows(db, "SELECT id, isDelivered, snoozeDeadline, snoozePriority, snoozeBootCount, snoozeGroupKey FROM notificationitementity", emptyMap())
+            .associateBy { it["id"] }
+        val completed = after.getValue("hiddenHead")
+        assertThat((completed["isDelivered"] as Number).toInt()).isEqualTo(1)
+        assertThat(completed["snoozeDeadline"]).isNull()
+        assertThat(completed["snoozePriority"]).isNull()
+        assertThat(completed["snoozeBootCount"]).isNull()
+        assertThat(completed["snoozeGroupKey"]).isNull()
+        val untouched = after.getValue("hiddenOnly")
+        assertThat((untouched["isDelivered"] as Number).toInt()).isEqualTo(0)
+        assertThat((untouched["snoozeDeadline"] as Number).toLong()).isEqualTo(2000L)
+    }
+
+    // why: the durable custody query must agree with pre-checks and ignore invalidated rows.
+    // catches: rehydrating a cleared, delivered, invalidated, or ordinary row as an owned key.
+    @Test fun `live snoozes excludes closed and invalidated custody`() = pendingSnoozes { db ->
+        db.createStatement().use { sql ->
+            sql.executeUpdate("UPDATE notificationitementity SET isCleared=1 WHERE id='hiddenHead'")
+            sql.executeUpdate("UPDATE notificationitementity SET isDelivered=1 WHERE id='onlyAtDeadline'")
+            sql.executeUpdate("UPDATE notificationitementity SET deliveryInvalidated=1 WHERE id='onlyPastDeadline'")
+        }
+        assertThat(rows(db, NotificationQueries.LIVE_SNOOZES, emptyMap()).map { it["id"] })
+            .containsExactly("hiddenOnly", "atDeadline", "pastDeadline")
+    }
+
+    private fun pendingSnoozes(block: (java.sql.Connection) -> Unit) = database { db ->
+        insert(db, "ordinary", 100, pkg = "mixed")
+        insert(db, "hiddenHead", 200, pkg = "mixed")
+        insert(db, "hiddenOnly", 300, pkg = "hidden")
+        insert(db, "atDeadline", 400, pkg = "mixed")
+        insert(db, "onlyAtDeadline", 600, pkg = "deadline-now")
+        insert(db, "onlyPastDeadline", 700, pkg = "deadline-past")
+        insert(db, "pastDeadline", 500, pkg = "mixed")
+        db.createStatement().use { sql ->
+            sql.executeUpdate("UPDATE notificationitementity SET snoozeDeadline=2000, snoozePriority=2, snoozeBootCount=10, snoozeGroupKey='fixture-group' WHERE id LIKE 'hidden%'")
+            sql.executeUpdate("UPDATE notificationitementity SET snoozeDeadline=1000 WHERE id IN ('atDeadline', 'onlyAtDeadline')")
+            sql.executeUpdate("UPDATE notificationitementity SET snoozeDeadline=999 WHERE id IN ('pastDeadline', 'onlyPastDeadline')")
+        }
+        block(db)
     }
 
     // why: filtering must precede paging, ties must be stable, and cleared/standing priorities must use identical rules.

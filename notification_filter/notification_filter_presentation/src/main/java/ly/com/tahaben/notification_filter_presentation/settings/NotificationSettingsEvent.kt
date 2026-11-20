@@ -19,5 +19,5 @@ sealed class NotificationSettingsEvent {
     object RevokeAutomationCredential : NotificationSettingsEvent()
     object RefreshAutomation : NotificationSettingsEvent()
     data class SetSourceIconExperiment(val enabled: Boolean) : NotificationSettingsEvent()
-    data class SetSnoozeDemoExperiment(val enabled: Boolean) : NotificationSettingsEvent()
+    data class SetSnoozeExperiment(val enabled: Boolean) : NotificationSettingsEvent()
 }

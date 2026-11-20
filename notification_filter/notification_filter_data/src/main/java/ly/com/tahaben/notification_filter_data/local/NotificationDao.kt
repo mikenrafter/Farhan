@@ -14,9 +14,9 @@ interface NotificationDao {
     @Query(NotificationQueries.INVALIDATE)
     suspend fun invalidateBefore(session: String, order: Long)
 
-    @Query("SELECT creatorPackage AS packageName, priority FROM notificationitementity WHERE isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0 AND priority <= :maxPriority GROUP BY creatorPackage, priority ORDER BY priority ASC, creatorPackage ASC LIMIT 4096")
+    @Query(NotificationQueries.PENDING_GROUPS)
     suspend fun pendingGroups(maxPriority: Int): List<PendingGroup>
-    @Query("SELECT * FROM notificationitementity WHERE creatorPackage = :packageName AND priority = :priority AND isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0 ORDER BY CASE WHEN :oldest THEN timestamp END ASC, CASE WHEN NOT :oldest THEN timestamp END DESC, id ASC LIMIT 1")
+    @Query(NotificationQueries.PENDING_HEAD)
     suspend fun pendingHead(packageName: String, priority: Int, oldest: Boolean): NotificationItemEntity?
 
     @Query(NotificationQueries.INBOX)
@@ -89,7 +89,26 @@ interface NotificationDao {
     @Query("UPDATE notificationitementity SET isDelivered = 1 WHERE id = :id")
     suspend fun markNotificationAsDelivered(id: String)
 
-    @Query("SELECT * FROM notificationitementity WHERE isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0 AND priority <= :priorityLevel ORDER BY priority ASC, timestamp ASC")
+    @Query(NotificationQueries.COMPLETE_SNOOZE_RETURN)
+    suspend fun completeSnoozeReturn(id: String)
+
+    @Query(NotificationQueries.LIVE_SNOOZES)
+    suspend fun liveSnoozes(): List<NotificationItemEntity>
+
+    @Query("SELECT * FROM NotificationItemEntity WHERE isCleared = 1 AND snoozeDeadline IS NOT NULL")
+    suspend fun clearedSnoozes(): List<NotificationItemEntity>
+
+    @Query("""UPDATE NotificationItemEntity SET snoozeDeadline = NULL, snoozePriority = NULL,
+        snoozeBootCount = NULL, snoozeGroupKey = NULL
+        WHERE id = :id AND isCleared = 1 AND snoozeDeadline = :deadline""")
+    suspend fun closeClearedSnooze(id: String, deadline: Long)
+
+    @Query("""UPDATE NotificationItemEntity SET isCleared = 1, snoozeDeadline = NULL, snoozePriority = NULL,
+        snoozeBootCount = NULL, snoozeGroupKey = NULL
+        WHERE id = :id AND timestamp <= :postTime""")
+    suspend fun clearSnoozeSourceRemoval(id: String, postTime: Long)
+
+    @Query(NotificationQueries.PENDING_UP_TO_PRIORITY)
     suspend fun getUndeliveredNotificationsUpToPriority(priorityLevel: Int): List<NotificationItemEntity>
 
     @Query("SELECT COUNT(*) FROM notificationitementity WHERE creatorPackage = :packageName AND timestamp >= :since AND isCleared = 0")

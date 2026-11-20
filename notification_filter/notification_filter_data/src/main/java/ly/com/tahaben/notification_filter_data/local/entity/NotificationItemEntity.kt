@@ -32,4 +32,8 @@ data class NotificationItemEntity(
     @ColumnInfo(defaultValue = "''") val sourceSession: String = "",
     @ColumnInfo(defaultValue = "0") val sourceEventOrder: Long = 0,
     @ColumnInfo(defaultValue = "0") val deliveryInvalidated: Boolean = false,
+    val snoozeDeadline: Long? = null,
+    val snoozePriority: Int? = null,
+    val snoozeBootCount: Int? = null,
+    val snoozeGroupKey: String? = null,
 )

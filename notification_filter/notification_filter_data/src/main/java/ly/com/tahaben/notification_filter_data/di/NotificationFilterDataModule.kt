@@ -39,6 +39,8 @@ object NotificationFilterDataModule {
             override suspend fun find(id: String) = dao.find(id)?.toNotificationItem()
             override suspend fun markCleared(id: String) = dao.markNotificationAsCleared(id)
             override suspend fun markDelivered(id: String) = dao.markNotificationAsDelivered(id)
+            override suspend fun completeSnoozeReturn(id: String) = dao.completeSnoozeReturn(id)
+            override suspend fun liveSnoozes() = dao.liveSnoozes().map { it.toNotificationItem() }
             override suspend fun pending(maxPriorityLevel: Int): List<ly.com.tahaben.notification_filter_domain.model.NotificationItem> {
                 val preferencesByApp = preferences.getAppQueuePreferences()
                 return dao.pendingGroups(maxPriorityLevel).mapNotNull { group ->
@@ -65,6 +67,8 @@ object NotificationFilterDataModule {
         }
         val environment = object : ly.com.tahaben.notification_filter_domain.delivery.DeliveryEnvironment {
             override fun schedule() = preferences.getNotificationSchedule()
+            override fun scheduleAt(instant: java.time.Instant, zone: java.time.ZoneId) =
+                preferences.getScheduleSnapshot().book.scheduleAt(instant, zone)
             override fun settings() = preferences.getPriorityDeliverySettings()
             override fun timeContext() = ly.com.tahaben.notification_filter_domain.delivery.DeliveryClock.current(preferences.isDeliveryTestingMode())
             override fun queuePreferences() = preferences.getAppQueuePreferences()
