@@ -1,0 +1,58 @@
+{
+  "cli_version": "0.13.4",
+  "checkpoint_id": "1601f04a0e42",
+  "session_id": "692b4a47-ef9a-466e-b204-707c2b08baa9",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-20T12:00:33.493811013Z",
+  "branch": "fix/usage-permission-package",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "app/src/androidTest/java/ly/com/tahaben/farhan/ExampleInstrumentedTest.kt",
+    "app/src/androidTest/java/ly/com/tahaben/farhan/UsageOverviewE2E.kt",
+    "research/usage-permission-report.md",
+    "research/usage-permission/baseline-appops.txt",
+    "research/usage-permission/baseline-home.png",
+    "research/usage-permission/baseline-usage.png",
+    "research/usage-permission/baseline-usage.txt",
+    "research/usage-permission/fixed-appops.txt",
+    "research/usage-permission/fixed-home.png",
+    "research/usage-permission/fixed-usage.png",
+    "research/usage-permission/fixed-usage.txt",
+    "screen_grayscale/screen_grayscale_data/src/main/java/ly/com/tahaben/screen_grayscale_data/util/GrayscaleUtilImpl.kt",
+    "usage_overview/usage_overview_data/src/main/java/ly/com/tahaben/usage_overview_data/repository/UsageRepositoryImpl.kt",
+    "usage_overview/usage_overview_presentation/src/main/java/ly/com/tahaben/usage_overview_presentation/UsageOverviewViewModel.kt",
+    "usage_overview/usage_overview_presentation/src/main/java/ly/com/tahaben/usage_overview_presentation/widget/WidgetWorker.kt"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-5-5",
+  "turn_id": "f0e21d70896a",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 48,
+    "cache_creation_tokens": 58073,
+    "cache_read_tokens": 1611116,
+    "output_tokens": 13360,
+    "api_call_count": 23
+  },
+  "session_token_usage": {
+    "input_tokens": 48,
+    "cache_creation_tokens": 58073,
+    "cache_read_tokens": 1611116,
+    "output_tokens": 13360,
+    "api_call_count": 23
+  },
+  "redaction": {
+    "replacements": 1,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 0,
+      "key_context": 1,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  }
+}
