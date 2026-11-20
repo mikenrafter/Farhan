@@ -1,26 +1,31 @@
 package ly.com.tahaben.farhan
 
 import android.content.Intent
+import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -41,6 +46,9 @@ import ly.com.tahaben.core.util.UiEvent
 import ly.com.tahaben.core_ui.theme.FarhanTheme
 import ly.com.tahaben.domain.preferences.Preferences
 import ly.com.tahaben.farhan.db.DatabaseCombineHelper
+import ly.com.tahaben.farhan.notifications.NotificationArea
+import ly.com.tahaben.farhan.settings.BackupRestoreScreen
+import ly.com.tahaben.farhan.settings.SettingsBackupActivity
 import ly.com.tahaben.infinite_scroll_blocker_domain.use_cases.InfiniteScrollUseCases
 import ly.com.tahaben.infinite_scroll_blocker_presentation.InfiniteScrollingBlockerScreen
 import ly.com.tahaben.infinite_scroll_blocker_presentation.exceptions.InfiniteScrollExceptionsScreen
@@ -53,14 +61,12 @@ import ly.com.tahaben.launcher_presentation.wait.DelayedLaunchScreen
 import ly.com.tahaben.launcher_presentation.wait.DelayedLaunchViewModel
 import ly.com.tahaben.launcher_presentation.wait.DelayedLaunchWhiteListScreen
 import ly.com.tahaben.notification_filter_domain.use_cases.NotificationFilterUseCases
-import ly.com.tahaben.notification_filter_presentation.NotificationFilterScreen
-import ly.com.tahaben.notification_filter_presentation.apppriority.AppPriorityScreen
-import ly.com.tahaben.notification_filter_presentation.dashboard.NotificationDashboardScreen
 import ly.com.tahaben.notification_filter_presentation.onboarding.NotificationFilterOnBoardingScreen
 import ly.com.tahaben.notification_filter_presentation.schedule.ScheduleEditorScreen
 import ly.com.tahaben.notification_filter_presentation.settings.NotificationFilterSettingsScreen
 import ly.com.tahaben.onboarding_presentaion.OnBoardingScreen
 import ly.com.tahaben.onboarding_presentaion.SelectAppearanceScreen
+import ly.com.tahaben.farhan.settings.SettingsScreen
 import ly.com.tahaben.onboarding_presentaion.about.AboutScreen
 import ly.com.tahaben.onboarding_presentaion.main.MainScreen
 import ly.com.tahaben.onboarding_presentaion.main.MainScreenEvent
@@ -125,6 +131,18 @@ class MainActivity : ComponentActivity() {
                 darkMode = isDarkMode,
                 colorStyle = mainState.themeColors
             ) {
+                val windowBackground = MaterialTheme.colorScheme.background.toArgb()
+                LaunchedEffect(isDarkMode, windowBackground) {
+                    // CLAIM(nav-icon-contrast): Android 15 derives forced three-button icon appearance from the window background [AOSP DecorView#setWindowBackground].
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                        // ↳ CLAIM(nav-icon-contrast)
+                        window.setBackgroundDrawable(ColorDrawable(windowBackground))
+                    }
+                    WindowCompat.getInsetsController(window, window.decorView).apply {
+                        isAppearanceLightStatusBars = !isDarkMode
+                        isAppearanceLightNavigationBars = !isDarkMode
+                    }
+                }
                 val navController = rememberNavController()
                 val snackbarHostState = remember {
                     SnackbarHostState()
@@ -132,19 +150,11 @@ class MainActivity : ComponentActivity() {
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    topBar = {
-                        if (navController.currentBackStackEntryAsState().value?.destination?.route == Routes.MAIN) {
-                            TextButton(onClick = { startActivity(Intent(this@MainActivity,
-                                ly.com.tahaben.farhan.settings.SettingsBackupActivity::class.java)) }) {
-                                Text("Settings backup")
-                            }
-                        }
-                    },
                     snackbarHost = { SnackbarHost(snackbarHostState) }
                 ) {
-                    it.calculateBottomPadding()
+                    val topInset = PaddingValues(top = it.calculateTopPadding())
                     NavHost(
-                        modifier = Modifier.padding(top = it.calculateTopPadding()),
+                        modifier = Modifier.padding(topInset).consumeWindowInsets(topInset),
                         navController = navController,
                         startDestination = if (shouldShowOnBoarding) {
                             Routes.WELCOME
@@ -261,6 +271,20 @@ class MainActivity : ComponentActivity() {
                                 endDate = endDate
                             )
                         }
+                        composable(Routes.SETTINGS) {
+                            SettingsScreen(
+                                state = mainState,
+                                onEvent = mainScreenViewModel::onEvent,
+                                onNavigateUp = navController::navigateUp,
+                                onOpen = { navController.navigate(it) },
+                            )
+                        }
+                        composable(Routes.BACKUP_RESTORE) {
+                            BackupRestoreScreen(
+                                onNavigateUp = navController::navigateUp,
+                                onStartBackup = { startActivity(SettingsBackupActivity.intent(this@MainActivity, it)) },
+                            )
+                        }
                         composable(Routes.USAGE_SETTINGS) {
                             UsageSettingsScreen(
                                 onNavigateUp = { navController.navigateUp() },
@@ -301,13 +325,13 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
-                        composable(Routes.NOTIFICATION_FILTER, deepLinks = listOf(
-                            navDeepLink {
-                                uriPattern =
-                                    "app://$packageName/${Routes.NOTIFICATION_FILTER}"
+                        composable(
+                            Routes.NOTIFICATION_FILTER,
+                            deepLinks = listOf(navDeepLink {
+                                uriPattern = "app://$packageName/${Routes.NOTIFICATION_FILTER}"
                                 action = Intent.ACTION_VIEW
-                            }
-                        )) {
+                            })
+                        ) {
                             if (notificationFilterUseCases.loadShouldShowOnBoarding()) {
                                 NotificationFilterOnBoardingScreen(
                                     onNextClick = {
@@ -317,48 +341,17 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             } else {
-                                NotificationFilterScreen(
-                                    navigateToNotificationSettings = {
-                                        navController.navigate(Routes.NOTIFICATION_FILTER_SETTINGS)
-                                    },
-                                    navigateToDashboard = {
-                                        navController.navigate(Routes.NOTIFICATION_DASHBOARD)
-                                    },
-                                    onNavigateUp = {
-                                        navController.navigateUp()
-                                    },
-                                    isUiModeDark = isDarkMode,
+                                NotificationArea(
+                                    onNavigateUp = navController::navigateUp,
+                                    onBack = { if (!navController.popBackStack()) finish() },
+                                    onOpenSettings = { navController.navigate(Routes.NOTIFICATION_FILTER_SETTINGS) },
+                                    onOpenSchedule = { navController.navigate(Routes.NOTIFICATION_SCHEDULE_EDITOR) },
                                     shouldShowRational = ::shouldShowRational,
                                 )
                             }
-
-                        }
-                        composable(Routes.NOTIFICATION_DASHBOARD) {
-                            NotificationDashboardScreen(
-                                onNavigateUp = { navController.navigateUp() },
-                                onNavigateToInbox = {
-                                    navController.navigate(Routes.NOTIFICATION_FILTER) {
-                                        popUpTo(Routes.NOTIFICATION_DASHBOARD)
-                                    }
-                                },
-                                onNavigateToSettings = {
-                                    navController.navigate(Routes.NOTIFICATION_FILTER_SETTINGS)
-                                },
-                                onNavigateToAppPriority = {
-                                    navController.navigate(Routes.APP_PRIORITY)
-                                },
-                                onNavigateToScheduleEditor = {
-                                    navController.navigate(Routes.NOTIFICATION_SCHEDULE_EDITOR)
-                                }
-                            )
                         }
                         composable(Routes.NOTIFICATION_SCHEDULE_EDITOR) {
                             ScheduleEditorScreen(onNavigateUp = { navController.navigateUp() })
-                        }
-                        composable(Routes.APP_PRIORITY) {
-                            AppPriorityScreen(
-                                onNavigateUp = { navController.navigateUp() }
-                            )
                         }
                         composable(Routes.NOTIFICATION_FILTER_SETTINGS) {
                             NotificationFilterSettingsScreen(

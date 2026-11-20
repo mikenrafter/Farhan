@@ -8,6 +8,8 @@ object Routes {
     const val WELCOME = "welcome"
     const val SELECT_THEME = "select_theme"
     const val MAIN = "main"
+    const val SETTINGS = "settings"
+    const val BACKUP_RESTORE = "backup_restore"
     const val USAGE = "usage"
     const val USAGE_FOR_PERIOD = "$USAGE/{$START_DATE}/{$END_DATE}"
     const val USAGE_SETTINGS = "usage_settings"

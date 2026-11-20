@@ -204,6 +204,46 @@ import ly.com.tahaben.core_ui.secondaryLight
 import ly.com.tahaben.core_ui.secondaryLightClassic
 import ly.com.tahaben.core_ui.secondaryLightHighContrast
 import ly.com.tahaben.core_ui.secondaryLightMediumContrast
+import ly.com.tahaben.core_ui.surfaceContainerDark
+import ly.com.tahaben.core_ui.surfaceContainerDarkClassic
+import ly.com.tahaben.core_ui.surfaceContainerDarkHighContrast
+import ly.com.tahaben.core_ui.surfaceContainerDarkMediumContrast
+import ly.com.tahaben.core_ui.surfaceContainerHighDark
+import ly.com.tahaben.core_ui.surfaceContainerHighDarkClassic
+import ly.com.tahaben.core_ui.surfaceContainerHighDarkHighContrast
+import ly.com.tahaben.core_ui.surfaceContainerHighDarkMediumContrast
+import ly.com.tahaben.core_ui.surfaceContainerHighLight
+import ly.com.tahaben.core_ui.surfaceContainerHighLightClassic
+import ly.com.tahaben.core_ui.surfaceContainerHighLightHighContrast
+import ly.com.tahaben.core_ui.surfaceContainerHighLightMediumContrast
+import ly.com.tahaben.core_ui.surfaceContainerHighestDark
+import ly.com.tahaben.core_ui.surfaceContainerHighestDarkClassic
+import ly.com.tahaben.core_ui.surfaceContainerHighestDarkHighContrast
+import ly.com.tahaben.core_ui.surfaceContainerHighestDarkMediumContrast
+import ly.com.tahaben.core_ui.surfaceContainerHighestLight
+import ly.com.tahaben.core_ui.surfaceContainerHighestLightClassic
+import ly.com.tahaben.core_ui.surfaceContainerHighestLightHighContrast
+import ly.com.tahaben.core_ui.surfaceContainerHighestLightMediumContrast
+import ly.com.tahaben.core_ui.surfaceContainerLight
+import ly.com.tahaben.core_ui.surfaceContainerLightClassic
+import ly.com.tahaben.core_ui.surfaceContainerLightHighContrast
+import ly.com.tahaben.core_ui.surfaceContainerLightMediumContrast
+import ly.com.tahaben.core_ui.surfaceContainerLowDark
+import ly.com.tahaben.core_ui.surfaceContainerLowDarkClassic
+import ly.com.tahaben.core_ui.surfaceContainerLowDarkHighContrast
+import ly.com.tahaben.core_ui.surfaceContainerLowDarkMediumContrast
+import ly.com.tahaben.core_ui.surfaceContainerLowLight
+import ly.com.tahaben.core_ui.surfaceContainerLowLightClassic
+import ly.com.tahaben.core_ui.surfaceContainerLowLightHighContrast
+import ly.com.tahaben.core_ui.surfaceContainerLowLightMediumContrast
+import ly.com.tahaben.core_ui.surfaceContainerLowestDark
+import ly.com.tahaben.core_ui.surfaceContainerLowestDarkClassic
+import ly.com.tahaben.core_ui.surfaceContainerLowestDarkHighContrast
+import ly.com.tahaben.core_ui.surfaceContainerLowestDarkMediumContrast
+import ly.com.tahaben.core_ui.surfaceContainerLowestLight
+import ly.com.tahaben.core_ui.surfaceContainerLowestLightClassic
+import ly.com.tahaben.core_ui.surfaceContainerLowestLightHighContrast
+import ly.com.tahaben.core_ui.surfaceContainerLowestLightMediumContrast
 import ly.com.tahaben.core_ui.surfaceDark
 import ly.com.tahaben.core_ui.surfaceDarkClassic
 import ly.com.tahaben.core_ui.surfaceDarkHighContrast
@@ -268,6 +308,11 @@ val lightScheme = lightColorScheme(
     inverseSurface = inverseSurfaceLight,
     inverseOnSurface = inverseOnSurfaceLight,
     inversePrimary = inversePrimaryLight,
+    surfaceContainerLowest = surfaceContainerLowestLight,
+    surfaceContainerLow = surfaceContainerLowLight,
+    surfaceContainer = surfaceContainerLight,
+    surfaceContainerHigh = surfaceContainerHighLight,
+    surfaceContainerHighest = surfaceContainerHighestLight,
 )
 
 val classicLightScheme = lightColorScheme(
@@ -299,6 +344,11 @@ val classicLightScheme = lightColorScheme(
     inverseSurface = inverseSurfaceLightClassic,
     inverseOnSurface = inverseOnSurfaceLightClassic,
     inversePrimary = inversePrimaryLightClassic,
+    surfaceContainerLowest = surfaceContainerLowestLightClassic,
+    surfaceContainerLow = surfaceContainerLowLightClassic,
+    surfaceContainer = surfaceContainerLightClassic,
+    surfaceContainerHigh = surfaceContainerHighLightClassic,
+    surfaceContainerHighest = surfaceContainerHighestLightClassic,
 )
 val classicDarkScheme = darkColorScheme(
     primary = primaryDarkClassic,
@@ -329,6 +379,11 @@ val classicDarkScheme = darkColorScheme(
     inverseSurface = inverseSurfaceDarkClassic,
     inverseOnSurface = inverseOnSurfaceDarkClassic,
     inversePrimary = inversePrimaryDarkClassic,
+    surfaceContainerLowest = surfaceContainerLowestDarkClassic,
+    surfaceContainerLow = surfaceContainerLowDarkClassic,
+    surfaceContainer = surfaceContainerDarkClassic,
+    surfaceContainerHigh = surfaceContainerHighDarkClassic,
+    surfaceContainerHighest = surfaceContainerHighestDarkClassic,
 )
 
 val darkScheme = darkColorScheme(
@@ -360,6 +415,11 @@ val darkScheme = darkColorScheme(
     inverseSurface = inverseSurfaceDark,
     inverseOnSurface = inverseOnSurfaceDark,
     inversePrimary = inversePrimaryDark,
+    surfaceContainerLowest = surfaceContainerLowestDark,
+    surfaceContainerLow = surfaceContainerLowDark,
+    surfaceContainer = surfaceContainerDark,
+    surfaceContainerHigh = surfaceContainerHighDark,
+    surfaceContainerHighest = surfaceContainerHighestDark,
 )
 
 private val mediumContrastLightColorScheme = lightColorScheme(
@@ -391,6 +451,11 @@ private val mediumContrastLightColorScheme = lightColorScheme(
     inverseSurface = inverseSurfaceLightMediumContrast,
     inverseOnSurface = inverseOnSurfaceLightMediumContrast,
     inversePrimary = inversePrimaryLightMediumContrast,
+    surfaceContainerLowest = surfaceContainerLowestLightMediumContrast,
+    surfaceContainerLow = surfaceContainerLowLightMediumContrast,
+    surfaceContainer = surfaceContainerLightMediumContrast,
+    surfaceContainerHigh = surfaceContainerHighLightMediumContrast,
+    surfaceContainerHighest = surfaceContainerHighestLightMediumContrast,
 )
 
 private val highContrastLightColorScheme = lightColorScheme(
@@ -422,6 +487,11 @@ private val highContrastLightColorScheme = lightColorScheme(
     inverseSurface = inverseSurfaceLightHighContrast,
     inverseOnSurface = inverseOnSurfaceLightHighContrast,
     inversePrimary = inversePrimaryLightHighContrast,
+    surfaceContainerLowest = surfaceContainerLowestLightHighContrast,
+    surfaceContainerLow = surfaceContainerLowLightHighContrast,
+    surfaceContainer = surfaceContainerLightHighContrast,
+    surfaceContainerHigh = surfaceContainerHighLightHighContrast,
+    surfaceContainerHighest = surfaceContainerHighestLightHighContrast,
 )
 
 private val mediumContrastDarkColorScheme = darkColorScheme(
@@ -453,6 +523,11 @@ private val mediumContrastDarkColorScheme = darkColorScheme(
     inverseSurface = inverseSurfaceDarkMediumContrast,
     inverseOnSurface = inverseOnSurfaceDarkMediumContrast,
     inversePrimary = inversePrimaryDarkMediumContrast,
+    surfaceContainerLowest = surfaceContainerLowestDarkMediumContrast,
+    surfaceContainerLow = surfaceContainerLowDarkMediumContrast,
+    surfaceContainer = surfaceContainerDarkMediumContrast,
+    surfaceContainerHigh = surfaceContainerHighDarkMediumContrast,
+    surfaceContainerHighest = surfaceContainerHighestDarkMediumContrast,
 )
 
 private val highContrastDarkColorScheme = darkColorScheme(
@@ -484,6 +559,11 @@ private val highContrastDarkColorScheme = darkColorScheme(
     inverseSurface = inverseSurfaceDarkHighContrast,
     inverseOnSurface = inverseOnSurfaceDarkHighContrast,
     inversePrimary = inversePrimaryDarkHighContrast,
+    surfaceContainerLowest = surfaceContainerLowestDarkHighContrast,
+    surfaceContainerLow = surfaceContainerLowDarkHighContrast,
+    surfaceContainer = surfaceContainerDarkHighContrast,
+    surfaceContainerHigh = surfaceContainerHighDarkHighContrast,
+    surfaceContainerHighest = surfaceContainerHighestDarkHighContrast,
 )
 
 

@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Lock
@@ -28,13 +27,10 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -57,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import ly.com.tahaben.core_ui.LocalSpacing
-import ly.com.tahaben.core_ui.mirror
 import ly.com.tahaben.notification_filter_domain.delivery.AppQueuePreference
 import ly.com.tahaben.notification_filter_domain.delivery.QueueOrder
 import ly.com.tahaben.notification_filter_domain.model.AppPriorityInfo
@@ -76,29 +71,12 @@ private val PRIORITY_COLORS = mapOf(
 @Composable
 fun AppPriorityScreen(
     viewModel: AppPriorityViewModel = hiltViewModel(),
-    onNavigateUp: () -> Unit,
 ) {
     val spacing = LocalSpacing.current
     val state = viewModel.state
     val listState = rememberLazyListState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        TopAppBar(
-            title = { Text("App Priorities") },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.background
-            ),
-            navigationIcon = {
-                IconButton(onClick = onNavigateUp) {
-                    Icon(
-                        modifier = Modifier.mirror(),
-                        imageVector = Icons.Filled.ArrowBack,
-                        contentDescription = "Back"
-                    )
-                }
-            }
-        )
-
         when {
             state.isLoading && state.apps.isEmpty() -> {
                 Box(modifier = Modifier.fillMaxSize()) {
