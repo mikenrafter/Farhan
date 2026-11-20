@@ -22,6 +22,7 @@ class NotificationSettingsViewModel @Inject constructor(
     private val preferences: Preferences,
     private val credentials: ly.com.tahaben.notification_filter_domain.schedule.AutomationCredentialOwner,
     private val receipts: ly.com.tahaben.notification_filter_domain.schedule.AutomationReceiptStore,
+    internal val soundControl: ly.com.tahaben.notification_filter_domain.sound.SoundControl,
     private val experimentLog: ly.com.tahaben.notification_filter_domain.delivery.ExperimentEventLog,
 ) : ViewModel() {
 
@@ -245,6 +246,8 @@ class NotificationSettingsViewModel @Inject constructor(
             )
         }
     }
+
+    internal suspend fun soundApps() = notificationFilterUseCases.getAppPriorityInfoList()
 
     /** For the copy button only. The value goes to the clipboard and is never stored in state or logged. */
     fun credentialForCopy(): String? = credentials.credential()
