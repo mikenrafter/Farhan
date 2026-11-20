@@ -29,7 +29,7 @@ object Experiments {
     fun maySnoozeInDemo(packageName: String): Boolean = packageName in SNOOZE_DEMO_PACKAGES
 }
 
-enum class ExperimentEventKind { SNOOZED, RETURNED, REMOVED, FAILED }
+enum class ExperimentEventKind { SNOOZED, RETURNED, RESNOOZED, REMOVED, FAILED }
 
 /** One platform callback seen during the snooze demo. No notification text, title or key. [removalReason] is Android's code. */
 data class ExperimentEvent(

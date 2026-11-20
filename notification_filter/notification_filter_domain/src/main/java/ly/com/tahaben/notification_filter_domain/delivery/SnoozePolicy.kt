@@ -1,6 +1,9 @@
 package ly.com.tahaben.notification_filter_domain.delivery
 
+import java.time.Instant
+import java.time.ZoneId
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
+import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
 
 data class SnoozeInput(
     val packageName: String,
@@ -8,7 +11,11 @@ data class SnoozeInput(
     val snoozeEnabled: Boolean,
     val filterEnabled: Boolean,
     val platformSupportsSnooze: Boolean,
-    val duration: SnoozeDuration,
+    val setting: PriorityDeliverySetting,
+    val now: Instant,
+    val zone: ZoneId,
+    val testingMode: Boolean = false,
+    val isPassthrough: Boolean = false,
     val isExceptedPackage: Boolean = false,
     val priority: NotificationPriority = NotificationPriority.MEDIUM,
     val isSystemExemptCategory: Boolean = false,
@@ -30,6 +37,8 @@ enum class SnoozeSkipReason {
     OWN_NOTIFICATION,
     PACKAGE_EXCEPTION,
     CRITICAL,
+    IMMEDIATE_CADENCE,
+    PASSTHROUGH,
     SYSTEM_EXEMPT_CATEGORY,
     ONGOING,
     FOREGROUND_SERVICE,

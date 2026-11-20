@@ -100,14 +100,6 @@ class SettingsCatalogTest {
         }
     }
 
-    // why: the snooze duration is portable and belongs to the SharedPreferences int group.
-    // catches: omitting the key, treating it like a boolean experiment toggle, or accepting it in the wrong store.
-    @Test
-    fun `snooze duration is an integer shared preference`() {
-        assertThat(shared("notification_snooze_minutes")).isEqualTo(SettingDisposition.Configuration(SettingType.INT))
-        assertThat(SettingsCatalog.dispositionOf(DATA_STORE, "notification_snooze_minutes")).isEqualTo(SettingDisposition.Unsupported)
-    }
-
     // why: the DataStore holds exactly eight settings (launcher and onboarding); a SharedPreferences key must not
     //      be accepted there, nor the reverse, or a file could write a key into the wrong store.
     // proves: CLAIM(catalog-default-unsupported)

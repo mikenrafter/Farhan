@@ -2,7 +2,11 @@ package ly.com.tahaben.notification_filter_domain.delivery
 
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import java.time.Instant
+import java.time.ZoneOffset
+import ly.com.tahaben.notification_filter_domain.model.DeliveryCadence
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
+import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
 import org.junit.Test
 
 class SnoozePolicyTest {
@@ -12,7 +16,10 @@ class SnoozePolicyTest {
         snoozeEnabled = true,
         filterEnabled = true,
         platformSupportsSnooze = true,
-        duration = SnoozeDuration.MINUTES_5,
+        priority = NotificationPriority.HIGH,
+        setting = PriorityDeliverySetting.defaultFor(NotificationPriority.HIGH),
+        now = Instant.parse("2026-11-20T08:55:00Z"),
+        zone = ZoneOffset.UTC,
     )
 
     private val exclusions = mapOf(
@@ -22,6 +29,10 @@ class SnoozePolicyTest {
         SnoozeSkipReason.OWN_NOTIFICATION to eligible.copy(packageName = "ly.com.tahaben.farhan_alpha"),
         SnoozeSkipReason.PACKAGE_EXCEPTION to eligible.copy(isExceptedPackage = true),
         SnoozeSkipReason.CRITICAL to eligible.copy(priority = NotificationPriority.CRITICAL),
+        SnoozeSkipReason.IMMEDIATE_CADENCE to eligible.copy(
+            setting = eligible.setting.copy(cadence = DeliveryCadence.IMMEDIATELY),
+        ),
+        SnoozeSkipReason.PASSTHROUGH to eligible.copy(isPassthrough = true),
         SnoozeSkipReason.SYSTEM_EXEMPT_CATEGORY to eligible.copy(isSystemExemptCategory = true),
         SnoozeSkipReason.ONGOING to eligible.copy(isOngoing = true),
         SnoozeSkipReason.FOREGROUND_SERVICE to eligible.copy(isForegroundService = true),
@@ -65,6 +76,18 @@ class SnoozePolicyTest {
     @Test
     fun `skip when the notification is critical`() = assertSkip(SnoozeSkipReason.CRITICAL)
 
+    // why: a HIGH priority can use immediate cadence and must go straight through just like CRITICAL.
+    // proves: CLAIM(snooze-exclusions)
+    // catches: checking only CRITICAL and ignoring owner-configured immediate cadence.
+    @Test
+    fun `skip when high priority uses immediate cadence`() = assertSkip(SnoozeSkipReason.IMMEDIATE_CADENCE)
+
+    // why: intake already allows passthrough notifications through the normal path (D7).
+    // proves: CLAIM(snooze-exclusions)
+    // catches: snoozing a non-critical notification that intake marked passthrough.
+    @Test
+    fun `skip when intake marks the notification passthrough`() = assertSkip(SnoozeSkipReason.PASSTHROUGH)
+
     // why: the policy must skip when the category is system exempt, even with all other inputs eligible.
     // proves: CLAIM(snooze-exclusions)
     // catches: an alarm with medium priority is snoozed.
@@ -98,11 +121,11 @@ class SnoozePolicyTest {
     // why: D1 makes both an arbitrary app and a package that resembles a former fixture eligible.
     // catches: keeping the four-package allowlist or substituting a package-prefix rule.
     @Test
-    fun `eligible packages snooze for the selected duration`() {
+    fun `eligible packages snooze until the next cadence tick`() {
         for (packageName in listOf("com.whatsapp", "ly.com.tahaben.test.messenger.evil")) {
             assertWithMessage(packageName)
                 .that(SnoozePolicy.decide(eligible.copy(packageName = packageName)))
-                .isEqualTo(SnoozeDecision.Snooze(300_000L)) // 5 × 60 × 1000
+                .isEqualTo(SnoozeDecision.Snooze(300_000L)) // 08:55 to the 09:00 hourly tick
         }
     }
 
