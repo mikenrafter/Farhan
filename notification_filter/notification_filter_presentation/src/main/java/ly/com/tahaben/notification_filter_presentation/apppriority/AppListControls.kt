@@ -2,10 +2,10 @@ package ly.com.tahaben.notification_filter_presentation.apppriority
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import ly.com.tahaben.notification_filter_domain.model.NotificationCategory
 import ly.com.tahaben.notification_filter_presentation.R
@@ -77,12 +77,19 @@ internal fun AppListControls(
                                 is AppFilter.Category -> filter.category.displayName()
                             },
                         )
-                        Text(
-                            text = catalog?.count(filter)?.toString().orEmpty(),
-                            modifier = Modifier.widthIn(min = 20.dp),
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.labelSmall,
-                        )
+                        val countStyle = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum")
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = "000",
+                                modifier = Modifier.clearAndSetSemantics {},
+                                color = Color.Transparent,
+                                style = countStyle,
+                            )
+                            Text(
+                                text = catalog?.count(filter)?.toString().orEmpty(),
+                                style = countStyle,
+                            )
+                        }
                     }
                 },
             )
