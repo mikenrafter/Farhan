@@ -1,0 +1,56 @@
+{
+  "cli_version": "0.13.4",
+  "checkpoint_id": "cb68648f8b50",
+  "strategy": "manual-commit",
+  "branch": "rework",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/delivery/DeliveryClock.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/delivery/DeliveryGate.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/delivery/DeliveryTimeContext.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/delivery/NotificationCore.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/delivery/NotificationDeliveryCoordinator.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/delivery/NotificationDeliveryPolicy.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/model/NotificationSchedulePeriod.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/preferences/Preferences.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/BoundaryDrag.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/DaySchedule.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ScheduleAutomation.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ScheduleBook.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ScheduleDraft.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/use_cases/GetCurrentBudgetStatus.kt",
+    "notification_filter/notification_filter_domain/src/test/java/ly/com/tahaben/notification_filter_domain/delivery/NotificationCoreTest.kt",
+    "research/notification-core-green-report.md",
+    "research/notification-spec-review.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/cb/68648f8b50/0/metadata.json",
+      "transcript": "/cb/68648f8b50/0/full.jsonl",
+      "compact_transcript": "/cb/68648f8b50/0/transcript.jsonl",
+      "content_hash": "/cb/68648f8b50/0/content_hash.txt",
+      "prompt": "/cb/68648f8b50/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "redaction": {
+    "replacements": 1,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 1,
+      "key_context": 0,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  }
+}
