@@ -2,6 +2,10 @@ package ly.com.tahaben.notification_filter_domain.delivery
 
 import ly.com.tahaben.notification_filter_domain.model.BudgetSpendEntry
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
+import ly.com.tahaben.notification_filter_domain.sound.AlertIdentity
+import ly.com.tahaben.notification_filter_domain.sound.ElectionInput
+import ly.com.tahaben.notification_filter_domain.sound.ElectionPolicy
+import ly.com.tahaben.notification_filter_domain.sound.ProxyAlert
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_domain.model.NotificationSchedulePeriod
 import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
@@ -60,7 +64,7 @@ interface DeliveryBudgetStore {
 /** Android-bound in production (NotificationManager). Must report failure, not hide it. */
 interface ProxyNotificationPoster {
     suspend fun post(item: NotificationItem): PostResult
-    suspend fun post(item: NotificationItem, alert: ly.com.tahaben.notification_filter_domain.sound.ProxyAlert): PostResult =
+    suspend fun post(item: NotificationItem, alert: ProxyAlert): PostResult =
         post(item)
     suspend fun refresh(item: NotificationItem): PostResult = PostResult.Posted
 }
@@ -72,7 +76,7 @@ interface DeliveryEnvironment {
     fun timeContext(): DeliveryTimeContext
     fun queuePreferences(): Map<String, AppQueuePreference>
     fun activeSourceKeys(): Set<String> = emptySet()
-    fun soundElection(item: NotificationItem): ly.com.tahaben.notification_filter_domain.sound.ElectionInput? = null
+    fun soundElection(item: NotificationItem): ElectionInput? = null
 }
 
 /**
@@ -98,6 +102,8 @@ class NotificationDeliveryCoordinator(
     private data class Completion(val id: String, val state: DeliveryBudgetState, val entry: BudgetSpendEntry?,
         var rowSaved: Boolean = false, var budgetSaved: Boolean = false)
     private var completion: Completion? = null
+    private val alerted = linkedSetOf<AlertIdentity>()
+    private class TickSound(var alerted: Boolean = false)
 
     init { require(eventCapacity > 0); gate.recover = { finishCompletion(); persistInvalidations() } }
 
@@ -222,6 +228,7 @@ class NotificationDeliveryCoordinator(
             NotificationDeliveryPolicy.shouldDeliverOnBatchTick(it.priority, settings, time)
         }.toMutableList()
         val outcomes = mutableListOf<DeliveryOutcome>()
+        val sound = TickSound()
         while (pending.isNotEmpty() && outcomes.size < MAX_BATCH_ATTEMPTS) {
             val candidate = NotificationDeliveryPolicy.orderCandidates(pending, environment.queuePreferences()).first()
             pending.removeAll { it.id == candidate.id }
@@ -233,7 +240,7 @@ class NotificationDeliveryCoordinator(
                 persistInvalidations()
                 DeliveryOutcome.Invalidated(candidate.id)
             } else if (current.isDelivered || bypassed(candidate.id) || candidate.id in visibleSources) DeliveryOutcome.Deferred(candidate.id)
-            else deliver(current)
+            else deliver(current, sound)
             outcomes += outcome
             if (outcome is DeliveryOutcome.CommitPending) break
             if (outcome is DeliveryOutcome.Delivered) {
@@ -243,7 +250,7 @@ class NotificationDeliveryCoordinator(
         outcomes
     }
 
-    private suspend fun deliver(item: NotificationItem): DeliveryOutcome {
+    private suspend fun deliver(item: NotificationItem, sound: TickSound? = null): DeliveryOutcome {
         // Recheck callback-side tombstones at the effect boundary, even if removal work is queued.
         if (explicitlyRemoved(item.id) || rows.find(item.id)?.isCleared != false) {
             rows.markCleared(item.id)
@@ -262,9 +269,17 @@ class NotificationDeliveryCoordinator(
         }
         if (ambiguous(item)) { persistInvalidations(); return DeliveryOutcome.Invalidated(item.id) }
         if (bypassed(item.id) || unprocessed(item.id)) return DeliveryOutcome.Deferred(item.id)
-        return when (val post = postSafely(item)) {
+        val alert = environment.soundElection(item)?.let {
+            ElectionPolicy.alert(item, it, alerted, sound?.alerted == true)
+        } ?: ProxyAlert.Normal
+        return when (val post = postSafely(item, alert = alert)) {
             is PostResult.Failed -> DeliveryOutcome.PostFailed(item.id, post.reason)
             PostResult.Posted -> {
+                if (alert == ProxyAlert.Breakthrough) {
+                    alerted += AlertIdentity(item.id, item.timestamp)
+                    if (alerted.size > eventCapacity) alerted.remove(alerted.first())
+                    sound?.alerted = true
+                }
                 val charged = NotificationDeliveryPolicy.recordPassthrough(item.priority, setting, schedule, time.scheduleMinuteOfDay, decision.updatedBudget)
                 val entry = if (setting.budgetBehavior == ly.com.tahaben.notification_filter_domain.model.BudgetBehavior.RESPECTING && item.priority.pointCost > 0)
                     BudgetSpendEntry(item.appName.orEmpty(), item.title.orEmpty(), item.priority, item.priority.pointCost,
@@ -279,8 +294,12 @@ class NotificationDeliveryCoordinator(
         }
     }
 
-    private suspend fun postSafely(item: NotificationItem, refresh: Boolean = false): PostResult = try {
-        if (refresh) poster.refresh(item) else poster.post(item)
+    private suspend fun postSafely(
+        item: NotificationItem,
+        refresh: Boolean = false,
+        alert: ProxyAlert = ProxyAlert.Normal,
+    ): PostResult = try {
+        if (refresh) poster.refresh(item) else poster.post(item, alert)
     } catch (cancelled: kotlinx.coroutines.CancellationException) {
         throw cancelled
     } catch (_: Exception) {

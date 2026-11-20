@@ -9,7 +9,7 @@ sealed interface SoundControlState {
 
 enum class SuspensionReason {
     FILTER_OFF, APP_OFF, LISTENER_ACCESS, NEEDS_ACCESS, POST_PERMISSION,
-    CHANNEL_UNUSABLE, STOPPED_IN_SETTINGS, REMOVAL_FAILED,
+    CHANNEL_UNUSABLE, STOPPED_IN_SETTINGS, REMOVAL_FAILED, STORAGE_FAILED, PLATFORM_FAILED,
 }
 
 data class SoundIntent(
@@ -30,4 +30,6 @@ data class SoundPrerequisites(
 
 data class ZenRule(val id: String, val ownerPackage: String, val conditionId: String, val active: Boolean)
 
-data class BreakthroughChannel(val bypassesDnd: Boolean, val importance: Int)
+data class BreakthroughChannel(val bypassesDnd: Boolean, val importance: Int) {
+    val usable: Boolean get() = bypassesDnd && importance > 0
+}
