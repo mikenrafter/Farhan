@@ -18,6 +18,7 @@ internal class SnoozeServiceRouting(
 ) {
     suspend fun handleStoredPost(item: NotificationItem, order: Long, now: Instant): Boolean {
         if (find(item.id)?.snoozeDeadline == null) return false
+        coordinator.acceptSnoozeEvent(item.id, order)
         settle(SnoozeReturn(item.id, item.timestamp), now)
         return true
     }

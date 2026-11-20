@@ -161,7 +161,7 @@ class NotificationDeliveryCoordinator(
     @Synchronized private fun bypassed(id: String): Boolean = events[id]?.bypassed == true
     @Synchronized private fun unprocessed(id: String): Boolean = events[id]?.let { it.order > it.accepted && !it.removed } == true
     @Synchronized private fun accept(id: String, order: Long?) {
-        if (order != null) events[id]?.let { events[id] = it.copy(accepted = order) }
+        if (order != null) events[id]?.let { events[id] = it.copy(accepted = maxOf(it.accepted, order)) }
     }
 
     suspend fun onArrival(
@@ -240,11 +240,17 @@ class NotificationDeliveryCoordinator(
 
     suspend fun refreshSnoozeProxy(item: NotificationItem) = gate.run { postSafely(item, refresh = true) }
 
+    fun acceptSnoozeEvent(id: String, order: Long) = accept(id, order)
+
     suspend fun withSnoozeAdmission(
         id: String,
         order: Long,
         block: suspend (List<NotificationItem>, DeliveryBudgetState) -> Boolean,
-    ): Boolean = gate.run { block(rows.liveSnoozes(), budget.read()) }
+    ): Boolean = gate.run {
+        val admitted = block(rows.liveSnoozes(), budget.read())
+        if (admitted) acceptSnoozeEvent(id, order)
+        admitted
+    }
 
     suspend fun onRemoved(id: String, reason: NotificationRemovalReason, atMillis: Long, eventOrder: Long? = null) {
         if (reason != NotificationRemovalReason.SOURCE_APP_CANCELLED && reason != NotificationRemovalReason.USER_DISMISSED && reason != NotificationRemovalReason.INBOX_CLEARED) return
