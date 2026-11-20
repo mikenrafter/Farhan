@@ -26,7 +26,11 @@ class Reconciler(private val ownerPackage: String, private val conditionId: Stri
         val rule = preferredRule(intent, owned)
         val state = if (rule?.active == true) SoundControlState.Held(rule.id)
             else SoundControlState.Suspended(SuspensionReason.STOPPED_IN_SETTINGS)
-        val actions = if (rule != null && rule.id != intent.ruleId) listOf(ReconcileAction.Adopt(rule.id)) else emptyList()
+        val actions = buildList {
+            val duplicates = owned.filter { it.id != rule?.id }.map(ZenRule::id)
+            if (duplicates.isNotEmpty()) add(ReconcileAction.Release(duplicates))
+            if (rule != null && rule.id != intent.ruleId) add(ReconcileAction.Adopt(rule.id))
+        }
         return Reconciliation(state, actions)
     }
 
