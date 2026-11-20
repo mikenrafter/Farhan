@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "d054ac50918b08548b7192e01e85fe2f",
+    "identityHash": "b69623b6900d6758a130bfc088eef7fc",
     "entities": [
       {
         "tableName": "UsageDataItemEntity",
@@ -50,7 +50,7 @@
       },
       {
         "tableName": "NotificationItemEntity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `appName` TEXT, `title` TEXT, `text` TEXT, `time` TEXT NOT NULL, `creatorPackage` TEXT NOT NULL, `timestamp` INTEGER NOT NULL DEFAULT 0, `priority` INTEGER NOT NULL DEFAULT 3, `category` TEXT NOT NULL DEFAULT 'OTHER', `isRead` INTEGER NOT NULL DEFAULT 0, `channelId` TEXT DEFAULT NULL, `isCleared` INTEGER NOT NULL DEFAULT 0, `isDelivered` INTEGER NOT NULL DEFAULT 0, `priorityReason` TEXT DEFAULT NULL, `sourceSession` TEXT NOT NULL DEFAULT '', `sourceEventOrder` INTEGER NOT NULL DEFAULT 0, `deliveryInvalidated` INTEGER NOT NULL DEFAULT 0, `snoozeDeadline` INTEGER, `snoozePriority` INTEGER, `snoozeBootCount` INTEGER, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `appName` TEXT, `title` TEXT, `text` TEXT, `time` TEXT NOT NULL, `creatorPackage` TEXT NOT NULL, `timestamp` INTEGER NOT NULL DEFAULT 0, `priority` INTEGER NOT NULL DEFAULT 3, `category` TEXT NOT NULL DEFAULT 'OTHER', `isRead` INTEGER NOT NULL DEFAULT 0, `channelId` TEXT DEFAULT NULL, `isCleared` INTEGER NOT NULL DEFAULT 0, `isDelivered` INTEGER NOT NULL DEFAULT 0, `priorityReason` TEXT DEFAULT NULL, `sourceSession` TEXT NOT NULL DEFAULT '', `sourceEventOrder` INTEGER NOT NULL DEFAULT 0, `deliveryInvalidated` INTEGER NOT NULL DEFAULT 0, `snoozeDeadline` INTEGER, `snoozePriority` INTEGER, `snoozeBootCount` INTEGER, `snoozeGroupKey` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -181,6 +181,12 @@
             "fieldPath": "snoozeBootCount",
             "columnName": "snoozeBootCount",
             "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "snoozeGroupKey",
+            "columnName": "snoozeGroupKey",
+            "affinity": "TEXT",
             "notNull": false
           }
         ],
@@ -371,7 +377,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd054ac50918b08548b7192e01e85fe2f')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b69623b6900d6758a130bfc088eef7fc')"
     ]
   }
 }

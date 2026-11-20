@@ -35,4 +35,5 @@ data class NotificationItemEntity(
     val snoozeDeadline: Long? = null,
     val snoozePriority: Int? = null,
     val snoozeBootCount: Int? = null,
+    val snoozeGroupKey: String? = null,
 )

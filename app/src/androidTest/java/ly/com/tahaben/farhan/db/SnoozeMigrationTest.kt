@@ -41,6 +41,7 @@ class SnoozeMigrationTest {
                 assertThat(old?.snoozeDeadline).isNull()
                 assertThat(old?.snoozePriority).isNull()
                 assertThat(old?.snoozeBootCount).isNull()
+                assertThat(old?.snoozeGroupKey).isNull()
                 assertThat(dao.pendingGroups(4).map { it.packageName }).containsExactly("com.chat")
                 assertThat(dao.pendingHead("com.chat", 2, false)?.id).isEqualTo("legacy")
                 assertThat(dao.getUndeliveredNotificationsUpToPriority(4).map { it.id }).containsExactly("legacy")

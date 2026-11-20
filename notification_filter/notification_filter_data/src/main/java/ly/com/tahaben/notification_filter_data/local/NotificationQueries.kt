@@ -2,10 +2,10 @@ package ly.com.tahaben.notification_filter_data.local
 
 /** SQL shared with executable SQLite query fixtures. All row results are bounded before domain mapping. */
 object NotificationQueries {
-    const val COMPLETE_SNOOZE_RETURN = "UPDATE notificationitementity SET isDelivered = 1 WHERE id = :id"
-    const val PENDING_UP_TO_PRIORITY = "SELECT * FROM notificationitementity WHERE isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0 AND priority <= :priorityLevel ORDER BY priority ASC, timestamp ASC"
-    const val PENDING_HEAD = "SELECT * FROM notificationitementity WHERE creatorPackage = :packageName AND priority = :priority AND isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0 ORDER BY CASE WHEN :oldest THEN timestamp END ASC, CASE WHEN NOT :oldest THEN timestamp END DESC, id ASC LIMIT 1"
-    const val PENDING_GROUPS = "SELECT creatorPackage AS packageName, priority FROM notificationitementity WHERE isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0 AND priority <= :maxPriority GROUP BY creatorPackage, priority ORDER BY priority ASC, creatorPackage ASC LIMIT 4096"
+    const val COMPLETE_SNOOZE_RETURN = "UPDATE notificationitementity SET isDelivered = 1, snoozeDeadline = NULL, snoozePriority = NULL, snoozeBootCount = NULL WHERE id = :id"
+    const val PENDING_UP_TO_PRIORITY = "SELECT * FROM notificationitementity WHERE isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0 AND snoozeDeadline IS NULL AND priority <= :priorityLevel ORDER BY priority ASC, timestamp ASC"
+    const val PENDING_HEAD = "SELECT * FROM notificationitementity WHERE creatorPackage = :packageName AND priority = :priority AND isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0 AND snoozeDeadline IS NULL ORDER BY CASE WHEN :oldest THEN timestamp END ASC, CASE WHEN NOT :oldest THEN timestamp END DESC, id ASC LIMIT 1"
+    const val PENDING_GROUPS = "SELECT creatorPackage AS packageName, priority FROM notificationitementity WHERE isDelivered = 0 AND isCleared = 0 AND deliveryInvalidated = 0 AND snoozeDeadline IS NULL AND priority <= :maxPriority GROUP BY creatorPackage, priority ORDER BY priority ASC, creatorPackage ASC LIMIT 4096"
     const val INVALIDATE = "UPDATE notificationitementity SET deliveryInvalidated = 1, priorityReason = 'Not proxied after intake overflow. Open the source app.' WHERE sourceSession = :session AND sourceEventOrder > 0 AND sourceEventOrder <= :order AND isDelivered = 0 AND isCleared = 0"
     const val INBOX = """SELECT * FROM notificationitementity WHERE isCleared = :cleared
         AND (:priority IS NULL OR (CASE WHEN isRead = 0 AND priority != 1 AND timestamp < :standingCutoff THEN MIN(priority + 1, 4) ELSE priority END) = :priority)

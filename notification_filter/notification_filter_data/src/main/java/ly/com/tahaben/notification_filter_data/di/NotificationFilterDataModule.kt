@@ -40,6 +40,7 @@ object NotificationFilterDataModule {
             override suspend fun markCleared(id: String) = dao.markNotificationAsCleared(id)
             override suspend fun markDelivered(id: String) = dao.markNotificationAsDelivered(id)
             override suspend fun completeSnoozeReturn(id: String) = dao.completeSnoozeReturn(id)
+            override suspend fun liveSnoozes() = dao.liveSnoozes().map { it.toNotificationItem() }
             override suspend fun pending(maxPriorityLevel: Int): List<ly.com.tahaben.notification_filter_domain.model.NotificationItem> {
                 val preferencesByApp = preferences.getAppQueuePreferences()
                 return dao.pendingGroups(maxPriorityLevel).mapNotNull { group ->
