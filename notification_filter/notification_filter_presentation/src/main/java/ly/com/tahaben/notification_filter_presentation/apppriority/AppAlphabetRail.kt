@@ -1,5 +1,6 @@
 package ly.com.tahaben.notification_filter_presentation.apppriority
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
@@ -115,8 +116,9 @@ internal fun AppAlphabetRail(
                     )
                 }.requiredSize(bubbleSize).clearAndSetSemantics {},
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(letters[index], style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
