@@ -93,6 +93,7 @@ class NotificationService : NotificationListenerService() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private data class PostedFields(
         val item: NotificationItem, val androidCategory: String?, val exclusionFlags: SnoozeExclusionFlags,
+        val groupKey: String?,
         val contentIntent: PendingIntent?, val actions: List<CapturedAction>, val order: Long,
         /** Only captured while the source-icon experiment is on. */
         val smallIcon: android.graphics.drawable.Icon? = null,
@@ -114,12 +115,12 @@ class NotificationService : NotificationListenerService() {
                     snoozeWork.withLock {
                         drainSnoozeReturns()
                         when (work) {
-                        Work.Return -> Unit
-                        is Work.NativeRemoval -> snoozeHandler.onRemoved(work.key, work.packageName, work.reason, work.at)
-                        is Work.Posted -> processNotificationPosted(work.fields)
-                        is Work.Removed -> coordinator.onRemoved(work.id, work.reason, System.currentTimeMillis(), work.order)
-                        is Work.ChannelChanged -> notificationFilterUseCases.registerKnownNotificationSources(listOf(
-                            VisibleNotificationSource(work.pkg, resolveApplicationName(work.pkg), work.channel, null)))
+                            Work.Return -> Unit
+                            is Work.NativeRemoval -> snoozeHandler.onRemoved(work.key, work.packageName, work.reason, work.at)
+                            is Work.Posted -> processNotificationPosted(work.fields)
+                            is Work.Removed -> coordinator.onRemoved(work.id, work.reason, System.currentTimeMillis(), work.order)
+                            is Work.ChannelChanged -> notificationFilterUseCases.registerKnownNotificationSources(listOf(
+                                VisibleNotificationSource(work.pkg, resolveApplicationName(work.pkg), work.channel, null)))
                         }
                     }
                 } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
@@ -296,13 +297,13 @@ class NotificationService : NotificationListenerService() {
             notification.extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.take(1024),
             notification.extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString()?.take(16384),
             java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(sbn.postTime)),
-            sbn.packageName, timestamp = sbn.postTime, channelId = notification.channelId, snoozeGroupKey = groupKey)
+            sbn.packageName, timestamp = sbn.postTime, channelId = notification.channelId)
         val actions = notification.actions.orEmpty().take(8).mapNotNull { action ->
             val intent = action.actionIntent ?: return@mapNotNull null
             CapturedAction(action.title?.toString()?.take(128).orEmpty(), intent, action.remoteInputs?.take(8)?.toTypedArray())
         }
         val smallIcon = if (preferences.isExperimentEnabled(Experiments.SOURCE_ICON)) notification.smallIcon else null
-        val fields = PostedFields(item, notification.category, flags, notification.contentIntent, actions, order, smallIcon)
+        val fields = PostedFields(item, notification.category, flags, groupKey, notification.contentIntent, actions, order, smallIcon)
         if (!intake.offer(Work.Posted(fields))) {
             // Invalidate older queued updates to this key; this new notification remains in the source tray.
             coordinator.captureEvent(item.id, bypassed = true)
@@ -312,7 +313,6 @@ class NotificationService : NotificationListenerService() {
     }
 
     private fun returnInput(now: Instant): SnoozeInput {
-        val book = preferences.getScheduleSnapshot().book
         return SnoozeInput(
             packageName = "", ownPackageName = packageName,
             snoozeEnabled = preferences.isExperimentEnabled(Experiments.SNOOZE),
@@ -322,7 +322,8 @@ class NotificationService : NotificationListenerService() {
             now = now, zone = DeliveryClock.systemClock.zone, testingMode = preferences.isDeliveryTestingMode(),
             isPassthrough = false, isExceptedPackage = false, priority = NotificationPriority.MEDIUM,
             exclusionFlags = SnoozeExclusionFlags.fromNotification(0, null, null),
-            scheduleAt = book::scheduleAt, alreadyDelivered = false, liveSnoozes = 0,
+            scheduleAt = { at, zone -> preferences.getScheduleSnapshot().book.scheduleAt(at, zone) },
+            alreadyDelivered = false, liveSnoozes = 0,
         )
     }
 
@@ -381,7 +382,7 @@ class NotificationService : NotificationListenerService() {
                     isExceptedPackage = excepted, alreadyDelivered = notificationDao.find(item.id)?.isDelivered == true,
                     liveSnoozes = liveRows.size, budget = budget, ownedRows = liveRows,
                 )
-                snoozeHandler.onPosted(item, context)
+                snoozeHandler.onPosted(item.copy(snoozeGroupKey = fields.groupKey), context)
             }
             if (handled) {
                 captureActions()
