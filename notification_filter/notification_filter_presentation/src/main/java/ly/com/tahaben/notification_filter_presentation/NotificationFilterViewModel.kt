@@ -86,15 +86,19 @@ class NotificationFilterViewModel internal constructor(
 
     private fun getNotifications() {
         getNotificationsJob?.cancel()
-        state = state.copy(
-            isLoading = true, hasNextPage = false,
-            filteredNotifications = emptyList(), clearedNotifications = emptyList(),
-        )
+        val key = InboxPageKey(state.showCleared, state.priorityFilter, state.page)
+        // CLAIM(inbox-resume): the same displayed page stays visible until its refresh emits [NotificationFilterViewModelTest].
+        if (key != state.shownKey) {
+            state = state.copy(
+                isLoading = true, shownKey = null, hasNextPage = false,
+                filteredNotifications = emptyList(), clearedNotifications = emptyList(),
+            )
+        }
         val selection = InboxSelection(
-            cleared = state.showCleared, priority = state.priorityFilter,
+            cleared = key.cleared, priority = key.priority,
             standingCutoff = System.currentTimeMillis() - sharedPref.getStandingThresholdHours() * 3_600_000L,
         )
-        val query = InboxQuery(selection, offset = state.page * 100, limit = 101)
+        val query = InboxQuery(selection, offset = key.page * 100, limit = 101)
         getNotificationsJob = repository.observeInbox(query).onEach { rows ->
             val page = rows.take(100)
             val displayPriorities = page.associate { item ->
@@ -102,6 +106,7 @@ class NotificationFilterViewModel internal constructor(
             }
             val observed = state.copy(
                 isLoading = false,
+                shownKey = key,
                 hasNextPage = rows.size > 100,
                 inboxSearch = selection.search,
                 standingCutoff = selection.standingCutoff,

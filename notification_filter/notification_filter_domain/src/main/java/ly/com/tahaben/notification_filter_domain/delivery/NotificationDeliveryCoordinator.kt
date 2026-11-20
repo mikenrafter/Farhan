@@ -202,9 +202,9 @@ class NotificationDeliveryCoordinator(
         }
     }
 
-    suspend fun clearInbox(id: String, delete: suspend () -> Unit) {
+    suspend fun markCleared(id: String, afterCleared: suspend () -> Unit) {
         val order = captureEvent(id, removed = true)
-        gate.run { rows.markCleared(id); delete(); removalApplied(id, order) }
+        gate.run { rows.markCleared(id); afterCleared(); removalApplied(id, order) }
     }
     // CLAIM(scoped-delivery-clear): clearing updates only tracked events for deleted rows [NotificationDeliveryCoordinatorTest].
     suspend fun clearScoped(delete: suspend () -> List<String>, clearActions: (List<String>) -> Unit) {

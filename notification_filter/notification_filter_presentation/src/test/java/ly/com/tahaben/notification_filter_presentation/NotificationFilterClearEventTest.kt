@@ -19,10 +19,10 @@ class NotificationFilterClearEventTest {
         NotificationFilterState(showCleared = true).dispatchClear { events += it }
 
         assertThat(events).containsExactly(
-            NotificationFilterEvent.OnClearNotifications(InboxClearScope.All, 0),
-            NotificationFilterEvent.OnClearNotifications(InboxClearScope.Priority(LOW), 500),
-            NotificationFilterEvent.OnClearNotifications(InboxClearScope.Cleared, 700),
-            NotificationFilterEvent.OnClearNotifications(InboxClearScope.Cleared, 0),
+            NotificationFilterEvent.OnClearNotifications(InboxClearScope.All, 0, search = ""),
+            NotificationFilterEvent.OnClearNotifications(InboxClearScope.Priority(LOW), 500, search = ""),
+            NotificationFilterEvent.OnClearNotifications(InboxClearScope.Cleared, 700, search = ""),
+            NotificationFilterEvent.OnClearNotifications(InboxClearScope.Cleared, 0, search = ""),
         ).inOrder()
     }
 

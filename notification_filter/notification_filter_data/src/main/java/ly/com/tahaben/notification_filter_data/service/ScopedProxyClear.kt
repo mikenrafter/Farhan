@@ -13,10 +13,8 @@ internal fun clearScopedProxies(
     cancel: (String, Int) -> Unit,
 ) {
     if (ids.isEmpty()) return
-    val tags = ids.mapTo(mutableSetOf()) { id ->
-        actions.remove(id)
-        PROXY_TAG + id
-    }
+    ids.forEach(actions::remove)
+    val tags = ids.mapTo(mutableSetOf()) { PROXY_TAG + it }
     for (notification in activeNotifications()) {
         val tag = notification.tag ?: continue
         if (tag in tags) cancel(tag, notification.id)

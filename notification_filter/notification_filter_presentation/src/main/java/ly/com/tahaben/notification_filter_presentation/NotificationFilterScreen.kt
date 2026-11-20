@@ -247,190 +247,190 @@ fun NotificationFilterScreen(
                         )
                     }
 
-                    if (state.isLoading) return@Column
-
-                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = spacing.spaceMedium), horizontalArrangement = Arrangement.SpaceBetween) {
-                        androidx.compose.material3.TextButton(onClick = viewModel::previousPage, enabled = state.page > 0) { Text("Newer") }
-                        Text("Page ${state.page + 1}", style = MaterialTheme.typography.labelSmall)
-                        androidx.compose.material3.TextButton(onClick = viewModel::nextPage, enabled = state.hasNextPage) { Text("Older") }
-                    }
-
-                    if (displayList.isEmpty()) {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.no_notifications),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
+                    if (!state.isLoading) {
+                        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = spacing.spaceMedium), horizontalArrangement = Arrangement.SpaceBetween) {
+                            androidx.compose.material3.TextButton(onClick = viewModel::previousPage, enabled = state.page > 0) { Text("Newer") }
+                            Text("Page ${state.page + 1}", style = MaterialTheme.typography.labelSmall)
+                            androidx.compose.material3.TextButton(onClick = viewModel::nextPage, enabled = state.hasNextPage) { Text("Older") }
                         }
 
-                    } else {
-                        Box(modifier = Modifier.navigationBarsPadding()) {
-                            LazyColumn(
+                        if (displayList.isEmpty()) {
+                            Column(
                                 modifier = Modifier.fillMaxSize(),
-                                verticalArrangement = Arrangement.spacedBy(spacing.spaceSmall),
-                                contentPadding = PaddingValues(
-                                    top = spacing.spaceSmall,
-                                    bottom = spacing.spaceHuge + spacing.spaceSmall
-                                )
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                items(
-                                    displayList,
-                                    NotificationItem::id
-                                ) { notificationItem ->
-                                    val coroutineScope = rememberCoroutineScope()
-                                    val dismissState = rememberSwipeToDismissBoxState(
-                                        initialValue = SwipeToDismissBoxValue.Settled,
-                                        confirmValueChange = {
-                                            if (it == SwipeToDismissBoxValue.EndToStart) {
-                                                coroutineScope.launch {
-                                                    delay(100)
-                                                    viewModel.onEvent(
-                                                        NotificationFilterEvent.OnDismissNotification(
-                                                            notificationItem
-                                                        )
-                                                    )
-                                                }
-
-                                                true
-                                            }else{
-                                                false
-                                            }
-                                        }
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.no_notifications),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        textAlign = TextAlign.Center
                                     )
+                                }
+                            }
 
-                                    // Using CompositionLocalProvider to change the layout direction because of bug in SwipeToDismissBox
-                                    // in RTL layouts
-                                    CompositionLocalProvider(value = LocalLayoutDirection provides LayoutDirection.Ltr) {
-                                        SwipeToDismissBox(
-                                            modifier = Modifier.animateItemPlacement(tween(200)),
-                                            state = dismissState,
-                                            enableDismissFromStartToEnd = false,
-                                            backgroundContent = {
-                                                val color by animateColorAsState(
-                                                    when (dismissState.targetValue) {
-                                                        SwipeToDismissBoxValue.Settled -> MaterialTheme.colorScheme.background
-                                                        else -> MaterialTheme.colorScheme.error
-                                                    }
-                                                )
-                                                val alignment = Alignment.CenterEnd
-                                                val icon = Icons.Default.Delete
-
-                                                val scale by animateFloatAsState(
-                                                    targetValue =
-                                                    if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) 0.75f else 1f
-                                                )
-                                                Box(
-                                                    modifier =
-                                                    Modifier
-                                                        .fillMaxSize()
-                                                        .background(color)
-                                                        .padding(horizontal = 20.dp),
-                                                    contentAlignment = alignment
-                                                ) {
-                                                    Icon(
-                                                        imageVector = icon,
-                                                        contentDescription = stringResource(R.string.delete_icon),
-                                                        modifier = Modifier.scale(scale),
-                                                        tint = MaterialTheme.colorScheme.onError
-                                                    )
-                                                }
-                                            },
-                                            content = {
-                                                // Wrapping content with the correct layout direction to avoid LTR layout force by the statement above
-                                                CompositionLocalProvider(value = LocalLayoutDirection provides localLayoutDirection) {
-                                                    Card(
-                                                        elevation = CardDefaults.cardElevation(
-                                                            defaultElevation = 0.dp,
-                                                            draggedElevation = 4.dp
-                                                        ),
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .padding(horizontal = spacing.spaceMedium)
-                                                            .fillMaxWidth()
-                                                            .align(alignment = Alignment.CenterVertically)
-                                                    ) {
-                                                        NotificationListItem(
-                                                            modifier = Modifier,
-                                                            notification = notificationItem,
-                                                            displayPriority = state.displayPriorities[notificationItem.id]
-                                                                ?: notificationItem.priority,
-                                                            onClick = {
-                                                                Timber.d("notification click composable")
-                                                                viewModel.onEvent(
-                                                                    NotificationFilterEvent.OnOpenNotification(
-                                                                        notificationItem = notificationItem
-                                                                    )
-                                                                )
-                                                            },
-                                                            menuOptions = listOf(
-                                                                MenuOption(
-                                                                    text = "Always allow (Critical)",
-                                                                    onClick = {
-                                                                        viewModel.onEvent(
-                                                                            NotificationFilterEvent.OnExcludeAppClick(
-                                                                                notificationItem.packageName
-                                                                            )
-                                                                        )
-                                                                        Toast.makeText(
-                                                                            context,
-                                                                            "${notificationItem.appName} will always pass through",
-                                                                            Toast.LENGTH_SHORT
-                                                                        ).show()
-                                                                    }),
-                                                                MenuOption(
-                                                                    text = stringResource(id = R.string.app_info),
-                                                                    onClick = {
-                                                                        viewModel.onEvent(
-                                                                            NotificationFilterEvent.OnLaunchAppInfoClick(
-                                                                                notificationItem.packageName
-                                                                            )
-                                                                        )
-                                                                    }),
-                                                            ),
-                                                            actions = state.notificationActions[notificationItem.id] ?: emptyList(),
-                                                            onActionClick = { actionIndex ->
-                                                                viewModel.onEvent(
-                                                                    NotificationFilterEvent.OnFireNotificationAction(
-                                                                        notificationId = notificationItem.id,
-                                                                        actionIndex = actionIndex
-                                                                    )
-                                                                )
-                                                            }
+                        } else {
+                            Box(modifier = Modifier.navigationBarsPadding()) {
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(spacing.spaceSmall),
+                                    contentPadding = PaddingValues(
+                                        top = spacing.spaceSmall,
+                                        bottom = spacing.spaceHuge + spacing.spaceSmall
+                                    )
+                                ) {
+                                    items(
+                                        displayList,
+                                        NotificationItem::id
+                                    ) { notificationItem ->
+                                        val coroutineScope = rememberCoroutineScope()
+                                        val dismissState = rememberSwipeToDismissBoxState(
+                                            initialValue = SwipeToDismissBoxValue.Settled,
+                                            confirmValueChange = {
+                                                if (it == SwipeToDismissBoxValue.EndToStart) {
+                                                    coroutineScope.launch {
+                                                        delay(100)
+                                                        viewModel.onEvent(
+                                                            NotificationFilterEvent.OnDismissNotification(
+                                                                notificationItem
+                                                            )
                                                         )
                                                     }
+
+                                                    true
+                                                }else{
+                                                    false
                                                 }
                                             }
                                         )
 
-                                    }
+                                        // Using CompositionLocalProvider to change the layout direction because of bug in SwipeToDismissBox
+                                        // in RTL layouts
+                                        CompositionLocalProvider(value = LocalLayoutDirection provides LayoutDirection.Ltr) {
+                                            SwipeToDismissBox(
+                                                modifier = Modifier.animateItemPlacement(tween(200)),
+                                                state = dismissState,
+                                                enableDismissFromStartToEnd = false,
+                                                backgroundContent = {
+                                                    val color by animateColorAsState(
+                                                        when (dismissState.targetValue) {
+                                                            SwipeToDismissBoxValue.Settled -> MaterialTheme.colorScheme.background
+                                                            else -> MaterialTheme.colorScheme.error
+                                                        }
+                                                    )
+                                                    val alignment = Alignment.CenterEnd
+                                                    val icon = Icons.Default.Delete
 
+                                                    val scale by animateFloatAsState(
+                                                        targetValue =
+                                                        if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) 0.75f else 1f
+                                                    )
+                                                    Box(
+                                                        modifier =
+                                                        Modifier
+                                                            .fillMaxSize()
+                                                            .background(color)
+                                                            .padding(horizontal = 20.dp),
+                                                        contentAlignment = alignment
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = icon,
+                                                            contentDescription = stringResource(R.string.delete_icon),
+                                                            modifier = Modifier.scale(scale),
+                                                            tint = MaterialTheme.colorScheme.onError
+                                                        )
+                                                    }
+                                                },
+                                                content = {
+                                                    // Wrapping content with the correct layout direction to avoid LTR layout force by the statement above
+                                                    CompositionLocalProvider(value = LocalLayoutDirection provides localLayoutDirection) {
+                                                        Card(
+                                                            elevation = CardDefaults.cardElevation(
+                                                                defaultElevation = 0.dp,
+                                                                draggedElevation = 4.dp
+                                                            ),
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .padding(horizontal = spacing.spaceMedium)
+                                                                .fillMaxWidth()
+                                                                .align(alignment = Alignment.CenterVertically)
+                                                        ) {
+                                                            NotificationListItem(
+                                                                modifier = Modifier,
+                                                                notification = notificationItem,
+                                                                displayPriority = state.displayPriorities[notificationItem.id]
+                                                                    ?: notificationItem.priority,
+                                                                onClick = {
+                                                                    Timber.d("notification click composable")
+                                                                    viewModel.onEvent(
+                                                                        NotificationFilterEvent.OnOpenNotification(
+                                                                            notificationItem = notificationItem
+                                                                        )
+                                                                    )
+                                                                },
+                                                                menuOptions = listOf(
+                                                                    MenuOption(
+                                                                        text = "Always allow (Critical)",
+                                                                        onClick = {
+                                                                            viewModel.onEvent(
+                                                                                NotificationFilterEvent.OnExcludeAppClick(
+                                                                                    notificationItem.packageName
+                                                                                )
+                                                                            )
+                                                                            Toast.makeText(
+                                                                                context,
+                                                                                "${notificationItem.appName} will always pass through",
+                                                                                Toast.LENGTH_SHORT
+                                                                            ).show()
+                                                                        }),
+                                                                    MenuOption(
+                                                                        text = stringResource(id = R.string.app_info),
+                                                                        onClick = {
+                                                                            viewModel.onEvent(
+                                                                                NotificationFilterEvent.OnLaunchAppInfoClick(
+                                                                                    notificationItem.packageName
+                                                                                )
+                                                                            )
+                                                                        }),
+                                                                ),
+                                                                actions = state.notificationActions[notificationItem.id] ?: emptyList(),
+                                                                onActionClick = { actionIndex ->
+                                                                    viewModel.onEvent(
+                                                                        NotificationFilterEvent.OnFireNotificationAction(
+                                                                            notificationId = notificationItem.id,
+                                                                            actionIndex = actionIndex
+                                                                        )
+                                                                    )
+                                                                }
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            )
+
+                                        }
+
+                                    }
                                 }
-                            }
-                            Button(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(spacing.spaceHuge)
-                                    .padding(
-                                        vertical = spacing.spaceSmall,
-                                        horizontal = spacing.spaceMedium
+                                Button(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(spacing.spaceHuge)
+                                        .padding(
+                                            vertical = spacing.spaceSmall,
+                                            horizontal = spacing.spaceMedium
+                                        )
+                                        .align(Alignment.BottomCenter),
+                                    onClick = { state.dispatchClear(viewModel::onEvent) }) {
+                                    Text(
+                                        text = stringResource(state.clearLabel),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        textAlign = TextAlign.Center
                                     )
-                                    .align(Alignment.BottomCenter),
-                                onClick = { state.dispatchClear(viewModel::onEvent) }) {
-                                Text(
-                                    text = stringResource(state.clearLabel),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    textAlign = TextAlign.Center
-                                )
+                                }
                             }
                         }
                     }

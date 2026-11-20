@@ -4,6 +4,12 @@ import ly.com.tahaben.notification_filter_domain.inbox.InboxClearScope
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 
+data class InboxPageKey(
+    val cleared: Boolean,
+    val priority: NotificationPriority?,
+    val page: Int,
+)
+
 data class NotificationFilterState(
     val isServiceEnabled: Boolean = false,
     val isPermissionGranted: Boolean = true,
@@ -14,6 +20,7 @@ data class NotificationFilterState(
     val priorityFilter: NotificationPriority? = null,
     val showCleared: Boolean = false,
     val isLoading: Boolean = true,
+    val shownKey: InboxPageKey? = null,
     val inboxSearch: String = "",
     val standingCutoff: Long = 0,
     val page: Int = 0,

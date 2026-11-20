@@ -92,7 +92,7 @@ class CoreGapsTest {
         val h = DeliveryHarness(threeWindows(8), settings)
         val first = h.coordinator.captureEvent("K")
         val second = h.coordinator.captureEvent("J")
-        h.coordinator.clearInbox("K") { h.rows.rows.remove("K") }
+        h.coordinator.markCleared("K") { h.rows.rows.remove("K") }
         assertThat(h.coordinator.onArrival(item("K", 100), HIGH, first)).isEqualTo(DeliveryOutcome.Cleared("K"))
         h.coordinator.clearAll { h.rows.rows.clear() }
         assertThat(h.coordinator.onArrival(item("J", 200), HIGH, second)).isEqualTo(DeliveryOutcome.Cleared("J"))

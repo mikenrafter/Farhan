@@ -43,8 +43,8 @@ class ClearInboxTest {
         val clear = ClearInbox(repository, core, service)
 
         clear(InboxClearScope.Priority(LOW), standingCutoff = 500, search = "needle")
-        clear(InboxClearScope.Cleared, standingCutoff = 700)
-        clear(InboxClearScope.All, standingCutoff = 900)
+        clear(InboxClearScope.Cleared, standingCutoff = 700, search = "")
+        clear(InboxClearScope.All, standingCutoff = 900, search = "")
 
         assertThat(calls).containsExactly(
             listOf("deleteInboxNotifications", InboxSelection(priority = LOW, search = "needle", standingCutoff = 500)),

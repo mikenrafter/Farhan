@@ -12,7 +12,7 @@ class ClearInbox(
     private val service: ServiceUtil,
 ) {
     // CLAIM(inbox-clear-routing): a scoped clear removes actions only for IDs committed by storage [ClearInboxTest].
-    suspend operator fun invoke(scope: InboxClearScope, standingCutoff: Long, search: String = "") = when (scope) {
+    suspend operator fun invoke(scope: InboxClearScope, standingCutoff: Long, search: String) = when (scope) {
         InboxClearScope.All -> invoke()
         is InboxClearScope.Priority -> clearScoped(InboxSelection(priority = scope.priority, search = search, standingCutoff = standingCutoff))
         InboxClearScope.Cleared -> clearScoped(InboxSelection(cleared = true, search = search, standingCutoff = standingCutoff))
