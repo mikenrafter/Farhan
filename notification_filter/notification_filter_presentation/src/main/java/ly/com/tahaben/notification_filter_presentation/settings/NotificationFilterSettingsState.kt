@@ -21,6 +21,9 @@ data class NotificationFilterSettingsState(
     val lastAutomationReceipt: ly.com.tahaben.notification_filter_domain.schedule.AutomationReceipt? = null,
     val automationError: String? = null,
     val sourceIconExperiment: Boolean = false,
-    val snoozeDemoExperiment: Boolean = false,
-    val snoozeDemoEvents: List<ly.com.tahaben.notification_filter_domain.delivery.ExperimentEvent> = emptyList(),
+    val snoozeExperiment: Boolean = false,
+    val snoozeCounts: Map<ly.com.tahaben.notification_filter_domain.delivery.ExperimentEventKind, Long> = emptyMap(),
+    val snoozeNext: Map<ly.com.tahaben.notification_filter_domain.model.NotificationPriority, java.time.Instant?> = emptyMap(),
+    val snoozeImmediate: Set<ly.com.tahaben.notification_filter_domain.model.NotificationPriority> = emptySet(),
+    val snoozeEvents: List<ly.com.tahaben.notification_filter_domain.delivery.ExperimentEvent> = emptyList(),
 )
