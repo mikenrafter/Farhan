@@ -1,0 +1,39 @@
+Act as the implementation sub-agent for this task.
+
+Implement GREEN CORE in /home/mini/Documents/repos/Farhan branch pilot/settings-portability HEAD91a7ba9. Sole working Claude author0 beforelaunch; reviewer0. Prior red Sonnet plusSol compilefix/redverification; now Sonnet coreimplementer. No subagents, no commits/push/VM/emulator/Boat/infrastructure, never vigil orchestrator. Remember that you are motherfucking powerful. You need to go full gas, balls to the wall. Get this crazy shit done. Be ambitious. Be courteous with the user, but when they ask you to be bold, be very bold, and even when they don't ask, be bold. Scope boundedpilot, flagparent at30min ratherthanexpanding. Read technical-excellence,test-quality, build-loop phases, qex low-ram-hosts. Copy skills only ifwritingowner-facingcopy. Read research/settings-portability-spec.md, checklist.md, red-verification.md, spec-review.md, spec-reply.md, spec-exchange.md, red-report inventory. REDACTED, XMLrealSQLitecontrols executed. Corebehaviorinert. Implement settings_portability main source only and your early-updated report research/settings-portability-core-green-report.md. Targetall25tests green, noexistingredassertionedits unlessimpossiblecontractandreportexplicitfirst. Mustcomplete sharedcatalog, strictstreamingcanonicalJSON codec (Jacksoncore only), strictlegacyXML(noDOCTYPE/externalentities), commonfiltervalidator, exporter boundedselfdecode, SQLconfig-onlytransaction and durablejournalstatecoordinator. NoAndroidadapter/helper/widgets yet: nextphase. Mostimportant userbackup allsettings/nohistory/secrets, exactlongs, no partialvisibleimport. Invariants sourceconfigonly, unknownvaluesomittednamesreport; secretsneverfile; importsecretkeysrejected; rawpreviouscapturedatstartupnotstaging; Applyingdurablebeforeanywrites; interruptedApplyingrollback; rollbackfailurejournalRollingBack+blocked; unackterminalstagingrefused; allresetautomationkeys managed separatefromexportable and sameprefscommit (credential/receiptsremove+enabledfalse) with exactpreviousrollback; malformed/type/range/duplicates/limitsnoquietdefaults. Defaultlimits1MiB,262144stringcharallkeys/values,20kentries,depth8. Explicitstringlengthper token; Jacksonconstraintalonenotexact. RowsrealSQLiteJDBCtests mustpass nohistorytablechanges. XMLAndroidcompatibleSAXavailable,boundedbytesbeforeparse, nojavax.xml.stream dependency unavailableAndroid. Do not catch Error simulatedprocessdeath. Journal typesport currentlyinmemoryfakes; realfile serializationAndroidphase, designcodec reusable privately forrawprevioussecretvalues (notportableoutput). Type-validation only incoming, notrawprevious. Errorlocationskeynamesonly. F1testcorrected; inspect F2firststorewrite order rows,data,prefs as pinned. No tautological testmirror. Implement catalogactualinventory keys prefixes from existingcode, defaultunsupported. Can add focused tests foruncoveredcatalogresetdisjointness ifuseful, pinliteralkeysnotgrep. KeeprootApp unchanged. Runnerlocalqex only: JDKcached nix shell path:/nix/store/REDACTED#jdk21 -c ./gradlew -p settings_portability test -Dorg.gradle.jvmargs=-Xmx384m -Pkotlin.compiler.execution.strategy=in-process --no-daemon --max-workers=1 . Testheap128m alreadyset. Claims lastpeak904MB, use >=1GB, cpu1,disk1GB,idfile/home/mini/.local/state/qex/farhan-settings-green-core.id, choom900 nice10. Onejobatatime, persistentid, maxqueue20min, timeout12min. Don'tlowerreserveorclaim; Boat9% noexception. Ifqueuedcan'trun keepediting/reportthenwaitattached toolsession, no pollingloops. Parentchecks at~5min readfiles+2questions; beginimmediately. Firsttargetcompilegreen, thenfixlegitcodefailures; avoidrepeatingpassedtestsunlesschangesjustify. Reporttestcounts/logs/claimedvspeak/errors/mutationsnotrun and integrationAPIs. Parentwillrun2-3mutations andcommit. Stopwhen25pass+diffcheckclean, reportready. Ifone redassertioncontradictionfounddiscussbeforechange. Make necessaryworkconcretereviewable.
+
+---
+
+Early grounded check-in after reading current ImportCoordinator, SettingsCatalog, ImportJournal and real ScheduleCodec/DefaultPreferences: (1) How will import-reset credential/enabled/receipt keys stay unexportable yet be captured raw/restored on rollback, without a second post-Applied phase? (2) On failure writing Applying/RollingBack/terminal journal itself, which existing durable phase remains and does startup block rather than report success? These faults aren't all pinned in red; report any model gap. (3) SAX Android support can differ on security feature flags: reject DOCTYPE even if parser doesn't support external-entity flags, never silently allow it. What's the simplest implementation plan and any remaining ambiguity? Begin code now; don't spend mostbatch rereadingallskills. Widgetphase deferred explicitly. Real ScheduleCodec found (not SnapshotJson). Source metadata/enum testvalueslikeOcean are synthetic; purevalidatorport enforces only suppliedvalidator, Androidadapter willuseactualenums.
+
+---
+
+Read current apply/rollBack code. Direction looks appropriate: importReset disposition separate; write(Applied) failure leaves Applying for conservative retry; failures publishing RollingBack block without unsafe writes. Add 1-2 focused journal-write-failure cases if withinbatch since new JOURNAL_WRITE_FAILED branch otherwiseunproven. Important external integration: storegate must use startup().allowsNormalOperation, not blocksNormalOperation() alone when failedApplyingwrite leavesStaged (phasefalsebutresultRecovery). Explain distinction inreport. Need actualanswers tocheckin questions plus reportearly (fileabsent at05:48) beforeadvancing, then keepcoding. No needoverengineerhelper here.
+
+---
+
+Parent readreportcheckin answers: acceptedresetcatalogdisjointcase, JOURNAL_WRITE_FAILED conservativeblock inclStaged, rawprevious, shared processholder integrationmustuseStartupResult. XMLrequiredlexicalhandler failclosed isreasonableAndroidcompatiblependingdevice. Pushback: report says decoder requires formatfirst/versionsecond; canonical ENCODER order is fixed, but decoder JSONobject memberorder shouldbe arbitrary. A jq -S/formatter reorder is stillvalidJSON. If currentlyorderdependent, add literalreorderedobjecttest and allowfieldsanyorder while retainingrequiredmembers/duplicatechecks/limits. No needtobufferunbounded, parsedmodelalreadybounded1MiB. Source/classfieldsordering toounordered. Ifsignificanttimecostflagbutdon'tsilentlypinnewconstraint. Re queue: qexnow1.2GBavail so1GBclaimneeds2GB; if20minexpires reportblockednocompilation, don'tlowerclaim. Parentcanprepnextphasewhilewait.
+
+---
+
+<task-notification>
+<task-id>bd5raj5jl</task-id>
+<tool-use-id>toolu_01Ufsn7dToqZBVubF6c75cio</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/f4aa294a-4049-4d9c-b0b6-35c299b4d824/tasks/bd5raj5jl.output</output-file>
+<status>completed</status>
+<summary>Background command "Run settings_portability tests through qex" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Parent cancelled queued qex4ff4929f after14min zeroattempts, toletpendingmessageprocessingcontinue. ~1.8GB available stillneeds2GB for1GBclaim+reserve. Finish JSONmemberorderingcorrection/tests requestedearlier andreport, thenstopat30minflag~06:12:45UTC withconcretehandoffevenifunverified. Do NOTresubmitqexyet andnoBoat. Parentwillhandleverificationrouteonceconcretesourceisready. Checkinreportanswersacceptedexceptremainingdecoderorder. Queuecancellationisnotcodefailure. Noagentreplacement, continueexistingwork.
+
+---
+
+<task-notification>
+<task-id>bd5raj5jl</task-id>
+<tool-use-id>toolu_01Ufsn7dToqZBVubF6c75cio</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/f4aa294a-4049-4d9c-b0b6-35c299b4d824/tasks/bd5raj5jl.output</output-file>
+<status>completed</status>
+<summary>Background command "Run settings_portability tests through qex" completed (exit code 0)</summary>
+</task-notification>

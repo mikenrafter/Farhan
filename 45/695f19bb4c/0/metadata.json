@@ -1,0 +1,168 @@
+{
+  "cli_version": "0.13.4",
+  "checkpoint_id": "45695f19bb4c",
+  "session_id": "f4aa294a-4049-4d9c-b0b6-35c299b4d824",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-20T09:50:33.41010097Z",
+  "branch": "pilot/settings-portability",
+  "checkpoints_count": 2,
+  "save_step_count": 1,
+  "files_touched": [
+    "research/settings-recovery-feasibility.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-5-5",
+  "turn_id": "3d7d62240ab4",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "redaction": {
+    "replacements": 17,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 17,
+      "key_context": 0,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01E9L3EcSUT9Xg1PLs7QEppn",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "technical-excellence"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "3d7d62240ab4",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 29,
+        "end": 30,
+        "entry_ids": [
+          "e553a719-6488-47eb-8eb0-3f098a89f006"
+        ],
+        "tool_use_id": "toolu_01E9L3EcSUT9Xg1PLs7QEppn"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01E9L3EcSUT9Xg1PLs7QEppn"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: technical-excellence",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_01XxVwtjQUYHAFx2A9cF1qCP",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "test-quality"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "3d7d62240ab4",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 30,
+        "end": 31,
+        "entry_ids": [
+          "6a297370-678e-44e1-8ee7-e71168dbfe68"
+        ],
+        "tool_use_id": "toolu_01XxVwtjQUYHAFx2A9cF1qCP"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01XxVwtjQUYHAFx2A9cF1qCP"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: test-quality",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_01MgdjMEDRjFBD18iB8SYEp8",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "qex"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "3d7d62240ab4",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 31,
+        "end": 32,
+        "entry_ids": [
+          "d37c7c0f-48c6-441a-bf26-7b8c2104db4b"
+        ],
+        "tool_use_id": "toolu_01MgdjMEDRjFBD18iB8SYEp8"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01MgdjMEDRjFBD18iB8SYEp8"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: qex",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_012i5XcBmjHKRWUZYFNQpGKo",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "low-ram-hosts"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "3d7d62240ab4",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 32,
+        "end": 33,
+        "entry_ids": [
+          "27a90411-ec00-47ef-90ee-f54a9ddf8d2c"
+        ],
+        "tool_use_id": "toolu_012i5XcBmjHKRWUZYFNQpGKo"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_012i5XcBmjHKRWUZYFNQpGKo"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: low-ram-hosts",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 2
+  }
+}
