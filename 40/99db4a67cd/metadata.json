@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.13.4",
+  "checkpoint_id": "4099db4a67cd",
+  "strategy": "manual-commit",
+  "branch": "pilot/settings-portability",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "research/settings-recovery-feasibility.md",
+    "research/settings-rescue-green-report.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/40/99db4a67cd/0/metadata.json",
+      "transcript": "/40/99db4a67cd/0/full.jsonl",
+      "compact_transcript": "/40/99db4a67cd/0/transcript.jsonl",
+      "content_hash": "/40/99db4a67cd/0/content_hash.txt",
+      "prompt": "/40/99db4a67cd/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "redaction": {
+    "replacements": 1,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 1,
+      "key_context": 0,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  }
+}
