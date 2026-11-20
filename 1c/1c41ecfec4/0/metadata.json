@@ -1,0 +1,138 @@
+{
+  "cli_version": "0.13.4",
+  "checkpoint_id": "1c1c41ecfec4",
+  "session_id": "c073bd71-4269-4679-9e52-e9edc49e9e31",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-20T09:50:31.00544648Z",
+  "branch": "pilot/settings-portability",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "research/settings-recovery-feasibility.md",
+    "research/settings-rescue-green-report.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-fable-5-1",
+  "turn_id": "f162d0b5d7ae",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "redaction": {
+    "replacements": 1,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 1,
+      "key_context": 0,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01CSmqMyvoK3VZwifj8s6vWA",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "writing-copy"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "f162d0b5d7ae",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 156,
+        "end": 157,
+        "entry_ids": [
+          "0294036a-60c8-420a-8710-31a501613768"
+        ],
+        "tool_use_id": "toolu_01CSmqMyvoK3VZwifj8s6vWA"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01CSmqMyvoK3VZwifj8s6vWA"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: writing-copy",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_011brb9xHv8PFVfB6vRR53Pd",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "unslop"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "f162d0b5d7ae",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 165,
+        "end": 166,
+        "entry_ids": [
+          "20526a61-baf8-4a0b-9cd0-3a0cbe0f1dd3"
+        ],
+        "tool_use_id": "toolu_011brb9xHv8PFVfB6vRR53Pd"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_011brb9xHv8PFVfB6vRR53Pd"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: unslop",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_01T1W7hbJ5L2fyHHPs1YRxbM",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "plain-writing"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "f162d0b5d7ae",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 178,
+        "end": 179,
+        "entry_ids": [
+          "4f49d7c8-c39a-472d-a189-0285a04ed82f"
+        ],
+        "tool_use_id": "toolu_01T1W7hbJ5L2fyHHPs1YRxbM"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01T1W7hbJ5L2fyHHPs1YRxbM"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: plain-writing",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 1
+  }
+}
