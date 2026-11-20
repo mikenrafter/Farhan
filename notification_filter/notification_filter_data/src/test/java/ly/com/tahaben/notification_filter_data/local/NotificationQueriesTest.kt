@@ -87,6 +87,18 @@ class NotificationQueriesTest {
         assertThat((untouched["snoozeDeadline"] as Number).toLong()).isEqualTo(2000L)
     }
 
+    // why: the durable custody query must agree with pre-checks and ignore invalidated rows.
+    // catches: rehydrating a cleared, delivered, invalidated, or ordinary row as an owned key.
+    @Test fun `live snoozes excludes closed and invalidated custody`() = pendingSnoozes { db ->
+        db.createStatement().use { sql ->
+            sql.executeUpdate("UPDATE notificationitementity SET isCleared=1 WHERE id='hiddenHead'")
+            sql.executeUpdate("UPDATE notificationitementity SET isDelivered=1 WHERE id='onlyAtDeadline'")
+            sql.executeUpdate("UPDATE notificationitementity SET deliveryInvalidated=1 WHERE id='onlyPastDeadline'")
+        }
+        assertThat(rows(db, NotificationQueries.LIVE_SNOOZES, emptyMap()).map { it["id"] })
+            .containsExactly("hiddenOnly", "atDeadline", "pastDeadline")
+    }
+
     private fun pendingSnoozes(block: (java.sql.Connection) -> Unit) = database { db ->
         insert(db, "ordinary", 100, pkg = "mixed")
         insert(db, "hiddenHead", 200, pkg = "mixed")

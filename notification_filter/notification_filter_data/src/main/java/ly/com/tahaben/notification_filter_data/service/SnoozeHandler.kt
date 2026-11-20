@@ -54,7 +54,7 @@ class SnoozeHandler(
     private val bootCount: () -> Int,
     private val proxyArrival: suspend (NotificationItem) -> Unit,
     private val refreshProxy: suspend (NotificationItem) -> Unit,
-    private val inputAt: (Instant) -> SnoozeInput,
+    private val inputAt: suspend (Instant) -> SnoozeInput,
 ) : SnoozeReturnFlags {
     private data class Entry(var confirmed: Boolean = false, var returned: SnoozeReturn? = null)
     private data class Attempts(val day: LocalDate, val count: Int, val boundary: Instant, val retry: Boolean)
@@ -125,7 +125,7 @@ class SnoozeHandler(
         } catch (_: IllegalStateException) {
             return
         }
-        val input by lazy { inputAt(now) }
+
         for (row in rows) {
             val deadline = row.snoozeDeadline ?: continue
             if (row.id in snoozed) {
@@ -136,7 +136,7 @@ class SnoozeHandler(
             val activePostTime = active[row.id]
             when {
                 activePostTime != null && activePostTime != row.timestamp ->
-                    settle(SnoozeReturn(row.id, activePostTime), input)
+                    settle(SnoozeReturn(row.id, activePostTime), inputAt(now))
                 activePostTime != null && row.timestamp < previousTick.toEpochMilli() &&
                     synchronized(this) { owned[row.id]?.confirmed != true } -> fallback(row, now, UNCONFIRMED)
                 activePostTime == null && deadline < previousTick.toEpochMilli() -> {
@@ -261,7 +261,13 @@ class SnoozeHandler(
     }
 
     // CLAIM(snooze-removal): Android's snooze callback bypasses proxy removal [Snooze pilot spec D6, W7].
-    suspend fun onRemoved(key: String, packageName: String, reason: Int, atEpochMillis: Long): Boolean {
+    suspend fun onRemoved(
+        key: String,
+        packageName: String,
+        reason: Int,
+        atEpochMillis: Long,
+        farhanCancelledSummary: Boolean = false,
+    ): Boolean {
         val row = ledger.find(key) ?: return false
         if (reason == REASON_SNOOZED && row.snoozeDeadline != null) {
             remember(key, confirmed = true)

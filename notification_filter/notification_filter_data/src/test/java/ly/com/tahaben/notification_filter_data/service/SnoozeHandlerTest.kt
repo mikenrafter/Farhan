@@ -562,10 +562,10 @@ class SnoozeHandlerTest {
     // why: group-summary cancellation can collateral-remove an owned child without ending its logical delivery.
     // catches: clearing the child or charging it during recovery.
     @Test
-    fun `reason twelve restores an uncharged grouped child as pending`() = runTest {
+    fun `recorded Farhan summary cancel restores an uncharged grouped child as pending`() = runTest {
         ledger.upsert(snoozedRow().copy(snoozeGroupKey = "group"))
         val at = boundary.toEpochMilli()
-        assertThat(handler.onRemoved(key, packageName, 12, at)).isTrue()
+        assertThat(handler.onRemoved(key, packageName, 12, at, farhanCancelledSummary = true)).isTrue()
         val row = ledger.rows.getValue(key)
         assertThat(row.snoozeDeadline).isNull()
         assertThat(row.isDelivered).isFalse()
@@ -577,25 +577,38 @@ class SnoozeHandlerTest {
     // why: collateral removal of an already charged return needs a refresh with no second spend.
     // catches: sending the child to normal accounting or dropping the saved notification.
     @Test
-    fun `reason twelve refreshes an already charged grouped child without spending again`() = runTest {
+    fun `recorded Farhan summary cancel refreshes a charged grouped child without spending again`() = runTest {
         val row = snoozedRow().copy(snoozeGroupKey = "group", isDelivered = true,
             snoozeDeadline = null, snoozePriority = null, snoozeBootCount = null)
         ledger.upsert(row)
-        assertThat(handler.onRemoved(key, packageName, 12, boundary.toEpochMilli())).isTrue()
+        assertThat(handler.onRemoved(key, packageName, 12, boundary.toEpochMilli(), farhanCancelledSummary = true)).isTrue()
         assertThat(refreshed).containsExactly(row)
         assertThat(budget.checked).isEmpty()
         assertThat(fallback).isEmpty()
     }
 
-    // why: a missing grouped child on the same boot can be a cascade and keeps its saved pending copy.
-    // catches: applying the ordinary same-boot cancellation rule to grouped children.
+    // why: a reason-12 removal without Farhan's summary-cancel ownership is a source cancellation.
+    // catches: reviving an uncharged child removed by its app.
     @Test
-    fun `missing grouped child on the same boot returns to pending after the guard`() = runTest {
+    fun `external reason twelve clears an uncharged grouped child`() = runTest {
+        ledger.upsert(snoozedRow().copy(snoozeGroupKey = "group"))
+        assertThat(handler.onRemoved(key, packageName, 12, boundary.toEpochMilli())).isTrue()
+        val row = ledger.rows.getValue(key)
+        assertThat(row.isCleared).isTrue()
+        assertThat(row.snoozeDeadline).isNull()
+        assertThat(refreshed).isEmpty()
+        assertThat(budget.checked).isEmpty()
+    }
+
+    // why: an absent grouped child on the same boot is a source cancellation after the scan guard.
+    // catches: reviving a child the source cancelled while it was hidden.
+    @Test
+    fun `missing grouped child on the same boot is cleared after the guard`() = runTest {
         ledger.upsert(snoozedRow().copy(snoozeGroupKey = "group"))
         handler.onBatchTick(nextPeriod, nextHour)
         val row = ledger.rows.getValue(key)
         assertThat(row.snoozeDeadline).isNull()
-        assertThat(row.isCleared).isFalse()
+        assertThat(row.isCleared).isTrue()
         assertThat(row.isDelivered).isFalse()
         assertThat(row.text).isEqualTo("A body")
     }

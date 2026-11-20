@@ -25,7 +25,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Instant
-import java.time.temporal.ChronoUnit
 import ly.com.tahaben.notification_filter_data.local.NotificationDao
 import ly.com.tahaben.notification_filter_data.mapper.toNotificationEntity
 import ly.com.tahaben.notification_filter_domain.model.PriorityDeliverySetting
@@ -95,6 +94,9 @@ class NotificationService : NotificationListenerService() {
         )
     }
     private val snoozeIntake by lazy { SnoozeReturnIntake(snoozeHandler) }
+    private val snoozeRouting by lazy {
+        SnoozeServiceRouting(coordinator, snoozeHandler, { notificationDao.find(it)?.toNotificationItem() }, ::returnInput)
+    }
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private data class PostedFields(
@@ -318,11 +320,11 @@ class NotificationService : NotificationListenerService() {
         }
     }
 
-    private fun returnInput(now: Instant): SnoozeInput {
+    private suspend fun returnInput(now: Instant): SnoozeInput {
         return SnoozeInput(
             packageName = "", ownPackageName = packageName,
             snoozeEnabled = preferences.isExperimentEnabled(Experiments.SNOOZE),
-            filterEnabled = preferences.isNotificationServiceStatsEnabled(),
+            filterEnabled = snoozeReturnFilterEnabled(preferences),
             platformSupportsSnooze = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O,
             setting = PriorityDeliverySetting.defaultFor(NotificationPriority.MEDIUM),
             now = now, zone = DeliveryClock.systemClock.zone, testingMode = preferences.isDeliveryTestingMode(),
@@ -334,7 +336,7 @@ class NotificationService : NotificationListenerService() {
     }
 
     private suspend fun drainSnoozeReturns() = snoozeIntake.drain {
-        snoozeHandler.settle(it, returnInput(Instant.now()))
+        snoozeRouting.settle(it, Instant.now())
     }
 
     private suspend fun reconcileSnoozes() {
@@ -342,9 +344,7 @@ class NotificationService : NotificationListenerService() {
         snoozeWork.withLock {
             val now = Instant.now()
             val input = returnInput(now)
-            val minute = now.atZone(input.zone).minute
-            val interval = if (input.testingMode) 3 else 60
-            val previous = now.truncatedTo(ChronoUnit.MINUTES).minusSeconds((minute % interval + interval) * 60L)
+            val previous = previousSnoozeTick(now, input.zone, input.testingMode)
             drainSnoozeReturns()
             snoozeHandler.onBatchTick(now, previous)
         }
@@ -353,10 +353,7 @@ class NotificationService : NotificationListenerService() {
     private suspend fun processNotificationPosted(fields: PostedFields) {
         if (!notificationFilterUseCases.checkIfNotificationServiceIsEnabled()) return
         // A callback can arrive before the connect scan restores the binder-side cache.
-        if (notificationDao.find(fields.item.id)?.snoozeDeadline != null) {
-            snoozeHandler.settle(SnoozeReturn(fields.item.id, fields.item.timestamp), returnInput(Instant.now()))
-            return
-        }
+        if (snoozeRouting.handleStoredPost(fields.item, fields.order, Instant.now())) return
         val pkg = fields.item.packageName
         val name = knownPackageSourceRegistry.get(pkg)?.appName ?: resolveApplicationName(pkg)
         notificationFilterUseCases.registerKnownNotificationSources(listOf(VisibleNotificationSource(pkg, name, fields.item.channelId, fields.androidCategory)))
@@ -383,7 +380,7 @@ class NotificationService : NotificationListenerService() {
         if (preferences.isExperimentEnabled(Experiments.SNOOZE)) {
             if (fields.exclusionFlags.isGroupSummary) return
             val setting = preferences.getPriorityDeliverySettings()[priority] ?: PriorityDeliverySetting.defaultFor(priority)
-            val handled = coordinator.withSnoozeAdmission { liveRows, budget ->
+            val handled = coordinator.withSnoozeAdmission(item.id, fields.order) { liveRows, budget ->
                 if (activeSourcePostTimes()[item.id] != item.timestamp) return@withSnoozeAdmission true
                 val context = returnInput(Instant.now()).copy(
                     packageName = pkg, setting = setting, priority = priority,

@@ -240,9 +240,11 @@ class NotificationDeliveryCoordinator(
 
     suspend fun refreshSnoozeProxy(item: NotificationItem) = gate.run { postSafely(item, refresh = true) }
 
-    suspend fun <T> withSnoozeAdmission(
-        block: suspend (List<NotificationItem>, DeliveryBudgetState) -> T,
-    ): T = gate.run { block(rows.liveSnoozes(), budget.read()) }
+    suspend fun withSnoozeAdmission(
+        id: String,
+        order: Long,
+        block: suspend (List<NotificationItem>, DeliveryBudgetState) -> Boolean,
+    ): Boolean = gate.run { block(rows.liveSnoozes(), budget.read()) }
 
     suspend fun onRemoved(id: String, reason: NotificationRemovalReason, atMillis: Long, eventOrder: Long? = null) {
         if (reason != NotificationRemovalReason.SOURCE_APP_CANCELLED && reason != NotificationRemovalReason.USER_DISMISSED && reason != NotificationRemovalReason.INBOX_CLEARED) return
