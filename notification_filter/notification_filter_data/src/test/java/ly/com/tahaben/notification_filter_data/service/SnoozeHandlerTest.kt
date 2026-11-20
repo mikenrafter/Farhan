@@ -661,7 +661,14 @@ class SnoozeHandlerTest {
     private class FakeLedger : SnoozeLedger {
         val rows = linkedMapOf<String, NotificationItem>()
         override suspend fun find(key: String) = rows[key]
-        override suspend fun liveRows() = rows.values.filter { it.snoozeDeadline != null }
+        override suspend fun liveRows() = rows.values.filter { it.hasLiveSnooze }
+        override suspend fun clearedRows() = rows.values.filter { it.isCleared && it.snoozeDeadline != null }
+        override suspend fun closeClearedSnooze(key: String, deadline: Long) {
+            val row = rows[key] ?: return
+            if (row.isCleared && row.snoozeDeadline == deadline) {
+                rows[key] = row.copy(snoozeDeadline = null, snoozePriority = null, snoozeBootCount = null, snoozeGroupKey = null)
+            }
+        }
         override suspend fun upsert(item: NotificationItem) { rows[item.id] = item }
     }
 

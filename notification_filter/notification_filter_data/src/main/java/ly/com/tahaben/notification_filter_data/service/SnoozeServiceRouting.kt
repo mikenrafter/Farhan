@@ -17,9 +17,19 @@ internal class SnoozeServiceRouting(
     private val inputAt: suspend (Instant) -> SnoozeInput,
 ) {
     suspend fun handleStoredPost(item: NotificationItem, order: Long, now: Instant): Boolean {
-        if (find(item.id)?.snoozeDeadline == null) return false
-        coordinator.acceptSnoozeEvent(item.id, order)
-        settle(SnoozeReturn(item.id, item.timestamp), now)
+        return handleStoredPost(item.id, item.timestamp, now, order)
+    }
+
+    suspend fun handleStoredPost(id: String, postTime: Long, now: Instant, order: Long? = null): Boolean {
+        val row = find(id) ?: return false
+        val deadline = row.snoozeDeadline ?: return false
+        if (row.isCleared && postTime < deadline) {
+            handler.retireClearedSnooze(id, deadline)
+            return false
+        }
+        if (!row.isCleared && !row.hasLiveSnooze) return false
+        if (order != null) coordinator.acceptSnoozeEvent(id, order)
+        settle(SnoozeReturn(id, postTime), now)
         return true
     }
 

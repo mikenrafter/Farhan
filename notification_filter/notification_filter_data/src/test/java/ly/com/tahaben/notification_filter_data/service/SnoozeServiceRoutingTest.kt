@@ -261,7 +261,14 @@ class SnoozeServiceRoutingTest {
                 snoozePriority = null, snoozeBootCount = null)
         }
         override suspend fun liveSnoozes() = liveRows()
-        override suspend fun liveRows() = rows.values.filter { !it.isCleared && !it.isDelivered && it.snoozeDeadline != null }
+        override suspend fun liveRows() = rows.values.filter { it.hasLiveSnooze }
+        override suspend fun clearedRows() = rows.values.filter { it.isCleared && it.snoozeDeadline != null }
+        override suspend fun closeClearedSnooze(key: String, deadline: Long) {
+            val row = rows[key] ?: return
+            if (row.isCleared && row.snoozeDeadline == deadline) {
+                rows[key] = row.copy(snoozeDeadline = null, snoozePriority = null, snoozeBootCount = null, snoozeGroupKey = null)
+            }
+        }
         override suspend fun pending(maxPriorityLevel: Int) =
             rows.values.filter { !it.isCleared && !it.isDelivered && it.snoozeDeadline == null && it.priority.level <= maxPriorityLevel }
         override suspend fun invalidateBefore(session: String, order: Long) = Unit

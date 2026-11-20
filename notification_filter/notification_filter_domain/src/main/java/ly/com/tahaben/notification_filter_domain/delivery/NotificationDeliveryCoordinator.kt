@@ -203,7 +203,7 @@ class NotificationDeliveryCoordinator(
         gate.run {
             val row = rows.find(key) ?: return@run SnoozeReturnDecision.NotOwned
             val priority = row.snoozePriority ?: return@run SnoozeReturnDecision.NotOwned
-            if (row.isCleared || row.isDelivered || row.snoozeDeadline == null) return@run SnoozeReturnDecision.NotOwned
+            if (!row.hasLiveSnooze) return@run SnoozeReturnDecision.NotOwned
             val time = environment.timeContext()
             val schedule = environment.schedule()
             val setting = environment.settings()[priority] ?: PriorityDeliverySetting.defaultFor(priority)

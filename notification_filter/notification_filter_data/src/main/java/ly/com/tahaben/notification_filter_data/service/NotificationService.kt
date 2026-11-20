@@ -85,6 +85,9 @@ class NotificationService : NotificationListenerService() {
             ledger = object : SnoozeLedger {
                 override suspend fun find(key: String) = notificationDao.find(key)?.toNotificationItem()
                 override suspend fun liveRows() = notificationDao.liveSnoozes().map { it.toNotificationItem() }
+                override suspend fun clearedRows() = notificationDao.clearedSnoozes().map { it.toNotificationItem() }
+                override suspend fun closeClearedSnooze(key: String, deadline: Long) =
+                    notificationDao.closeClearedSnooze(key, deadline)
                 override suspend fun upsert(item: NotificationItem) = notificationDao.insertNotificationItem(item.toNotificationEntity())
             },
             bootCount = { android.provider.Settings.Global.getInt(contentResolver, android.provider.Settings.Global.BOOT_COUNT, -1) },
@@ -109,6 +112,7 @@ class NotificationService : NotificationListenerService() {
     private sealed interface Work {
         data class Posted(val fields: PostedFields) : Work
         data object Return : Work
+        data class CustodyCheck(val key: String, val postTime: Long) : Work
         data class NativeRemoval(val key: String, val packageName: String, val reason: Int, val at: Long) : Work
         data class Removed(val id: String, val reason: NotificationRemovalReason, val order: Long) : Work
         data class ChannelChanged(val pkg: String, val channel: String) : Work
@@ -124,6 +128,7 @@ class NotificationService : NotificationListenerService() {
                         drainSnoozeReturns()
                         when (work) {
                             Work.Return -> Unit
+                            is Work.CustodyCheck -> snoozeRouting.handleStoredPost(work.key, work.postTime, Instant.now())
                             is Work.NativeRemoval -> snoozeHandler.onRemoved(work.key, work.packageName, work.reason, work.at)
                             is Work.Posted -> processNotificationPosted(work.fields)
                             is Work.Removed -> coordinator.onRemoved(work.id, work.reason, System.currentTimeMillis(), work.order)
@@ -292,6 +297,9 @@ class NotificationService : NotificationListenerService() {
         if (sbn == null || sbn.packageName == packageName) return
         snoozeIntake.routePosted(sbn.key, sbn.postTime, offer = { intake.offer(Work.Return) }) {
             if (preferences.isNotificationServiceStatsEnabled()) offerFreshPost(sbn)
+            else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                intake.offer(Work.CustodyCheck(sbn.key, sbn.postTime))
+            }
         }
     }
 
@@ -351,9 +359,9 @@ class NotificationService : NotificationListenerService() {
     }
 
     private suspend fun processNotificationPosted(fields: PostedFields) {
-        if (!notificationFilterUseCases.checkIfNotificationServiceIsEnabled()) return
-        // A callback can arrive before the connect scan restores the binder-side cache.
+        // A callback can arrive before the scan restores the binder-side cache.
         if (snoozeRouting.handleStoredPost(fields.item, fields.order, Instant.now())) return
+        if (!notificationFilterUseCases.checkIfNotificationServiceIsEnabled()) return
         val pkg = fields.item.packageName
         val name = knownPackageSourceRegistry.get(pkg)?.appName ?: resolveApplicationName(pkg)
         notificationFilterUseCases.registerKnownNotificationSources(listOf(VisibleNotificationSource(pkg, name, fields.item.channelId, fields.androidCategory)))

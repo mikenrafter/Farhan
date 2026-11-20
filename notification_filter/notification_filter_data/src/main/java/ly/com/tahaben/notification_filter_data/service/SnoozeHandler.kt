@@ -38,6 +38,8 @@ interface SnoozePlatform {
 interface SnoozeLedger {
     suspend fun find(key: String): NotificationItem?
     suspend fun liveRows(): List<NotificationItem>
+    suspend fun clearedRows(): List<NotificationItem>
+    suspend fun closeClearedSnooze(key: String, deadline: Long)
     suspend fun upsert(item: NotificationItem)
 }
 
@@ -56,7 +58,11 @@ class SnoozeHandler(
     private val refreshProxy: suspend (NotificationItem) -> Unit,
     private val inputAt: suspend (Instant) -> SnoozeInput,
 ) : SnoozeReturnFlags {
-    private data class Entry(var confirmed: Boolean = false, var returned: SnoozeReturn? = null)
+    private data class Entry(
+        var deadline: Long,
+        var confirmed: Boolean = false,
+        var returned: SnoozeReturn? = null,
+    )
     private data class Attempts(val day: LocalDate, val count: Int, val boundary: Instant, val retry: Boolean)
     private val owned = linkedMapOf<String, Entry>()
     private val attempts = mutableMapOf<String, Attempts>()
@@ -64,6 +70,8 @@ class SnoozeHandler(
     @Synchronized
     override fun flagIfOwned(key: String, postTime: Long): Boolean {
         val entry = owned[key] ?: return false
+        // An early update needs its new fields if the durable row was cleared.
+        if (postTime < entry.deadline) return false
         if ((entry.returned?.postTime ?: Long.MIN_VALUE) <= postTime) entry.returned = SnoozeReturn(key, postTime)
         return true
     }
@@ -84,8 +92,9 @@ class SnoozeHandler(
     fun hasOwnedRows() = owned.isNotEmpty()
 
     @Synchronized
-    private fun remember(key: String, confirmed: Boolean = false) {
-        val entry = owned.remove(key) ?: Entry()
+    private fun remember(key: String, deadline: Long, confirmed: Boolean = false) {
+        val entry = owned.remove(key) ?: Entry(deadline)
+        entry.deadline = deadline
         entry.confirmed = confirmed
         owned[key] = entry
         if (owned.size > 1024) {
@@ -108,13 +117,16 @@ class SnoozeHandler(
 
     private suspend fun scan(now: Instant, previousTick: Instant) {
         val rows = ledger.liveRows()
+        val clearedRows = ledger.clearedRows()
         synchronized(this) {
-            for (row in rows) if (!owns(row.id)) remember(row.id)
+            for (row in rows) if (!owns(row.id)) {
+                row.snoozeDeadline?.let { remember(row.id, it) }
+            }
             val keys = rows.mapTo(hashSetOf()) { it.id }
             owned.keys.retainAll(keys)
             attempts.keys.retainAll(keys)
         }
-        if (rows.isEmpty()) return
+        if (rows.isEmpty() && clearedRows.isEmpty()) return
         val active: Map<String, Long>
         val snoozed: Set<String>
         try {
@@ -126,10 +138,21 @@ class SnoozeHandler(
             return
         }
 
+        for (row in clearedRows) {
+            val deadline = row.snoozeDeadline ?: continue
+            if (row.id in snoozed) continue
+            val activePostTime = active[row.id]
+            if (activePostTime != null && activePostTime >= deadline) {
+                disposeClearedReturn(row, deadline, now)
+            } else if (activePostTime == null && deadline < previousTick.toEpochMilli()) {
+                retireClearedSnooze(row.id, deadline)
+            }
+        }
+
         for (row in rows) {
             val deadline = row.snoozeDeadline ?: continue
             if (row.id in snoozed) {
-                remember(row.id, confirmed = true)
+                remember(row.id, deadline, confirmed = true)
                 continue
             }
             if (deadline >= now.toEpochMilli()) continue
@@ -151,7 +174,7 @@ class SnoozeHandler(
     // CLAIM(snooze-handled): unsuccessful native snoozes leave the post for ordinary delivery [Snooze pilot spec V1].
     suspend fun onPosted(item: NotificationItem, input: SnoozeInput): Boolean {
         if (input.snoozeEnabled && input.filterEnabled && input.exclusionFlags.isGroupSummary) return true
-        if (ledger.find(item.id)?.snoozeDeadline != null) return true
+        if (ledger.find(item.id)?.hasLiveSnooze == true) return true
         return when (val decision = SnoozePolicy.decide(input)) {
             is SnoozeDecision.Skip -> {
                 if (decision.reason == SnoozeSkipReason.PLATFORM_TOO_OLD) record(FAILED, item, input.now)
@@ -165,8 +188,15 @@ class SnoozeHandler(
     suspend fun settle(returned: SnoozeReturn, input: SnoozeInput): Boolean {
         val row = ledger.find(returned.key) ?: return false
         val deadline = row.snoozeDeadline ?: return false
+        if (row.isCleared) {
+            if (returned.postTime < deadline) {
+                retireClearedSnooze(row.id, deadline)
+                return false
+            }
+            return disposeClearedReturn(row, deadline, input.now)
+        }
+        if (!row.hasLiveSnooze) return false
         val priority = row.snoozePriority ?: return false
-        if (row.isDelivered || row.isCleared) return false
         if (!input.filterEnabled) {
             release(row.copy(isDelivered = true))
             return true
@@ -187,7 +217,7 @@ class SnoozeHandler(
             }
             SnoozeReturnDecision.NotOwned -> {
                 val live = ledger.find(row.id)
-                if (live?.snoozeDeadline != null && !live.isCleared && !live.isDelivered) {
+                if (live?.hasLiveSnooze == true) {
                     fallback(live, input.now, NOT_A_RETURN)
                 } else {
                     forget(row.id)
@@ -214,12 +244,13 @@ class SnoozeHandler(
         delay: Long, input: SnoozeInput, retry: Boolean,
     ): Boolean {
         val previous = ledger.find(item.id)
+        val deadline = input.now.toEpochMilli() + delay
         ledger.upsert(item.copy(
-            snoozeDeadline = input.now.toEpochMilli() + delay,
+            snoozeDeadline = deadline,
             snoozePriority = priority,
             snoozeBootCount = bootCount(),
         ))
-        remember(item.id)
+        remember(item.id, deadline)
         try {
             platform.snooze(item.id, delay)
         } catch (cancelled: CancellationException) {
@@ -247,6 +278,18 @@ class SnoozeHandler(
         return local.toLocalDate() to boundary
     }
 
+    internal suspend fun retireClearedSnooze(key: String, deadline: Long) {
+        ledger.closeClearedSnooze(key, deadline)
+        forget(key)
+    }
+
+    private suspend fun disposeClearedReturn(row: NotificationItem, deadline: Long, now: Instant): Boolean {
+        platform.cancelVisible(row.id)
+        retireClearedSnooze(row.id, deadline)
+        record(REMOVED, row, now)
+        return true
+    }
+
     private suspend fun release(row: NotificationItem) {
         ledger.upsert(row.copy(snoozeDeadline = null, snoozePriority = null, snoozeBootCount = null))
         forget(row.id)
@@ -269,8 +312,9 @@ class SnoozeHandler(
         farhanCancelledSummary: Boolean = false,
     ): Boolean {
         val row = ledger.find(key) ?: return false
-        if (reason == REASON_SNOOZED && row.snoozeDeadline != null) {
-            remember(key, confirmed = true)
+        val deadline = row.snoozeDeadline
+        if (reason == REASON_SNOOZED && deadline != null) {
+            remember(key, deadline, confirmed = true)
             return true
         }
         if (reason == REASON_GROUP_SUMMARY_CANCELED && row.snoozeGroupKey != null) {
