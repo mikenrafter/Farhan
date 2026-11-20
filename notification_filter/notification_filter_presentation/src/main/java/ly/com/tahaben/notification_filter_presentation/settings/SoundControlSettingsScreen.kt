@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -110,7 +112,7 @@ internal fun SoundControlSettingsScreen(viewModel: NotificationSettingsViewModel
         if (!granted) openSettings(context, Settings.ACTION_APP_NOTIFICATION_SETTINGS, context.packageName)
     }
 
-    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().navigationBarsPadding()) {
         TopAppBar(
             title = { Text(when (page) {
                 Page.SETTINGS -> "Sound control"
@@ -205,16 +207,18 @@ internal fun SoundControlSettingsScreen(viewModel: NotificationSettingsViewModel
                         val exceptions = sound.exceptionPackages()
                         SoundCard {
                             Text("Before you turn it on", style = MaterialTheme.typography.titleMedium)
-                            Text("Selected alerts use Farhan’s name and sound. They can play during your own Do Not Disturb and Bedtime modes. To stop them, turn off Override Do Not Disturb for Farhan’s alert channel.")
-                            Text("If you turn off that override, Farhan releases its mute. Reinstall Farhan to reset the channel.")
-                            Text("Only the first alert in a conversation sounds until you open or dismiss Farhan’s alert.")
-                            Text("If Farhan stops, your phone can stay muted. Tap Off in the status notification, open Farhan and turn it off, or stop Farhan’s rule in Android Modes.")
-                            Text("Work profile notifications, exception apps and notifications marked Critical can be silenced. Android Modes lets you add an app or channel exception.")
-                            if (exceptions.isNotEmpty()) {
-                                val names = exceptions.map { name -> apps.firstOrNull { it.packageName == name }?.appName ?: name }
-                                Text("Your exception apps: ${names.sorted().joinToString()}")
+                            ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+                                Text("Selected alerts use Farhan’s name and sound. They can play during your own Do Not Disturb and Bedtime modes. To stop them, turn off Override Do Not Disturb for Farhan’s alert channel.")
+                                Text("If you turn off that override, Farhan releases its mute. Reinstall Farhan to reset the channel.")
+                                Text("Only the first alert in a conversation sounds until you open or dismiss Farhan’s alert.")
+                                Text("If Farhan stops, your phone can stay muted. Tap Off in the status notification, open Farhan and turn it off, or stop Farhan’s rule in Android Modes.")
+                                Text("Work profile notifications, exception apps and notifications marked Critical can be silenced. Android Modes lets you add an app or channel exception.")
+                                if (exceptions.isNotEmpty()) {
+                                    val names = exceptions.map { name -> apps.firstOrNull { it.packageName == name }?.appName ?: name }
+                                    Text("Your exception apps: ${names.sorted().joinToString()}")
+                                }
+                                Text("Farhan allows calls from anyone and repeat callers. It leaves the call screener’s notification alone. Check calls and your screener on your phone after enabling.")
                             }
-                            Text("Farhan allows calls from anyone and repeat callers. It leaves the call screener’s notification alone. Check calls and your screener on your phone after enabling.")
                         }
                     }
                     item {
