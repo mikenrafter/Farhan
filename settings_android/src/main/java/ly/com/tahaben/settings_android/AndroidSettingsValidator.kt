@@ -6,6 +6,7 @@ import ly.com.tahaben.notification_filter_data.local.preferences.ScheduleCodec
 import ly.com.tahaben.notification_filter_domain.delivery.QueueOrder
 import ly.com.tahaben.notification_filter_domain.model.*
 import ly.com.tahaben.notification_filter_domain.schedule.DaySchedule
+import ly.com.tahaben.notification_filter_domain.sound.SoundElectionSettings
 import ly.com.tahaben.settings_portability.*
 
 /** Embedded preference JSON is checked strictly before the existing domain decoder receives its original text. */
@@ -25,6 +26,10 @@ object AndroidSettingsValidator : SemanticValidator {
         fun text() = (value as SettingValue.Text).value
         fun integer() = (value as SettingValue.Int32).value
         when {
+            key.startsWith(SoundElectionSettings.APP_PREFIX) ->
+                require(SoundElectionSettings.isPackageName(key.removePrefix(SoundElectionSettings.APP_PREFIX)))
+            key.startsWith(SoundElectionSettings.CATEGORY_PREFIX) ->
+                NotificationCategory.valueOf(key.removePrefix(SoundElectionSettings.CATEGORY_PREFIX))
             key.startsWith("notification_category_priority_") -> {
                 NotificationCategory.valueOf(key.removePrefix("notification_category_priority_"))
                 NotificationPriority.valueOf(text())

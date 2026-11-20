@@ -82,6 +82,11 @@ fun NotificationFilterSettingsScreen(
     snackbarHostState: SnackbarHostState,
     isDarkMode: Boolean
 ) {
+    var openSound by rememberSaveable { mutableStateOf(false) }
+    if (openSound) {
+        SoundControlSettingsScreen(viewModel, onBack = { openSound = false })
+        return
+    }
     val spacing = LocalSpacing.current
     val context = LocalContext.current
     val state = viewModel._state.collectAsStateWithLifecycle().value
@@ -366,6 +371,10 @@ fun NotificationFilterSettingsScreen(
                     }
                 }
                 Divider()
+                if (Build.VERSION.SDK_INT >= 35) {
+                    TextButton(onClick = { openSound = true }) { Text("Sound control (pilot)") }
+                    Divider()
+                }
                 AutomationAndExperimentsSection(
                     state = state,
                     onEvent = viewModel::onEvent,

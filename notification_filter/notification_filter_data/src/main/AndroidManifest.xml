@@ -5,7 +5,16 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+
     <application>
+        <activity android:name=".sound.SoundControlModeActivity" android:exported="false" />
+        <receiver android:name=".sound.SoundControlReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.USER_UNLOCKED" />
+            </intent-filter>
+        </receiver>
         <receiver
             android:name=".service.NotificationDeliveryReceiver"
             android:exported="false">

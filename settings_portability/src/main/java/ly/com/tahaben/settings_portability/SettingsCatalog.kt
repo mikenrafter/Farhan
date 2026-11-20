@@ -63,6 +63,7 @@ internal val SettingsStoreId.locationName: String
 object SettingsCatalog {
     private val sharedConfiguration: Map<String, SettingType> = mapOf(
         "notification_service_stats" to SettingType.BOOLEAN,
+        "notification_sound_system" to SettingType.BOOLEAN,
         "notification_delivery_testing_mode" to SettingType.BOOLEAN,
         "notification_filter_exceptions" to SettingType.STRING_SET,
         "infinite_scroll_exceptions" to SettingType.STRING_SET,
@@ -102,6 +103,8 @@ object SettingsCatalog {
     /** Longest match is not needed: no prefix is a prefix of another or of an exact key. */
     private val sharedConfigurationPrefixes: List<Pair<String, SettingType>> = listOf(
         "notification_experiment_" to SettingType.BOOLEAN,
+        "notification_sound_app_" to SettingType.BOOLEAN,
+        "notification_sound_category_" to SettingType.BOOLEAN,
         "notification_priority_override_" to SettingType.STRING,
         "notification_category_priority_" to SettingType.STRING,
         "notification_priority_locked_" to SettingType.BOOLEAN,
@@ -114,6 +117,9 @@ object SettingsCatalog {
         "today_usage_key" to ExclusionReason.HISTORY,
         "yesterday_usage_key" to ExclusionReason.HISTORY,
         "should_combine_db" to ExclusionReason.INTERNAL,
+        "sound_control_rule_id" to ExclusionReason.INTERNAL,
+        "sound_control_generation" to ExclusionReason.INTERNAL,
+        "sound_control_phase" to ExclusionReason.INTERNAL,
         "notification_schedule_legacy_backup" to ExclusionReason.INTERNAL,
         "app_should_show_on_boarding" to ExclusionReason.INTERNAL,
         "notification_filter_should_show_on_boarding" to ExclusionReason.INTERNAL,

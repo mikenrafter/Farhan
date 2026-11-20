@@ -133,7 +133,7 @@ fun AutomationAndExperimentsSection(
 }
 
 @Composable
-private fun ExperimentRow(title: String, description: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+internal fun ExperimentRow(title: String, description: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(title)

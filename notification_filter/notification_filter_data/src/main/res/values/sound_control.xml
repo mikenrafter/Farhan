@@ -1,0 +1,10 @@
+<resources>
+    <string name="sound_control_mode">Farhan sound control</string>
+    <string name="sound_control_alert_channel">Farhan alerts that can break through</string>
+    <string name="sound_control_status_channel">Sound control status</string>
+    <string name="sound_control_status_title">Farhan is managing Do Not Disturb</string>
+    <string name="sound_control_status_message">Tap Off to release Farhan’s mode.</string>
+    <string name="sound_control_status_recovery">Farhan could not confirm the mode was removed. Open Android Modes to turn it off.</string>
+    <string name="sound_control_off">Off</string>
+    <string name="sound_control_modes">Android Modes</string>
+</resources>
