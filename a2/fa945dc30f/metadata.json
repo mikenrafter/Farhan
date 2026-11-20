@@ -1,0 +1,40 @@
+{
+  "cli_version": "0.13.4",
+  "checkpoint_id": "a2fa945dc30f",
+  "strategy": "manual-commit",
+  "branch": "pilot/snooze",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "research/snooze-s5-fix-report.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/a2/fa945dc30f/0/metadata.json",
+      "transcript": "/a2/fa945dc30f/0/full.jsonl",
+      "compact_transcript": "/a2/fa945dc30f/0/transcript.jsonl",
+      "content_hash": "/a2/fa945dc30f/0/content_hash.txt",
+      "prompt": "/a2/fa945dc30f/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 10,
+    "cache_creation_tokens": 6788,
+    "cache_read_tokens": 871784,
+    "output_tokens": 5005,
+    "api_call_count": 5
+  },
+  "redaction": {
+    "replacements": 1,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 0,
+      "key_context": 1,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  }
+}
