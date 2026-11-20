@@ -17,13 +17,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,10 +37,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -50,7 +44,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -62,8 +55,6 @@ import ly.com.tahaben.core.util.UiText
 import ly.com.tahaben.core_ui.LocalSpacing
 import ly.com.tahaben.core_ui.util.isCurrentlyDark
 import ly.com.tahaben.onboarding_presentaion.components.MainScreenCard
-import ly.com.tahaben.onboarding_presentaion.components.ThemeColorsDialog
-import ly.com.tahaben.onboarding_presentaion.components.UiModeDialog
 import ly.com.tahaben.showcase_layout_compose.model.Arrow
 import ly.com.tahaben.showcase_layout_compose.model.ShowcaseMsg
 import ly.com.tahaben.showcase_layout_compose.ui.ShowcaseLayout
@@ -86,7 +77,6 @@ fun MainScreen(
 ) {
     val spacing = LocalSpacing.current
     val context = LocalContext.current
-    var mDisplayMenu by remember { mutableStateOf(false) }
     LaunchedEffect(key1 = true) {
         onEvent(MainScreenEvent.OnScreenLaunched)
     }
@@ -124,12 +114,11 @@ fun MainScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
                 actions = {
 
-                    // Creating Icon button for dropdown menu
                     IconButton(
                         modifier = Modifier.showcase(
                             1,
                             ShowcaseMsg(
-                                "Dark mode and theme colors can be changed from the drop down menu.",
+                                stringResource(R.string.main_settings_showcase),
                                 textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onPrimaryContainer),
                                 msgBackground = MaterialTheme.colorScheme.primaryContainer,
                                 roundedCorner = 15.dp,
@@ -139,54 +128,9 @@ fun MainScreen(
                                 )
                             )
                         ),
-                        onClick = { mDisplayMenu = !mDisplayMenu }) {
-                        Icon(Icons.Default.MoreVert, stringResource(R.string.drop_down_menu))
-                    }
-
-                    // Creating a dropdown menu
-                    DropdownMenu(
-                        expanded = mDisplayMenu,
-                        onDismissRequest = { mDisplayMenu = false }
+                        onClick = { navController.navigate(Routes.SETTINGS) }
                     ) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = stringResource(R.string.about_app),
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Normal,
-                                    textAlign = TextAlign.Center,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            },
-                            onClick = {
-                                navController.navigate(Routes.ABOUT_APP)
-                            })
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = stringResource(R.string.appearance),
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Normal,
-                                    textAlign = TextAlign.Center,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }, onClick = {
-                                onEvent(MainScreenEvent.ShowUiAppearanceDialog)
-                                mDisplayMenu = false
-                            })
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = stringResource(id = R.string.theme_colors),
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Normal,
-                                    textAlign = TextAlign.Center,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }, onClick = {
-                                onEvent(MainScreenEvent.ShowThemeColorsDialog)
-                                mDisplayMenu = false
-                            })
+                        Icon(Icons.Default.Settings, stringResource(R.string.settings))
                     }
                 }
             )
@@ -396,12 +340,6 @@ fun MainScreen(
         }
     }
 
-    if (state.isUiModeDialogVisible) {
-        UiModeDialog(onEvent, state)
-    }
-    if (state.isThemeColorsDialogVisible) {
-        ThemeColorsDialog(onEvent = onEvent, state = state)
-    }
     if (state.isCombineDbDialogVisible) {
         Dialog(
             onDismissRequest = {}

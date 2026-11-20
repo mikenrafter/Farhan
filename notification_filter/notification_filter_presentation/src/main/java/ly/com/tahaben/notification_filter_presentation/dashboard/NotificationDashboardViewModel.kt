@@ -54,17 +54,29 @@ class NotificationDashboardViewModel @Inject constructor(
         }
     }
 
-    fun reloadSettings() { loadSettings() }
-    fun startObserving() {
-        loadSettings(); observeSummary(); observeBatches()
+    fun startObservingDetails() {
+        loadSettings()
+        observeBatches()
+        observeStanding()
+    }
+
+    private fun observeStanding() {
         standingJob?.cancel()
         standingJob = repository.observeStanding(System.currentTimeMillis() - state.standingThresholdHours * 3_600_000L, 3)
             .onEach { state = state.copy(standingItems = it) }.launchIn(viewModelScope)
     }
-    fun stopObserving() {
-        summaryJob?.cancel(); batchesJob?.cancel(); standingJob?.cancel()
-        batchItemJobs.values.forEach { it.cancel() }; batchItemJobs.clear()
+
+    fun stopObservingDetails() {
+        batchesJob?.cancel()
+        standingJob?.cancel()
+        batchItemJobs.values.forEach { it.cancel() }
+        batchItemJobs.clear()
     }
+
+    fun stopObservingSummary() {
+        summaryJob?.cancel()
+    }
+
     private fun observeBatchItems(key: String, offset: Int = 0) {
         val batch = state.batches.find { it.key == key } ?: return
         batchItemJobs.remove(key)?.cancel()
@@ -73,7 +85,7 @@ class NotificationDashboardViewModel @Inject constructor(
         }.launchIn(viewModelScope)
     }
 
-    private fun observeSummary() {
+    fun startObservingSummary() {
         summaryJob?.cancel()
         summaryJob = useCases.getNotificationDashboardSummary()
             .onEach { summary ->
@@ -178,13 +190,13 @@ class NotificationDashboardViewModel @Inject constructor(
             is NotificationDashboardEvent.OnSetStandingThreshold -> {
                 useCases.setDashboardSettings.setStandingThresholdHours(event.hours)
                 state = state.copy(standingThresholdHours = event.hours)
-                startObserving()
+                observeStanding()
             }
 
             is NotificationDashboardEvent.OnSetFloodThreshold -> {
                 useCases.setDashboardSettings.setFloodThreshold(event.count)
                 state = state.copy(floodThreshold = event.count)
-                observeSummary()
+                startObservingSummary()
             }
 
             NotificationDashboardEvent.OnClearAllStanding -> {

@@ -1,6 +1,8 @@
 package ly.com.tahaben.farhan.settings
 
 import android.app.AlertDialog
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.os.Process
 import android.widget.Button
@@ -23,6 +25,7 @@ class SettingsBackupActivity : ComponentActivity() {
     private var pendingOperations = 0
     private val busy get() = pendingOperations > 0
     private var terminalOutcome = false
+    private var initialAction: BackupAction? = null
 
     private val createDocument = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         work {
@@ -68,6 +71,10 @@ class SettingsBackupActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        initialAction = BackupAction.fromIntentValue(
+            if (savedInstanceState == null) intent.getStringExtra(EXTRA_ACTION)
+            else savedInstanceState.getString(STATE_INITIAL_ACTION)
+        )
         title = "Settings backup"
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(32, 40, 32, 32) }
         status = TextView(this).apply {
@@ -108,6 +115,21 @@ class SettingsBackupActivity : ComponentActivity() {
         layout.addView(importButton)
         setContentView(layout)
         showOutcome()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(STATE_INITIAL_ACTION, initialAction?.intentValue)
+    }
+
+    private fun startInitialAction() {
+        if (busy || terminalOutcome) return
+        val action = initialAction ?: return
+        initialAction = null
+        when (action) {
+            BackupAction.Export -> exportButton.performClick()
+            BackupAction.Import -> importButton.performClick()
+        }
     }
 
     private fun showOutcome() = work {
@@ -167,7 +189,13 @@ class SettingsBackupActivity : ComponentActivity() {
             try { block() } catch (failure: Exception) { onUi { status.text = if (failure is UnsupportedSettingsStorageType)
                 "Settings operation failed: UNSUPPORTED_STORAGE_TYPE. No success was recorded."
                 else "Settings operation failed. No success was recorded. Try again." } }
-            finally { onUi { pendingOperations--; updateButtons() } }
+            finally {
+                onUi {
+                    pendingOperations--
+                    updateButtons()
+                    startInitialAction()
+                }
+            }
         }
     }
     override fun onDestroy() {
@@ -175,5 +203,12 @@ class SettingsBackupActivity : ComponentActivity() {
         super.onDestroy()
     }
     private fun onUi(action: () -> Unit) = runOnUiThread { if (!isDestroyed && !isFinishing) action() }
-    companion object { private const val MAX_BYTES = 1 shl 20 }
+    companion object {
+        private const val MAX_BYTES = 1 shl 20
+        private const val EXTRA_ACTION = "ly.com.tahaben.farhan.settings.BACKUP_ACTION"
+        private const val STATE_INITIAL_ACTION = "initial_backup_action"
+
+        internal fun intent(context: Context, action: BackupAction): Intent =
+            Intent(context, SettingsBackupActivity::class.java).putExtra(EXTRA_ACTION, action.intentValue)
+    }
 }

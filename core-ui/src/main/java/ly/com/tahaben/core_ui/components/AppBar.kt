@@ -1,5 +1,6 @@
 package ly.com.tahaben.core_ui.components
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,8 +18,15 @@ import ly.com.tahaben.core_ui.mirror
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CommonAppBar(modifier: Modifier = Modifier, title: String, onNavigateUp: () -> Unit) {
+fun CommonAppBar(
+    modifier: Modifier = Modifier,
+    title: String,
+    actions: @Composable RowScope.() -> Unit = {},
+    onNavigateUp: () -> Unit
+) {
     TopAppBar(
+        modifier = modifier,
+        actions = actions,
         title = {
             Text(text = title)
         },

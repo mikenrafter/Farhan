@@ -21,15 +21,12 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.DashboardCustomize
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -42,8 +39,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -68,13 +63,13 @@ import androidx.lifecycle.Lifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ly.com.tahaben.core.R
+import ly.com.tahaben.core_ui.components.CommonAppBar
 import ly.com.tahaben.core_ui.LocalSpacing
 import ly.com.tahaben.core_ui.OnLifecycleEvent
 import ly.com.tahaben.core_ui.components.HowDialog
 import ly.com.tahaben.core_ui.components.PermissionDialog
 import ly.com.tahaben.core_ui.components.PermissionNotGrantedContent
 import ly.com.tahaben.core_ui.components.PostNotificationPermissionTextProvider
-import ly.com.tahaben.core_ui.mirror
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_presentation.components.MenuOption
@@ -90,9 +85,7 @@ import timber.log.Timber
 fun NotificationFilterScreen(
     viewModel: NotificationFilterViewModel = hiltViewModel(),
     navigateToNotificationSettings: () -> Unit,
-    navigateToDashboard: () -> Unit = {},
     onNavigateUp: () -> Unit,
-    isUiModeDark: Boolean,
     shouldShowRational: (String) -> Boolean,
 ) {
     val spacing = LocalSpacing.current
@@ -156,45 +149,26 @@ fun NotificationFilterScreen(
         isDarkLayout = false
     ) {
         Column {
-            TopAppBar(
-                title = {
-                    Text(text = stringResource(id = R.string.notifications))
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
-                navigationIcon = {
-                    IconButton(onClick = onNavigateUp) {
-                        Icon(
-                            modifier = Modifier.mirror(),
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = stringResource(id = R.string.back)
-                        )
-                    }
-                },
+            CommonAppBar(
+                title = stringResource(R.string.notifications),
+                onNavigateUp = onNavigateUp,
                 actions = {
-                    if (state.isPermissionGranted) {
-                        IconButton(onClick = navigateToDashboard) {
-                            Icon(
-                                imageVector = Icons.Filled.DashboardCustomize,
-                                contentDescription = "Notification Dashboard"
+                    IconButton(onClick = navigateToNotificationSettings) {
+                        Showcase(
+                            index = 1,
+                            message = ShowcaseMsg(
+                                text = stringResource(R.string.notification_settings_shocase_tip),
+                                textStyle = TextStyle(MaterialTheme.colorScheme.onSurface),
+                                gravity = Gravity.Auto,
+                                arrow = Arrow(curved = true),
+                                msgBackground = MaterialTheme.colorScheme.surface,
+                                roundedCorner = 15.dp
                             )
-                        }
-                        IconButton(onClick = navigateToNotificationSettings) {
-                            Showcase(
-                                index = 1,
-                                message = ShowcaseMsg(
-                                    text = stringResource(R.string.notification_settings_shocase_tip),
-                                    textStyle = TextStyle(MaterialTheme.colorScheme.onSurface),
-                                    gravity = Gravity.Auto,
-                                    arrow = Arrow(curved = true),
-                                    msgBackground = MaterialTheme.colorScheme.surface,
-                                    roundedCorner = 15.dp
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Settings,
-                                    contentDescription = stringResource(id = R.string.notifications_filter_settings)
-                                )
-                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Settings,
+                                contentDescription = stringResource(R.string.notifications_filter_settings)
+                            )
                         }
                     }
                 }
@@ -275,7 +249,7 @@ fun NotificationFilterScreen(
                         }
 
                     } else {
-                        Box(modifier = Modifier.navigationBarsPadding()) {
+                        Box {
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
                                 verticalArrangement = Arrangement.spacedBy(spacing.spaceSmall),

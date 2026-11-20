@@ -41,6 +41,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.res.stringResource
@@ -264,22 +265,9 @@ private fun ThemeColorsItem(
                 modifier = Modifier,
                 horizontalArrangement = Arrangement.spacedBy(spacing.spaceSmall)
             ) {
-                Card(
-                    modifier = Modifier
-                        .size(50.dp), colors = CardDefaults.cardColors(containerColor = primary)
-                ) {}
-                Card(
-                    modifier = Modifier
-                        .size(50.dp), colors = CardDefaults.cardColors(containerColor = secondary)
-                ) {}
-                Card(
-                    modifier = Modifier
-                        .size(50.dp), colors = CardDefaults.cardColors(containerColor = surface)
-                ) {}
-                Card(
-                    modifier = Modifier
-                        .size(50.dp), colors = CardDefaults.cardColors(containerColor = tertiary)
-                ) {}
+                listOf(primary, secondary, surface, tertiary).forEach { color ->
+                    ThemeColorSwatch(color, Modifier.size(50.dp))
+                }
             }
 
         }
@@ -288,6 +276,19 @@ private fun ThemeColorsItem(
             text = description
         )
     }
+}
+
+@Composable
+fun ThemeColorSwatch(
+    color: Color,
+    modifier: Modifier = Modifier,
+    shape: Shape = CardDefaults.shape,
+) {
+    Card(
+        modifier = modifier,
+        shape = shape,
+        colors = CardDefaults.cardColors(containerColor = color),
+    ) {}
 }
 
 @Preview
