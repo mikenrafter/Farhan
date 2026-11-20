@@ -154,9 +154,10 @@ internal class SnoozeHandler(
             val deadline = row.snoozeDeadline ?: continue
             if (row.id in snoozed) continue
             val activePostTime = active[row.id]
-            if (activePostTime != null && activePostTime >= deadline) {
-                disposeClearedReturn(row, deadline, activePostTime, now)
-            } else if (activePostTime == null && deadline < previousTick.toEpochMilli()) {
+            // The scan has post times only. A visible cleared return may hold a folded follow-up, so it stays visible.
+            if (activePostTime != null && activePostTime >= deadline ||
+                activePostTime == null && deadline < previousTick.toEpochMilli()
+            ) {
                 retireClearedSnooze(row.id, deadline)
             }
         }
@@ -200,11 +201,10 @@ internal class SnoozeHandler(
         val row = ledger.find(returned.key) ?: return false
         val deadline = row.snoozeDeadline ?: return false
         if (row.isCleared) {
-            if (returned.postTime < deadline) {
-                retireClearedSnooze(row.id, deadline)
-                return false
-            }
-            return disposeClearedReturn(row, deadline, returned.postTime, input.now)
+            // CLAIM(snooze-cleared-return-content): this entry has no post fields, so it cannot tell the owner's
+            // dismissed message from a follow-up Android folded into the hidden record. Close and leave it visible.
+            retireClearedSnooze(row.id, deadline)
+            return false
         }
         if (!row.hasLiveSnooze) return false
         val priority = row.snoozePriority ?: return false
@@ -297,7 +297,8 @@ internal class SnoozeHandler(
         forget(key)
     }
 
-    private suspend fun disposeClearedReturn(
+    /** For a caller that has seen the returned post's title and text and found them equal to the cleared row's. */
+    internal suspend fun disposeClearedReturn(
         row: NotificationItem,
         deadline: Long,
         postTime: Long,

@@ -85,7 +85,7 @@ class SnoozeServiceRoutingTest {
         rig.admit()
         rig.clearInbox()
         rig.now = deadline
-        assertThat(rig.returnOriginal()).isTrue()
+        rig.listenerPost(source.title, source.text)
         rig.assertClearedReturnAndReuse()
     }
 

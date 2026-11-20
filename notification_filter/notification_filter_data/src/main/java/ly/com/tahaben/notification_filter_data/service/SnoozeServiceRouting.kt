@@ -10,6 +10,9 @@ import ly.com.tahaben.notification_filter_domain.delivery.SnoozeReturn
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
 
+/** A post's title and text as Farhan captures and stores them (same truncation), compared by exact equality. */
+internal data class PostedText(val title: String?, val text: String?)
+
 internal class SnoozeServiceRouting(
     private val coordinator: NotificationDeliveryCoordinator,
     private val handler: SnoozeHandler,
@@ -17,17 +20,33 @@ internal class SnoozeServiceRouting(
     private val inputAt: suspend (Instant) -> SnoozeReturnInput,
 ) {
     suspend fun handleStoredPost(item: NotificationItem, order: Long, now: Instant): Boolean {
-        return handleStoredPost(item.id, item.timestamp, now, order)
+        return handleStoredPost(item.id, item.timestamp, now, order, PostedText(item.title, item.text))
     }
 
-    suspend fun handleStoredPost(id: String, postTime: Long, now: Instant, order: Long? = null): Boolean {
+    /**
+     * True when the stored custody handled the post. A cleared row is disposed of (cancelled) only for a post with
+     * the same title and text; anything else closes the custody and returns false before the order is accepted,
+     * so the post takes the normal arrival path. A caller without [posted] fields fails visible.
+     */
+    suspend fun handleStoredPost(
+        id: String,
+        postTime: Long,
+        now: Instant,
+        order: Long? = null,
+        posted: PostedText? = null,
+    ): Boolean {
         val row = find(id) ?: return false
         val deadline = row.snoozeDeadline ?: return false
-        if (row.isCleared && postTime < deadline) {
-            handler.retireClearedSnooze(id, deadline)
-            return false
+        if (row.isCleared) {
+            // CLAIM(snooze-cleared-return-content): Android folds a follow-up into the hidden record without a callback.
+            if (postTime < deadline || posted != PostedText(row.title, row.text)) {
+                handler.retireClearedSnooze(id, deadline)
+                return false
+            }
+            if (order != null) coordinator.acceptSnoozeEvent(id, order)
+            return handler.disposeClearedReturn(row, deadline, postTime, now)
         }
-        if (!row.isCleared && !row.hasLiveSnooze) return false
+        if (!row.hasLiveSnooze) return false
         if (order != null) coordinator.acceptSnoozeEvent(id, order)
         settle(SnoozeReturn(id, postTime), now)
         return true
