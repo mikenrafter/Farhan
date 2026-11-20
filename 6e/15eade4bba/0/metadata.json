@@ -1,0 +1,169 @@
+{
+  "cli_version": "0.13.4",
+  "checkpoint_id": "6e15eade4bba",
+  "session_id": "b4c52a20-33fb-4452-9d3b-394735d994bf",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-20T09:50:30.748846387Z",
+  "branch": "rework",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "notification_filter/notification_filter_data/src/main/java/ly/com/tahaben/notification_filter_data/di/NotificationFilterDataModule.kt",
+    "notification_filter/notification_filter_data/src/main/java/ly/com/tahaben/notification_filter_data/local/NotificationDao.kt",
+    "notification_filter/notification_filter_data/src/main/java/ly/com/tahaben/notification_filter_data/local/preferences/DefaultPreferences.kt",
+    "notification_filter/notification_filter_data/src/main/java/ly/com/tahaben/notification_filter_data/local/preferences/KnownPackageSourceStore.kt",
+    "notification_filter/notification_filter_data/src/main/java/ly/com/tahaben/notification_filter_data/local/preferences/ScheduleCodec.kt",
+    "notification_filter/notification_filter_data/src/main/java/ly/com/tahaben/notification_filter_data/service/NotificationDeliveryEngine.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/delivery/DeliveryTimeContext.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/delivery/ListenerIntake.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/delivery/NotificationActionStore.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/delivery/NotificationDeliveryCoordinator.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/delivery/NotificationDeliveryPolicy.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/di/NotificationFilterDomainModule.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/model/BudgetSpendEntry.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/model/NotificationSchedulePeriod.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/preferences/Preferences.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/BoundaryDrag.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/DaySchedule.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ScheduleAutomation.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ScheduleBook.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/schedule/ScheduleDraft.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/use_cases/ClearBudgetSpend.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/use_cases/DeleteAllNotifications.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/use_cases/DeleteNotificationFromDB.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/use_cases/GetCurrentBudgetStatus.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/use_cases/SetNotificationSchedule.kt",
+    "notification_filter/notification_filter_domain/src/main/java/ly/com/tahaben/notification_filter_domain/util/ServiceUtil.kt",
+    "notification_filter/notification_filter_domain/src/test/java/ly/com/tahaben/notification_filter_domain/delivery/CoreGapsTest.kt",
+    "notification_filter/notification_filter_domain/src/test/java/ly/com/tahaben/notification_filter_domain/delivery/NotificationCoreTest.kt",
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/dashboard/NotificationDashboardViewModel.kt",
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/settings/NotificationSettingsViewModel.kt",
+    "research/notification-core-green-report.md",
+    "research/notification-pilot-contract.md",
+    "research/notification-spec-reply.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "9606f6fd106d",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "redaction": {
+    "replacements": 1,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 1,
+      "key_context": 0,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01ET6z4ee3EGs8meJ9JWBgCb",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "writing-copy"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "9606f6fd106d",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 29,
+        "end": 30,
+        "entry_ids": [
+          "c607933e-489b-4c0a-b4c2-92478443d441"
+        ],
+        "tool_use_id": "toolu_01ET6z4ee3EGs8meJ9JWBgCb"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01ET6z4ee3EGs8meJ9JWBgCb"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: writing-copy",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_014sbAyudZgn5JJ8jSgXTwsc",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "unslop"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "9606f6fd106d",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 52,
+        "end": 53,
+        "entry_ids": [
+          "9635b5c9-f8e9-4b31-91d6-f8d7efdaff9d"
+        ],
+        "tool_use_id": "toolu_014sbAyudZgn5JJ8jSgXTwsc"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_014sbAyudZgn5JJ8jSgXTwsc"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: unslop",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_01ApXwgwzszfNueQQ5xSr3k8",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "plain-writing"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "9606f6fd106d",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 53,
+        "end": 54,
+        "entry_ids": [
+          "6a0f816d-ef01-4bdf-b36b-4ea61d1263cf"
+        ],
+        "tool_use_id": "toolu_01ApXwgwzszfNueQQ5xSr3k8"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01ApXwgwzszfNueQQ5xSr3k8"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: plain-writing",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 1
+  }
+}
