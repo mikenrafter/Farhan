@@ -10,20 +10,28 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ly.com.tahaben.notification_filter_domain.delivery.Experiments
 import ly.com.tahaben.notification_filter_domain.inbox.InboxClearScope
 import ly.com.tahaben.notification_filter_domain.inbox.InboxQuery
 import ly.com.tahaben.notification_filter_domain.inbox.InboxSelection
 import ly.com.tahaben.notification_filter_domain.inbox.NotificationInboxFilter
+import ly.com.tahaben.notification_filter_domain.inbox.OtpCodeExtractor
+import ly.com.tahaben.notification_filter_domain.priority.OtpRuleConfig
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
 import ly.com.tahaben.notification_filter_domain.repository.NotificationRepository
 import ly.com.tahaben.notification_filter_domain.use_cases.NotificationFilterUseCases
 import ly.com.tahaben.notification_filter_domain.util.ServiceUtil
+import ly.com.tahaben.notification_filter_presentation.components.NotificationDateLabeler
+import ly.com.tahaben.notification_filter_presentation.inbox.InboxEntryBuilder
+import ly.com.tahaben.notification_filter_presentation.inbox.InboxSection
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -90,8 +98,8 @@ class NotificationFilterViewModel internal constructor(
         // CLAIM(inbox-resume): the same displayed page stays visible until its refresh emits [NotificationFilterViewModelTest].
         if (key != state.shownKey) {
             state = state.copy(
-                isLoading = true, shownKey = null, hasNextPage = false,
-                filteredNotifications = emptyList(), clearedNotifications = emptyList(),
+                isLoading = true, shownKey = null, hasNextPage = false, selected = emptySet(),
+                filteredNotifications = emptyList(), clearedNotifications = emptyList(), sections = emptyList(),
             )
         }
         val selection = InboxSelection(
@@ -99,33 +107,72 @@ class NotificationFilterViewModel internal constructor(
             standingCutoff = System.currentTimeMillis() - sharedPref.getStandingThresholdHours() * 3_600_000L,
         )
         val query = InboxQuery(selection, offset = key.page * 100, limit = 101)
-        getNotificationsJob = repository.observeInbox(query).onEach { rows ->
-            val page = rows.take(100)
-            val displayPriorities = page.associate { item ->
-                item.id to NotificationInboxFilter.effectivePriorityAtCutoff(item, selection.standingCutoff)
-            }
-            val observed = state.copy(
-                isLoading = false,
-                shownKey = key,
-                hasNextPage = rows.size > 100,
-                inboxSearch = selection.search,
-                standingCutoff = selection.standingCutoff,
-                displayPriorities = displayPriorities,
-            )
-            state = if (selection.cleared) {
-                observed.copy(clearedNotifications = page, notificationActions = emptyMap())
-            } else {
-                val actions = page.associate { item ->
-                    item.id to serviceUtil.getNotificationActionTitles(item.id)
-                }.filterValues { it.isNotEmpty() }
-                observed.copy(
-                    isServiceEnabled = true,
-                    allNotifications = page,
-                    filteredNotifications = page,
-                    notificationActions = actions,
+        getNotificationsJob = repository.observeInbox(query)
+            // Display priorities, action lookups, grouping and date labels are per-row work: keep them off Main.
+            .map { rows -> prepare(rows, selection) }
+            .flowOn(ioDispatcher)
+            .onEach { prepared ->
+                val observed = state.copy(
+                    isLoading = false,
+                    shownKey = key,
+                    hasNextPage = prepared.hasNextPage,
+                    inboxSearch = selection.search,
+                    standingCutoff = selection.standingCutoff,
+                    displayPriorities = prepared.displayPriorities,
+                    sections = prepared.sections,
+                    // Ticks follow rows that are still on the page, so "Clear N" never counts a row that is gone.
+                    selected = state.selected.intersect(prepared.page.mapTo(HashSet()) { it.id }),
                 )
-            }
-        }.launchIn(viewModelScope)
+                state = if (selection.cleared) {
+                    observed.copy(clearedNotifications = prepared.page, notificationActions = emptyMap())
+                } else {
+                    observed.copy(
+                        isServiceEnabled = true,
+                        allNotifications = prepared.page,
+                        filteredNotifications = prepared.page,
+                        notificationActions = prepared.actions,
+                    )
+                }
+            }.launchIn(viewModelScope)
+    }
+
+    private class PreparedPage(
+        val page: List<NotificationItem>,
+        val hasNextPage: Boolean,
+        val displayPriorities: Map<String, NotificationPriority>,
+        val actions: Map<String, List<String>>,
+        val sections: List<InboxSection>,
+    )
+
+    /** The lookup that raises fresh verification codes, or one that finds none when the feature is off. */
+    private fun codeLookup(cleared: Boolean): (NotificationItem) -> String? {
+        if (cleared || !sharedPref.isExperimentEnabled(Experiments.OTP_CODES)) return { null }
+        // The same scope as the rule, and only fresh codes: an old code does not stay pinned at the top.
+        val config = OtpRuleConfig.from(sharedPref)
+        val now = System.currentTimeMillis()
+        return { item ->
+            if (config.covers(item.packageName) && now - item.timestamp <= OtpRuleConfig.FRESH_MILLIS) {
+                OtpCodeExtractor.extract(item.title, item.text)
+            } else null
+        }
+    }
+
+    private fun prepare(rows: List<NotificationItem>, selection: InboxSelection): PreparedPage {
+        val page = rows.take(100)
+        val displayPriorities = page.associate { item ->
+            item.id to NotificationInboxFilter.effectivePriorityAtCutoff(item, selection.standingCutoff)
+        }
+        val actions = if (selection.cleared) emptyMap() else page.associate { item ->
+            item.id to serviceUtil.getNotificationActionTitles(item.id)
+        }.filterValues { it.isNotEmpty() }
+        val sections = InboxEntryBuilder.build(
+            notifications = page,
+            displayPriority = { item -> displayPriorities[item.id] ?: item.priority },
+            actionTitles = { item -> actions[item.id].orEmpty() },
+            labeler = NotificationDateLabeler(),
+            otpCode = codeLookup(selection.cleared),
+        )
+        return PreparedPage(page, rows.size > 100, displayPriorities, actions, sections)
     }
 
     fun onEvent(event: NotificationFilterEvent) {
@@ -136,15 +183,34 @@ class NotificationFilterViewModel internal constructor(
                     event.notificationItem.id,
                     event.notificationItem.packageName
                 )
+                // Opening only marks the row opened. Clearing from the shade or in the app is what removes it.
                 viewModelScope.launch {
                     withContext(Dispatchers.IO) {
                         useCases().markNotificationRead(event.notificationItem.id)
                     }
                 }
-                deleteNotificationData(event.notificationItem)
             }
             is NotificationFilterEvent.OnDismissNotification -> {
                 deleteNotificationData(event.notificationItem)
+            }
+            is NotificationFilterEvent.OnToggleSelected -> {
+                val current = state.selected
+                state = state.copy(
+                    selected = if (event.ids.all { it in current }) current - event.ids.toSet()
+                    else current + event.ids,
+                )
+            }
+            NotificationFilterEvent.OnClearSelected -> {
+                val ids = state.selected
+                state.filteredNotifications.filter { it.id in ids }.forEach(::deleteNotificationData)
+                state = state.copy(selected = emptySet())
+            }
+            is NotificationFilterEvent.OnToggleThread -> {
+                val expanded = state.expandedThreads
+                state = state.copy(
+                    expandedThreads = if (event.threadKey in expanded) expanded - event.threadKey
+                    else expanded + event.threadKey
+                )
             }
             is NotificationFilterEvent.OnClearNotifications -> {
                 viewModelScope.launch {

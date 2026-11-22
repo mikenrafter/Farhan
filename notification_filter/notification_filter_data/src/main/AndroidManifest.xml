@@ -23,6 +23,8 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+        <!-- Copy action of a verification-code notification. Only its own immutable PendingIntent reaches it. -->
+        <receiver android:name=".service.OtpCopyReceiver" android:exported="false" />
         <!-- Opt-in automation. Exported so Tasker or adb can send it; it does nothing unless the owner enabled it
              and the sender presents the credential. See notification_filter/AUTOMATION.md. -->
         <receiver

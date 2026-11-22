@@ -75,6 +75,10 @@ object SettingsCatalog {
         "notification_flood_threshold" to SettingType.INT,
         "notification_priority_delivery_settings" to SettingType.STRING,
         "notification_app_queue_v1" to SettingType.STRING,
+        "notification_otp_priority" to SettingType.STRING,
+        "notification_otp_packages" to SettingType.STRING_SET,
+        "notification_otp_all_apps" to SettingType.BOOLEAN,
+        "privileged_access_route" to SettingType.STRING, // Self-ADB, Shizuku or ask; an unknown value reads as "ask"
         "notification_schedule_snapshot_v1" to SettingType.STRING,
         "notification_delivery_schedule" to SettingType.STRING,
         "notification_budget_spent" to SettingType.INT,
@@ -95,6 +99,9 @@ object SettingsCatalog {
         "cache_key" to SettingType.BOOLEAN,
         "ignore_launcher_key" to SettingType.BOOLEAN,
         "ignore_farhan_key" to SettingType.BOOLEAN,
+        "feature_switch_usage" to SettingType.BOOLEAN,
+        "feature_switch_launcher" to SettingType.BOOLEAN,
+        "feature_switch_focus" to SettingType.BOOLEAN,
         "weekly_usage_report" to SettingType.BOOLEAN,
         "monthly_usage_report" to SettingType.BOOLEAN,
         "yearly_usage_report" to SettingType.BOOLEAN,
@@ -128,6 +135,9 @@ object SettingsCatalog {
         "notification_filter_should_showcase" to ExclusionReason.INTERNAL,
         "notification_filter_settings_warning" to ExclusionReason.INTERNAL,
         "should_show_appearance_menu" to ExclusionReason.INTERNAL,
+        "privileged_access_link_drop_pending" to ExclusionReason.INTERNAL, // bookkeeping for an interrupted revoke
+        // A seen-it diagnostic about this phone's Android; carrying it to another phone would show a false red note.
+        "notification_experiment_otp_redaction_seen" to ExclusionReason.INTERNAL,
     )
 
     /** SharedPreferences keys only; the DataStore holds none. */

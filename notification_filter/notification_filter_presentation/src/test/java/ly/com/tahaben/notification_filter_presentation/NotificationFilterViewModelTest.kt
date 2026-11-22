@@ -202,6 +202,37 @@ class NotificationFilterViewModelTest {
         assertThat(vm.state).isEqualTo(shown)
     }
 
+    // why: the right-edge column ticks a row, and a conversation ticks all of its messages together.
+    // catches: a thread toggle that adds only some ids, or a second tap that does not untick.
+    @Test fun `selection toggles single rows and whole conversations`() = withInbox { inbox ->
+        val vm = inbox.viewModel
+        vm.startObserving()
+        runCurrent()
+        inbox.emit(listOf(item("a", LOW), item("b", LOW), item("c", LOW)))
+
+        vm.onEvent(NotificationFilterEvent.OnToggleSelected(listOf("a")))
+        assertThat(vm.state.selected).containsExactly("a")
+        vm.onEvent(NotificationFilterEvent.OnToggleSelected(listOf("b", "c")))
+        assertThat(vm.state.selected).containsExactly("a", "b", "c")
+        vm.onEvent(NotificationFilterEvent.OnToggleSelected(listOf("b", "c")))
+        assertThat(vm.state.selected).containsExactly("a")
+    }
+
+    // why: ticks belong to the page that showed them; Clear N must never act on rows that left the screen.
+    // catches: carrying a selection across a chip or tab change.
+    @Test fun `changing the page key drops the selection`() = withInbox { inbox ->
+        val vm = inbox.viewModel
+        vm.startObserving()
+        runCurrent()
+        inbox.emit(listOf(item("a", LOW)))
+        vm.onEvent(NotificationFilterEvent.OnToggleSelected(listOf("a")))
+        assertThat(vm.state.selected).containsExactly("a")
+
+        vm.onEvent(NotificationFilterEvent.OnSetPriorityFilter(HIGH))
+        runCurrent()
+        assertThat(vm.state.selected).isEmpty()
+    }
+
     private fun assertLoadingWithoutRows(state: NotificationFilterState) {
         assertThat(state.isLoading).isTrue()
         assertThat(state.filteredNotifications).isEmpty()
@@ -240,6 +271,7 @@ class NotificationFilterViewModelTest {
                 when (call) {
                     "loadShouldShowcase" -> false
                     "getStandingThresholdHours" -> standingThresholdHours
+                    "isExperimentEnabled" -> false
                     else -> error("Unexpected preference call $call")
                 }
             },

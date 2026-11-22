@@ -12,13 +12,17 @@ import kotlinx.coroutines.launch
 import ly.com.tahaben.core.R
 import ly.com.tahaben.core.util.UiEvent
 import ly.com.tahaben.core.util.UiText
+import ly.com.tahaben.privileged_access_domain.Access
+import ly.com.tahaben.privileged_access_domain.PrivilegedAccess
+import ly.com.tahaben.privileged_access_domain.Route
 import ly.com.tahaben.screen_grayscale_domain.use_cases.GrayscaleUseCases
 import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class GrayscaleViewModel @Inject constructor(
-    private val grayscaleUseCases: GrayscaleUseCases
+    private val grayscaleUseCases: GrayscaleUseCases,
+    private val privilegedAccess: PrivilegedAccess,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(GrayscaleState())
@@ -95,6 +99,23 @@ class GrayscaleViewModel @Inject constructor(
 
 
         }
+    }
+
+    /**
+     * Grants WRITE_SECURE_SETTINGS through the privileged-access connector (the user's retained link, or the [route]
+     * they pick). The root button above stays as it was. The result is in [GrayscaleState.secureSettingsGrant].
+     */
+    fun grantSecureSettings(route: Route? = null) {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, secureSettingsGrant = null) }
+            val result = privilegedAccess.grant(Access.SECURE_SETTINGS, route)
+            _state.update { it.copy(isLoading = false, secureSettingsGrant = result) }
+            checkServiceStats()
+        }
+    }
+
+    fun dismissSecureSettingsGrant() {
+        _state.update { it.copy(secureSettingsGrant = null) }
     }
 
     fun checkForRootAccess() {

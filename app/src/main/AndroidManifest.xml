@@ -3,6 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="ly.com.tahaben.farhan">
 
+    <!--
+        Shizuku's API library declares minSdk 24; Farhan supports 23. The Shizuku route reports "too old" below 24
+        (AndroidShizukuRoute) and its provider is disabled there (privileged_access_data res/values/bools.xml), so no
+        Shizuku class loads on Android 6.
+    -->
+    <uses-sdk tools:overrideLibrary="rikka.shizuku.api" />
+
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" /> <!-- To get the list of installed apps on Android >= 11 -->

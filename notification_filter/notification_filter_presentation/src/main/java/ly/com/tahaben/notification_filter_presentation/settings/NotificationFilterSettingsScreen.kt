@@ -5,7 +5,12 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -61,6 +66,10 @@ import kotlinx.coroutines.launch
 import ly.com.tahaben.core.R
 import ly.com.tahaben.core_ui.LocalSpacing
 import ly.com.tahaben.core_ui.components.MyDialog
+import ly.com.tahaben.core_ui.components.SettingLinkRow
+import ly.com.tahaben.core_ui.components.SettingToggleRow
+import ly.com.tahaben.core_ui.components.SettingsBox
+import ly.com.tahaben.core_ui.components.SettingsRowDivider
 import ly.com.tahaben.core_ui.components.PermissionDialog
 import ly.com.tahaben.core_ui.components.PostNotificationPermissionTextProvider
 import ly.com.tahaben.core_ui.components.ScheduleExactAlarmPermissionTextProvider
@@ -73,23 +82,33 @@ import ly.com.tahaben.showcase_layout_compose.model.Side
 import ly.com.tahaben.showcase_layout_compose.ui.ShowcaseLayout
 import timber.log.Timber
 
+/**
+ * The Notifications tab of Settings: one scrolling page of boxed sections. The sound-control pages open full
+ * screen through [onOpenSound], and the schedule editor through [onOpenSchedule], both hosted by Settings.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NotificationFilterSettingsScreen(
-    onNavigateUp: () -> Unit,
+fun NotificationSettingsPage(
     viewModel: NotificationSettingsViewModel = hiltViewModel(),
     shouldShowRational: (String) -> Boolean,
     snackbarHostState: SnackbarHostState,
-    isDarkMode: Boolean
+    isDarkMode: Boolean,
+    onOpenSchedule: () -> Unit,
+    onOpenSound: () -> Unit,
+    codeAccessNeeded: Boolean,
+    codeAccessBusy: Boolean,
+    onAllowCodeAccess: () -> Unit,
 ) {
-    var openSound by rememberSaveable { mutableStateOf(false) }
-    if (openSound) {
-        SoundControlSettingsScreen(viewModel, onBack = { openSound = false })
-        return
-    }
     val spacing = LocalSpacing.current
     val context = LocalContext.current
     val state = viewModel._state.collectAsStateWithLifecycle().value
+    // The service can note that Android hid a code while this screen is open; check every few seconds.
+    androidx.compose.runtime.LaunchedEffect(viewModel) {
+        while (true) {
+            viewModel.onEvent(NotificationSettingsEvent.RefreshCodeDiagnostics)
+            kotlinx.coroutines.delay(3_000)
+        }
+    }
     val dialogQueue = state.visiblePermissionDialogQueue
     val scope = rememberCoroutineScope()
     var checkKey by remember {
@@ -179,209 +198,188 @@ fun NotificationFilterSettingsScreen(
         val notifyMeMsg1 = msgStyle.copy(getAnnotatedStringResource(id = R.string.notification_filter_settings_showcase_msg5))
         val notifyMeMsg2 = msgStyle.copy(getAnnotatedStringResource(id = R.string.notification_filter_settings_showcase_msg6), arrow = Arrow(targetFrom = Side.Top, head = Head.TRIANGLE, color = MaterialTheme.colorScheme.background))
         Column(
-            Modifier
+            modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = spacing.spaceMedium, vertical = spacing.spaceSmall),
+            verticalArrangement = Arrangement.spacedBy(spacing.spaceSmall),
         ) {
-            TopAppBar(
-                title = {
-                    Text(text = stringResource(id = R.string.notifications_filter_settings))
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
-                navigationIcon = {
-                    IconButton(onClick = onNavigateUp) {
-                        Icon(
-                            modifier = Modifier.mirror(),
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = stringResource(id = R.string.back)
-                        )
-                    }
-                }
-            )
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = spacing.spaceMedium)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .showcase(1, filterSwitchMsg)
-                        .padding(vertical = spacing.spaceMedium)
-                        .selectable(
-                            selected = state.isServiceEnabled,
-                            onClick = {
-                                viewModel.setServiceStats(!state.isServiceEnabled)
-                            },
-                            role = Role.Switch
-                        ),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                    Text(text = stringResource(R.string.notifications_filter))
-                    Switch(
-                        checked = state.isServiceEnabled,
-                        onCheckedChange = { checked ->
-                            viewModel.setServiceStats(checked)
-                        }
+            SettingsBox("Delivery") {
+                SettingToggleRow(
+                    title = stringResource(R.string.notifications_filter),
+                    summary = "Hold notifications until the next delivery",
+                    info = "While the filter is on, most apps cannot interrupt you. Their notifications wait in the Inbox and are delivered on your schedule. Apps you mark Always allow still come through at once.",
+                    checked = state.isServiceEnabled,
+                    onCheckedChange = { viewModel.setServiceStats(it) },
+                    modifier = Modifier.showcase(1, filterSwitchMsg),
+                )
+                SettingsRowDivider()
+                SettingLinkRow(
+                    title = "Daily schedule",
+                    summary = "When notifications are delivered",
+                    onClick = onOpenSchedule,
+                )
+                SettingsRowDivider()
+                SettingToggleRow(
+                    title = stringResource(R.string.notify_me),
+                    summary = if (state.isNotifyMeEnabled && state.notifyMeHour != -1) {
+                        "Daily at " + String.format("%d:%02d", state.notifyMeHour, state.notifyMeMinute)
+                    } else {
+                        "A daily reminder to check the Inbox"
+                    },
+                    info = "Farhan posts one reminder at this time each day. Android may ask for permission to send it and to schedule exact alarms.",
+                    checked = state.isNotifyMeEnabled,
+                    onCheckedChange = { checked ->
+                        if (!checked) viewModel.setNotifyMeTime(-1, -1)
+                        else viewModel.onEvent(NotificationSettingsEvent.ShowNotifyMeTimePicker)
+                    },
+                    modifier = Modifier.showcase(2, notifyMeMsg1).showcase(3, notifyMeMsg2),
+                )
+                if (state.isNotifyMeEnabled) {
+                    SettingLinkRow(
+                        title = stringResource(R.string.tap_to_set_new_time),
+                        onClick = { viewModel.onEvent(NotificationSettingsEvent.ShowNotifyMeTimePicker) },
                     )
                 }
-                Divider()
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .showcase(2, notifyMeMsg1)
-                        .showcase(3, notifyMeMsg2)
-                        .padding(vertical = spacing.spaceMedium)
-                        .selectable(
-                            selected = state.isNotifyMeEnabled,
-                            onClick = {
-                                if (state.isNotifyMeEnabled) {
-                                    viewModel.onEvent(NotificationSettingsEvent.CancelNotifyMe)
-                                } else {
-                                    viewModel.onEvent(NotificationSettingsEvent.ShowNotifyMeTimePicker)
-                                }
-                            },
-                            role = Role.Switch
-                        ),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column {
-                        Text(text = stringResource(R.string.notify_me))
-                        Text(
-                            text = stringResource(R.string.notify_me_description),
-                            textAlign = TextAlign.Start
-                        )
-                    }
-                    Switch(
-                        checked = state.isNotifyMeEnabled,
-                        onCheckedChange = { checked ->
-                            if (!checked) {
-                                viewModel.setNotifyMeTime(-1, -1)
-                            } else {
-                                viewModel.onEvent(NotificationSettingsEvent.ShowNotifyMeTimePicker)
+                SettingsRowDivider()
+                SettingToggleRow(
+                    title = "Delivery testing mode",
+                    summary = "Use 3-minute delivery windows",
+                    info = "Replaces the hourly delivery boundaries with 3-minute boundaries so you can test delivery quickly. Turn it off for normal use.",
+                    checked = state.isDeliveryTestingMode,
+                    onCheckedChange = { viewModel.onEvent(NotificationSettingsEvent.OnSetDeliveryTestingMode(it)) },
+                )
+                val debuggable = androidx.compose.ui.platform.LocalContext.current.applicationInfo.flags and
+                    android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
+                if (debuggable) TextButton(onClick = { viewModel.onEvent(NotificationSettingsEvent.ClearBudgetSpend) }) {
+                    Text(text = "Clear budget spend (debug)", color = MaterialTheme.colorScheme.error)
+                }
+            }
+
+            SettingsBox("Verification codes") {
+                SettingToggleRow(
+                    title = "Raise codes",
+                    summary = "Show codes at the top of the Inbox with Copy",
+                    info = "The Inbox lifts a one-time code found in a notification to the top, with Copy. Copy marks the clip sensitive and never copies on its own. Farhan only sees the code if Android passes it on; some phones hide it first. A delivered notification keeps its original text.",
+                    checked = state.otpCodes,
+                    onCheckedChange = { viewModel.onEvent(NotificationSettingsEvent.SetOtpCodes(it)) },
+                )
+                SettingsRowDivider()
+                if (showCodeAccessNote(state.otpCodes, state.otpRedactionSeen, codeAccessNeeded)) {
+                    val appPackage = androidx.compose.ui.platform.LocalContext.current.packageName
+                    Column(Modifier.padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = stringResource(R.string.codes_hidden_note),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.weight(1f),
+                            )
+                            OutlinedButton(
+                                onClick = onAllowCodeAccess,
+                                enabled = !codeAccessBusy,
+                                shape = RoundedCornerShape(16.dp),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    contentColor = MaterialTheme.colorScheme.onSurface,
+                                ),
+                            ) {
+                                Text(
+                                    stringResource(if (codeAccessBusy) R.string.special_access_flow_allowing else R.string.special_access_allow),
+                                    style = MaterialTheme.typography.labelLarge,
+                                )
                             }
                         }
-                    )
-                }
-                Divider()
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = spacing.spaceMedium)
-                        .selectable(
-                            selected = state.isDeliveryTestingMode,
-                            onClick = {
-                                viewModel.onEvent(
-                                    NotificationSettingsEvent.OnSetDeliveryTestingMode(!state.isDeliveryTestingMode)
-                                )
-                            },
-                            role = Role.Switch
-                        ),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = "Delivery testing mode")
                         Text(
-                            text = "Replace hourly delivery boundaries with 3-minute boundaries for faster testing.",
+                            text = stringResource(R.string.codes_hidden_adb_fallback, appPackage),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    Switch(
-                        checked = state.isDeliveryTestingMode,
-                        onCheckedChange = { enabled ->
-                            viewModel.onEvent(NotificationSettingsEvent.OnSetDeliveryTestingMode(enabled))
-                        }
-                    )
+                    SettingsRowDivider()
                 }
-                TextButton(
-                    onClick = { viewModel.onEvent(NotificationSettingsEvent.ClearBudgetSpend) },
-                    modifier = Modifier.padding(bottom = spacing.spaceSmall),
-                ) {
-                    Text(
-                        text = "Clear budget spend (debug)",
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-                val timePickerState = rememberTimePickerState()
-                if (state.isTimePickerVisible) {
-                    Dialog(onDismissRequest = {
-                        viewModel.onEvent(NotificationSettingsEvent.DismissNotifyMeTimePicker)
-                    }) {
-                        Surface(
-                            shape = MaterialTheme.shapes.extraLarge,
-                            tonalElevation = AlertDialogDefaults.TonalElevation
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(spacing.spaceLarge)
-                            ) {
-                                TimePicker(
-                                    state = timePickerState,
-                                )
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.End
-                                ) {
-                                    TextButton(onClick = {
-                                        viewModel.onEvent(NotificationSettingsEvent.DismissNotifyMeTimePicker)
-                                    }) {
-                                        Text(
-                                            text = stringResource(id = R.string.cancel),
-                                            style = MaterialTheme.typography.labelLarge
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(spacing.spaceSmall))
-                                    TextButton(onClick = {
-                                        viewModel.onEvent(
-                                            NotificationSettingsEvent.SaveNotifyMeTime(
-                                                timePickerState.hour,
-                                                timePickerState.minute
-                                            )
-                                        )
-                                    }) {
-                                        Text(
-                                            text = stringResource(id = R.string.ok),
-                                            style = MaterialTheme.typography.labelLarge
-                                        )
-                                    }
+                SettingLinkRow(
+                    title = "Raise to",
+                    summary = state.otpPriority.name.lowercase().replaceFirstChar { it.uppercase() } + " priority",
+                    onClick = {
+                        val order = ly.com.tahaben.notification_filter_domain.model.NotificationPriority.entries
+                        viewModel.onEvent(NotificationSettingsEvent.SetOtpPriority(order[(order.indexOf(state.otpPriority) + 1) % order.size]))
+                    },
+                )
+                SettingsRowDivider()
+                SettingToggleRow(
+                    title = "Any app",
+                    summary = if (state.otpAllApps) "Codes from every app" else "Only apps you pick in Settings, Apps",
+                    checked = state.otpAllApps,
+                    onCheckedChange = { viewModel.onEvent(NotificationSettingsEvent.SetOtpAllApps(it)) },
+                )
+            }
 
-                                }
-                            }
-                        }
-                    }
-                }
-                AnimatedVisibility(visible = state.isNotifyMeEnabled) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = spacing.spaceSmall)
-                            .clickable {
-                                viewModel.onEvent(NotificationSettingsEvent.ShowNotifyMeTimePicker)
-                            },
-                    ) {
-                        if (state.notifyMeHour != -1) {
-                            Text(text = "${state.notifyMeHour}:${state.notifyMeMinute}")
-                        }
-                        Spacer(modifier = Modifier.height(spacing.spaceExtraSmall))
-                        Text(text = stringResource(R.string.tap_to_set_new_time))
-                    }
-                }
-                Divider()
-                if (Build.VERSION.SDK_INT >= 35) {
-                    TextButton(onClick = { openSound = true }) { Text("Sound control (pilot)") }
-                    Divider()
-                }
+            SettingsBox("Sound") {
+                SettingLinkRow(
+                    title = "Sound control",
+                    summary = if (Build.VERSION.SDK_INT >= 35) "Choose which notifications make sound" else "Needs Android 15 or later",
+                    onClick = if (Build.VERSION.SDK_INT >= 35) onOpenSound else null,
+                )
+            }
+
+            SettingsBox("Automation and labs") {
                 AutomationAndExperimentsSection(
                     state = state,
                     onEvent = viewModel::onEvent,
                     credentialForCopy = viewModel::credentialForCopy,
                 )
             }
+        }
+    }
 
+    val timePickerState = rememberTimePickerState()
+    if (state.isTimePickerVisible) {
+        Dialog(onDismissRequest = {
+            viewModel.onEvent(NotificationSettingsEvent.DismissNotifyMeTimePicker)
+        }) {
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                tonalElevation = AlertDialogDefaults.TonalElevation
+            ) {
+                Column(
+                    modifier = Modifier.padding(spacing.spaceLarge)
+                ) {
+                    TimePicker(
+                        state = timePickerState,
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = {
+                            viewModel.onEvent(NotificationSettingsEvent.DismissNotifyMeTimePicker)
+                        }) {
+                            Text(
+                                text = stringResource(id = R.string.cancel),
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(spacing.spaceSmall))
+                        TextButton(onClick = {
+                            viewModel.onEvent(
+                                NotificationSettingsEvent.SaveNotifyMeTime(
+                                    timePickerState.hour,
+                                    timePickerState.minute
+                                )
+                            )
+                        }) {
+                            Text(
+                                text = stringResource(id = R.string.ok),
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 

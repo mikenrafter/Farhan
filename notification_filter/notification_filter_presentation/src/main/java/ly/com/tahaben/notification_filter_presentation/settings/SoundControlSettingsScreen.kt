@@ -315,3 +315,10 @@ private fun describeFilter(filter: Int) = when (filter) {
     NotificationManager.INTERRUPTION_FILTER_NONE -> "No interruptions"
     else -> "Unknown"
 }
+
+/** The existing sound-control pages as one destination, for Settings to open under its Notifications tab. */
+@Composable
+fun NotificationSoundControlPage(
+    onBack: () -> Unit,
+    viewModel: NotificationSettingsViewModel = androidx.hilt.navigation.compose.hiltViewModel(),
+) = SoundControlSettingsScreen(viewModel, onBack)

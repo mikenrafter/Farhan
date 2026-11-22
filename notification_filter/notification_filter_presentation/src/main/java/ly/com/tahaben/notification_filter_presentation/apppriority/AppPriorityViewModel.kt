@@ -19,6 +19,7 @@ import javax.inject.Inject
 class AppPriorityViewModel @Inject constructor(
     private val useCases: NotificationFilterUseCases,
     private val preferences: ly.com.tahaben.notification_filter_domain.preferences.Preferences,
+    private val soundControl: ly.com.tahaben.notification_filter_domain.sound.SoundControl,
 ) : ViewModel() {
 
     private val rows = androidx.compose.runtime.mutableStateListOf<ly.com.tahaben.notification_filter_domain.model.AppPriorityInfo>()
@@ -54,14 +55,6 @@ class AppPriorityViewModel @Inject constructor(
 
     fun onEvent(event: AppPriorityEvent) {
         when (event) {
-            is AppPriorityEvent.OnToggleExpanded -> {
-                val current = state.expandedPackages
-                state = if (event.packageName in current) {
-                    state.copy(expandedPackages = current - event.packageName)
-                } else {
-                    state.copy(expandedPackages = current + event.packageName)
-                }
-            }
             is AppPriorityEvent.OnSetAppPriority -> {
                 useCases.setAppPriorityOverride(event.packageName, event.priority)
                 patchApp(event.packageName)
@@ -84,6 +77,39 @@ class AppPriorityViewModel @Inject constructor(
             }
         }
     }
+
+    /** Pass-through: the legacy exceptions list or a Critical override, the same test the delivery path uses. */
+    fun isAlwaysAllowed(packageName: String): Boolean = useCases.isPackageInNotificationException(packageName)
+
+    /**
+     * Always allow, the way the Inbox action does it: a Critical override. Turning it off clears that override and
+     * takes the app out of the legacy exceptions list, so the app follows its normal priority again.
+     */
+    fun setAlwaysAllowed(packageName: String, allowed: Boolean) {
+        if (allowed) {
+            useCases.setAppPriorityOverride(packageName, NotificationPriority.CRITICAL)
+        } else {
+            useCases.setAppPriorityOverride(packageName, null)
+            useCases.removePackageFromNotificationException(packageName)
+        }
+        patchApp(packageName)
+    }
+
+    /** Whether sound control lets this app's notifications make sound. */
+    fun otpAllApps(): Boolean = preferences.isOtpAllApps()
+    fun isOtpCovered(packageName: String): Boolean = preferences.isOtpAllApps() || packageName in preferences.getOtpPackages()
+    fun setOtpCovered(packageName: String, covered: Boolean) {
+        val current = preferences.getOtpPackages()
+        preferences.setOtpPackages(if (covered) current + packageName else current - packageName)
+    }
+
+    fun isSoundElected(packageName: String): Boolean = packageName in soundControl.choices().apps
+
+    fun setSoundElected(packageName: String, elected: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) { soundControl.setAppElected(packageName, elected) }
+    }
+
+    fun appInfo(packageName: String) = rows.firstOrNull { it.packageName == packageName }
 
     private fun patchApp(packageName: String) {
         catalogRefresh.packageEdited(packageName)

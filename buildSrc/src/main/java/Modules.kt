@@ -34,4 +34,10 @@ object Modules {
     const val launcherData = ":launcher:launcher_data"
     const val launcherPresentation = ":launcher:launcher_presentation"
 
+
+    const val privilegedAccessDomain = ":privileged_access:privileged_access_domain"
+    const val privilegedAccessData = ":privileged_access:privileged_access_data"
+    const val privilegedAccessSelfAdb = ":privileged_access:privileged_access_selfadb"
+    const val privilegedAccessPresentation = ":privileged_access:privileged_access_presentation"
+
 }

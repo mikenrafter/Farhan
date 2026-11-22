@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,7 +37,26 @@ fun NotificationDashboardScreen(
 ) {
     val spacing = LocalSpacing.current
     val state = viewModel.state
+    ObserveDashboardDetails(viewModel)
 
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (state.isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(spacing.spaceMedium),
+                verticalArrangement = Arrangement.spacedBy(spacing.spaceMedium)
+            ) {
+                notificationDashboardItems(state, viewModel::onEvent, onNavigateToScheduleEditor)
+            }
+        }
+    }
+}
+
+/** Keeps the batch and standing-alert observers running while the dashboard content is on screen and resumed. */
+@Composable
+fun ObserveDashboardDetails(viewModel: NotificationDashboardViewModel) {
     OnLifecycleEvent { _, event ->
         when (event) {
             Lifecycle.Event.ON_RESUME -> viewModel.startObservingDetails()
@@ -47,9 +67,18 @@ fun NotificationDashboardScreen(
     DisposableEffect(viewModel) {
         onDispose { viewModel.stopObservingDetails() }
     }
+}
 
+/**
+ * The dashboard widgets as list items, so a screen can place them inside its own list (the Summary tab does).
+ * Callers show their own loading state while [NotificationDashboardState.isLoading].
+ */
+fun LazyListScope.notificationDashboardItems(
+    state: NotificationDashboardState,
+    onEvent: (NotificationDashboardEvent) -> Unit,
+    onNavigateToScheduleEditor: () -> Unit,
+) {
     val summary = state.summary
-
     val standingItems = state.standingItems
 
     val healthDescription = buildString {
@@ -65,107 +94,91 @@ fun NotificationDashboardScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (state.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(spacing.spaceMedium),
-                verticalArrangement = Arrangement.spacedBy(spacing.spaceMedium)
-            ) {
-                if (summary.isFlooding) {
-                    item {
-                        FloodStatusWidget(
-                            recentCount = summary.totalToday,
-                            floodThreshold = state.floodThreshold,
-                            onClearAll = { viewModel.onEvent(NotificationDashboardEvent.OnDeleteAll) }
-                        )
-                    }
-                }
-
-                item {
-                    NotificationHealthWidget(
-                        score = summary.healthScore,
-                        description = healthDescription
-                    )
-                }
-
-                item {
-                    PriorityDistributionWidget(breakdown = summary.priorityBreakdown)
-                }
-
-                item {
-                    CategoryBreakdownWidget(breakdown = summary.categoryBreakdown)
-                }
-
-                if (standingItems.isNotEmpty()) {
-                    item {
-                        StandingAlarmsWidget(
-                            totalCount = summary.standingCount,
-                            standingItems = standingItems,
-                            standingThresholdHours = state.standingThresholdHours,
-                            onClearAll = { viewModel.onEvent(NotificationDashboardEvent.OnClearAllStanding) }
-                        )
-                    }
-                }
-
-                if (summary.topChatters.isNotEmpty()) {
-                    item {
-                        TopChattersWidget(
-                            chatters = summary.topChatters,
-                            onSetLowPriority = { packageName ->
-                                viewModel.onEvent(
-                                    NotificationDashboardEvent.OnSetLowPriority(packageName)
-                                )
-                            }
-                        )
-                    }
-                }
-
-                item {
-                    PriorityDeliveryWidget(
-                        settings = state.priorityDeliverySettings,
-                        testingMode = state.deliveryTestingMode,
-                        onSettingChanged = { priority, setting ->
-                            viewModel.onEvent(
-                                NotificationDashboardEvent.OnSetPriorityDeliverySetting(priority, setting)
-                            )
-                        },
-                    )
-                }
-
-                item {
-                    BudgetSpendWidget(
-                        budgetStatus = state.budgetStatus,
-                    )
-                }
-
-                if (state.scheduleError != null) item {
-                    Text(state.scheduleError, color = MaterialTheme.colorScheme.error)
-                } else item {
-                    NotificationScheduleWidget(
-                        schedule = state.schedule,
-                        isDatedToday = state.isScheduleDatedToday,
-                        onEdit = onNavigateToScheduleEditor,
-                    )
-                }
-
-                item {
-                    RecentBatchesWidget(
-                        onBatchPage = { key, offset -> viewModel.onEvent(NotificationDashboardEvent.OnBatchPage(key, offset)) },
-                        batches = state.batches,
-                        expandedKeys = state.expandedBatchKeys,
-                        onToggleBatch = { key ->
-                            viewModel.onEvent(NotificationDashboardEvent.OnToggleBatch(key))
-                        },
-                        onOpenNotification = { item ->
-                            viewModel.onEvent(NotificationDashboardEvent.OnOpenNotification(item))
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
+    if (summary.isFlooding) {
+        item {
+            FloodStatusWidget(
+                recentCount = summary.totalToday,
+                floodThreshold = state.floodThreshold,
+                onClearAll = { onEvent(NotificationDashboardEvent.OnDeleteAll) }
+            )
         }
+    }
+
+    item {
+        NotificationHealthWidget(
+            score = summary.healthScore,
+            description = healthDescription
+        )
+    }
+
+    item {
+        PriorityDistributionWidget(breakdown = summary.priorityBreakdown)
+    }
+
+    item {
+        CategoryBreakdownWidget(breakdown = summary.categoryBreakdown)
+    }
+
+    if (standingItems.isNotEmpty()) {
+        item {
+            StandingAlarmsWidget(
+                totalCount = summary.standingCount,
+                standingItems = standingItems,
+                standingThresholdHours = state.standingThresholdHours,
+                onClearAll = { onEvent(NotificationDashboardEvent.OnClearAllStanding) }
+            )
+        }
+    }
+
+    if (summary.topChatters.isNotEmpty()) {
+        item {
+            TopChattersWidget(
+                chatters = summary.topChatters,
+                onSetLowPriority = { packageName ->
+                    onEvent(NotificationDashboardEvent.OnSetLowPriority(packageName))
+                }
+            )
+        }
+    }
+
+    item {
+        PriorityDeliveryWidget(
+            settings = state.priorityDeliverySettings,
+            testingMode = state.deliveryTestingMode,
+            onSettingChanged = { priority, setting ->
+                onEvent(NotificationDashboardEvent.OnSetPriorityDeliverySetting(priority, setting))
+            },
+        )
+    }
+
+    item {
+        BudgetSpendWidget(
+            budgetStatus = state.budgetStatus,
+        )
+    }
+
+    if (state.scheduleError != null) item {
+        Text(state.scheduleError, color = MaterialTheme.colorScheme.error)
+    } else item {
+        NotificationScheduleWidget(
+            schedule = state.schedule,
+            isDatedToday = state.isScheduleDatedToday,
+            onEdit = onNavigateToScheduleEditor,
+        )
+    }
+
+    item {
+        RecentBatchesWidget(
+            onBatchPage = { key, offset -> onEvent(NotificationDashboardEvent.OnBatchPage(key, offset)) },
+            batches = state.batches,
+            expandedKeys = state.expandedBatchKeys,
+            onToggleBatch = { key ->
+                onEvent(NotificationDashboardEvent.OnToggleBatch(key))
+            },
+            onOpenNotification = { item ->
+                onEvent(NotificationDashboardEvent.OnOpenNotification(item))
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

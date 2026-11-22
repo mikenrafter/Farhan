@@ -11,6 +11,14 @@ sealed class NotificationFilterEvent {
     data class OnDismissNotification(val notificationItem: NotificationItem) :
         NotificationFilterEvent()
 
+    data class OnToggleThread(val threadKey: String) : NotificationFilterEvent()
+
+    /** Ticks or unticks rows; a conversation toggles all of its messages together. */
+    data class OnToggleSelected(val ids: List<String>) : NotificationFilterEvent()
+
+    /** Clears the ticked rows. */
+    object OnClearSelected : NotificationFilterEvent()
+
     data class OnClearNotifications(val scope: InboxClearScope, val standingCutoff: Long, val search: String) : NotificationFilterEvent()
     data class OnExcludeAppClick(val appPackageName: String) : NotificationFilterEvent()
     data class OnLaunchAppInfoClick(val appPackageName: String) : NotificationFilterEvent()

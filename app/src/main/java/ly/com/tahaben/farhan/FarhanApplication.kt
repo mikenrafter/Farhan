@@ -25,6 +25,8 @@ class FarhanApplication : Application() {
 
     @Inject lateinit var soundControl: dagger.Lazy<SoundControlRuntime>
 
+    @Inject lateinit var privilegedAccess: dagger.Lazy<ly.com.tahaben.privileged_access_domain.PrivilegedAccess>
+
     init {
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
@@ -72,6 +74,7 @@ class FarhanApplication : Application() {
         }
         WorkManager.initialize(this, farhanWorkerConfiguration)
         soundControl.get().start()
+        registerActivityLifecycleCallbacks(ly.com.tahaben.farhan.privileged.ForegroundRecheck(privilegedAccess))
     }
 
 }

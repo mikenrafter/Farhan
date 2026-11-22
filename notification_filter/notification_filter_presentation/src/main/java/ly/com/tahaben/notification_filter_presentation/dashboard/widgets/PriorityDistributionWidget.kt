@@ -27,10 +27,11 @@ import ly.com.tahaben.core_ui.LocalSpacing
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 
 val priorityColor = mapOf(
-    NotificationPriority.CRITICAL to Color(0xFFF44336),
-    NotificationPriority.HIGH to Color(0xFFFF9800),
-    NotificationPriority.MEDIUM to Color(0xFF2196F3),
-    NotificationPriority.LOW to Color(0xFF9E9E9E),
+    // Muted on purpose: only Critical carries any colour.
+    NotificationPriority.CRITICAL to Color(0xFFB3574F),
+    NotificationPriority.HIGH to Color(0xFF7A7A7A),
+    NotificationPriority.MEDIUM to Color(0xFF9E9E9E),
+    NotificationPriority.LOW to Color(0xFFBDBDBD),
 )
 
 @Composable
@@ -44,7 +45,8 @@ fun PriorityDistributionWidget(
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier

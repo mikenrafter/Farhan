@@ -12,6 +12,16 @@ interface Preferences {
     fun isExperimentEnabled(name: String): Boolean = false
     fun setExperimentEnabled(name: String, enabled: Boolean) { error("Experiment storage required") }
 
+    /** Priority a notification with a one-time code is raised to. */
+    fun getOtpPriority(): ly.com.tahaben.notification_filter_domain.model.NotificationPriority =
+        ly.com.tahaben.notification_filter_domain.model.NotificationPriority.CRITICAL
+    fun setOtpPriority(priority: ly.com.tahaben.notification_filter_domain.model.NotificationPriority) { error("OTP storage required") }
+    /** Apps the verification-code rule covers when [isOtpAllApps] is false. */
+    fun getOtpPackages(): Set<String> = emptySet()
+    fun setOtpPackages(packages: Set<String>) { error("OTP storage required") }
+    fun isOtpAllApps(): Boolean = true
+    fun setOtpAllApps(allApps: Boolean) { error("OTP storage required") }
+
 
     fun loadShouldShowOnBoarding(): Boolean
     fun saveShouldShowOnBoarding(shouldShow: Boolean)
@@ -115,6 +125,9 @@ interface Preferences {
         const val KEY_CHANNEL_PRIORITY_OFFSET_PREFIX = "notification_channel_priority_offset_"
         const val KEY_PRIORITY_DELIVERY_SETTINGS = "notification_priority_delivery_settings"
         const val KEY_DELIVERY_TESTING_MODE = "notification_delivery_testing_mode"
+        const val KEY_OTP_PRIORITY = "notification_otp_priority"
+        const val KEY_OTP_PACKAGES = "notification_otp_packages"
+        const val KEY_OTP_ALL_APPS = "notification_otp_all_apps"
         const val KEY_KNOWN_PACKAGE_SOURCES = "notification_known_package_sources"
     }
 }

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Farhan is an open-source Android productivity app designed to reduce mindless phone use. It has no internet permission and does not transmit any data off-device. The app bundles five independent behaviour-modification features — Notification Filter, Infinite Scroll Blocker, Screen Grayscale, App Usage Overview, and Delayed Launch — plus a custom Launcher (present in code but currently hidden from the main navigation). A global main switch pauses all active features simultaneously. The first time the app is installed, a two-step first-run flow (welcome carousel then theme selection) is shown before the main screen.
+Farhan is an open-source Android productivity app designed to reduce mindless phone use. It sends no data off-device. Its one internet permission is used only for a loopback connection to the phone's own wireless-debugging service, and only if the user chooses to allow special access. The app bundles five independent behaviour-modification features — Notification Filter, Infinite Scroll Blocker, Screen Grayscale, App Usage Overview, and Delayed Launch — plus a custom Launcher (present in code but currently hidden from the main navigation). A global main switch pauses all active features simultaneously. The first time the app is installed, a two-step first-run flow (welcome carousel then theme selection) is shown before the main screen.
 
 ---
 
@@ -178,7 +178,7 @@ Farhan is an open-source Android productivity app designed to reduce mindless ph
 
 ### Observable Behaviour
 
-- **First-run onboarding**: on first launch, the app shows a three-page horizontal carousel (swipe or "Next" button to advance; "Skip" button available on pages 1 and 2; "Get started" button on page 3). The three pages cover: (1) no internet permission, (2) open-source nature, (3) the app's purpose.
+- **First-run onboarding**: on first launch, the app shows a three-page horizontal carousel (swipe or "Next" button to advance; "Skip" button available on pages 1 and 2; "Get started" button on page 3). The three pages cover: (1) nothing leaves the phone, and the one internet permission is only for the phone's own debugging service, (2) open-source nature, (3) the app's purpose.
 - Completing or skipping onboarding navigates to the theme-selection screen.
 - **Theme selection screen**: presented once after onboarding (or whenever the saved theme preference is unknown). The user selects:
   - **Display mode**: Dark, Follow System, or Light — shown as an animated toggle row with three icon buttons.

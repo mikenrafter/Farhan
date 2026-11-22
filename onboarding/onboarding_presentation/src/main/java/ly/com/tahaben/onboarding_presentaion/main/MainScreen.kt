@@ -340,6 +340,12 @@ fun MainScreen(
         }
     }
 
+    CombineDbDialog(state, onEvent)
+}
+
+/** The one-time prompt to merge the old notification and usage databases. Hosted by whichever screen is first. */
+@Composable
+fun CombineDbDialog(state: MainScreenState, onEvent: (MainScreenEvent) -> Unit) {
     if (state.isCombineDbDialogVisible) {
         Dialog(
             onDismissRequest = {}

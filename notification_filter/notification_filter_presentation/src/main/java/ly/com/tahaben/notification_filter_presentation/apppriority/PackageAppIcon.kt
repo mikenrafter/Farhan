@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -41,13 +42,17 @@ internal fun PackageAppIcon(
     loader: AppIconLoader<ImageBitmap>,
 ) {
     val pixels = with(LocalDensity.current) { appIconSize.roundToPx().coerceIn(1, 160) }
-    var icon by remember(packageName, pixels, loader) { mutableStateOf<AppIcon<ImageBitmap>>(AppIcon.LetterTile) }
-    LaunchedEffect(packageName, pixels, loader) { icon = loader.load(packageName, pixels) }
+    var icon by remember(packageName, pixels, loader) { mutableStateOf<AppIcon<ImageBitmap>>(loader.peek(packageName, pixels) ?: AppIcon.LetterTile) }
+    LaunchedEffect(packageName, pixels, loader) {
+        if (icon !is AppIcon.Loaded) icon = loader.load(packageName, pixels)
+    }
     val loaded = icon
+    // A real icon is drawn on its own, clipped to one rounded square. Only the letter fallback gets a tile,
+    // so there is no second shape behind an icon that already has its own.
     Surface(
         modifier = Modifier.size(appIconSize),
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(10.dp),
+        color = if (loaded is AppIcon.Loaded) Color.Transparent else MaterialTheme.colorScheme.surfaceVariant,
     ) {
         Box(contentAlignment = Alignment.Center) {
             when (loaded) {

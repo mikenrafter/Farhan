@@ -62,6 +62,8 @@ class SettingsCatalogTest {
             "notification_filter_should_showcase" to ExclusionReason.INTERNAL,
             "notification_filter_settings_warning" to ExclusionReason.INTERNAL,
             "should_show_appearance_menu" to ExclusionReason.INTERNAL,
+            "privileged_access_link_drop_pending" to ExclusionReason.INTERNAL,
+            "notification_experiment_otp_redaction_seen" to ExclusionReason.INTERNAL,
         )
         for ((key, reason) in expected) {
             assertWithMessage(key).that(shared(key)).isEqualTo(SettingDisposition.Excluded(reason))
@@ -85,6 +87,10 @@ class SettingsCatalogTest {
             "notification_channel_priority_offset_com.example.chat_direct" to SettingType.INT,
             "notification_priority_delivery_settings" to SettingType.STRING,
             "notification_app_queue_v1" to SettingType.STRING,
+            "notification_otp_priority" to SettingType.STRING,
+            "notification_otp_packages" to SettingType.STRING_SET,
+            "notification_otp_all_apps" to SettingType.BOOLEAN,
+            "privileged_access_route" to SettingType.STRING,
             "notify_me_schedule_date" to SettingType.LONG,
             "key_time_limit_packages" to SettingType.STRING_SET,
             "monthly_usage_report" to SettingType.BOOLEAN,
@@ -121,5 +127,17 @@ class SettingsCatalogTest {
             assertWithMessage("$key in shared preferences").that(shared(key)).isEqualTo(SettingDisposition.Unsupported)
         }
         assertThat(SettingsCatalog.dispositionOf(DATA_STORE, "notification_flood_threshold")).isEqualTo(SettingDisposition.Unsupported)
+    }
+
+    // why: the tab switches are the owner's choices and travel with a backup, so a restore brings the bar back as
+    //      it was. They live in shared preferences beside the other settings (app FeatureSwitchStore).
+    // catches: leaving a switch key out of the inventory (it exports as an unsupported name and a restore drops
+    //          it) or accepting one in the DataStore.
+    @Test
+    fun `the three feature switches are exportable booleans in shared preferences only`() {
+        for (key in listOf("feature_switch_usage", "feature_switch_launcher", "feature_switch_focus")) {
+            assertWithMessage(key).that(shared(key)).isEqualTo(SettingDisposition.Configuration(SettingType.BOOLEAN))
+            assertWithMessage("$key in the DataStore").that(SettingsCatalog.dispositionOf(DATA_STORE, key)).isEqualTo(SettingDisposition.Unsupported)
+        }
     }
 }

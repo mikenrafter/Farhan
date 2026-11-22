@@ -57,3 +57,9 @@ include(":launcher:launcher_presentation")
 include(":settings_android")
 
 include(":settings_rescue")
+
+include(":privileged_access")
+include(":privileged_access:privileged_access_domain")
+include(":privileged_access:privileged_access_data")
+include(":privileged_access:privileged_access_selfadb")
+include(":privileged_access:privileged_access_presentation")

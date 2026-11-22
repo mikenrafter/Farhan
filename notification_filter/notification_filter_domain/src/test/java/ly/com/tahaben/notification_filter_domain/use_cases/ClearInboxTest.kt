@@ -51,8 +51,9 @@ class ClearInboxTest {
             listOf("clearNotificationActions", listOf("low-1", "low-2")),
             listOf("deleteInboxNotifications", InboxSelection(cleared = true, standingCutoff = 700)),
             listOf("clearNotificationActions", listOf("history")),
-            listOf("deleteAllNotificationsFromDB"),
-            listOf("clearNotificationActions"),
+            // "All" clears the Inbox rows and leaves the Cleared history alone.
+            listOf("deleteInboxNotifications", InboxSelection(standingCutoff = 900)),
+            listOf("clearNotificationActions", listOf("low-1", "low-2")),
         ).inOrder()
     }
 

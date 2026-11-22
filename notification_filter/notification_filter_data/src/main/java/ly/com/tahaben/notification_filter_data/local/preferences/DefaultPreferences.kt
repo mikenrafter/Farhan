@@ -310,6 +310,16 @@ class DefaultPreferences(
     override fun isExperimentEnabled(name: String): Boolean = sharedPref.getBoolean("notification_experiment_" + name, false)
     override fun setExperimentEnabled(name: String, enabled: Boolean) { sharedPref.edit().putBoolean("notification_experiment_" + name, enabled).apply() }
 
+    override fun getOtpPriority(): NotificationPriority =
+        sharedPref.getString(Preferences.KEY_OTP_PRIORITY, null)
+            ?.let { stored -> NotificationPriority.entries.firstOrNull { it.name == stored } }
+            ?: NotificationPriority.CRITICAL
+    override fun setOtpPriority(priority: NotificationPriority) { sharedPref.edit().putString(Preferences.KEY_OTP_PRIORITY, priority.name).apply() }
+    override fun getOtpPackages(): Set<String> = HashSet(sharedPref.getStringSet(Preferences.KEY_OTP_PACKAGES, emptySet()).orEmpty())
+    override fun setOtpPackages(packages: Set<String>) { sharedPref.edit().putStringSet(Preferences.KEY_OTP_PACKAGES, HashSet(packages)).apply() }
+    override fun isOtpAllApps(): Boolean = sharedPref.getBoolean(Preferences.KEY_OTP_ALL_APPS, true)
+    override fun setOtpAllApps(allApps: Boolean) { sharedPref.edit().putBoolean(Preferences.KEY_OTP_ALL_APPS, allApps).apply() }
+
     override fun getBudgetSpentCurrentPeriod(): Int =
         getScheduleSnapshot().budget.spentPoints
 

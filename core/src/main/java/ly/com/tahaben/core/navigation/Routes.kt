@@ -14,7 +14,6 @@ object Routes {
     const val USAGE_FOR_PERIOD = "$USAGE/{$START_DATE}/{$END_DATE}"
     const val USAGE_SETTINGS = "usage_settings"
     const val NOTIFICATION_FILTER = "notification_filter"
-    const val NOTIFICATION_FILTER_SETTINGS = "notification_filter_settings"
     const val NOTIFICATION_FILTER_EXCEPTIONS = "notification_filter_exceptions"
     const val INFINITE_SCROLLING = "infinite_scrolling"
     const val INFINITE_SCROLLING_EXCEPTIONS = "infinite_scrolling_exceptions"
@@ -27,8 +26,6 @@ object Routes {
     const val TimeLimiter_WHITELIST_SETTINGS = "time_limiter_whitelist_settings"
     const val DELAYED_LAUNCH_SETTINGS = "mindful_launch_settings"
     const val DELAYED_LAUNCH_WHITELIST = "mindful_launch_whitelist"
-    const val NOTIFICATION_DASHBOARD = "notification_dashboard"
-    const val APP_PRIORITY = "app_priority"
     const val NOTIFICATION_SCHEDULE_EDITOR = "notification_schedule_editor"
 
 }

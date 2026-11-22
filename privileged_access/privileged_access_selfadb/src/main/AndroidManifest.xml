@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Loopback sockets to this phone's own wireless-debugging daemon, and nothing else. Android needs INTERNET for
+        any socket, loopback included. Farhan's onboarding and SPEC.md say it has no internet permission; shipping
+        this module changes that statement.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>

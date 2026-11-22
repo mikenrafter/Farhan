@@ -28,6 +28,9 @@ internal class AppIconLoader<Icon : Any>(
 
     private val cache = LinkedHashMap<Request, AppIcon<Icon>>(16, 0.75f, true)
 
+    /** The cached icon if this request was already loaded; lets a row draw it on its first frame. */
+    fun peek(packageName: String, pixels: Int): AppIcon<Icon>? = synchronized(cache) { cache[Request(packageName, pixels)] }
+
     suspend fun load(packageName: String, pixels: Int): AppIcon<Icon> = withContext(dispatcher) {
         val request = Request(packageName, pixels)
         synchronized(cache) { cache[request] }?.let { return@withContext it }

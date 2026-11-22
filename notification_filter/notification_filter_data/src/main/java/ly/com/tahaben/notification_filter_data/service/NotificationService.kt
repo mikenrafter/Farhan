@@ -39,6 +39,11 @@ import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import ly.com.tahaben.notification_filter_domain.model.VisibleNotificationSource
 import ly.com.tahaben.notification_filter_domain.delivery.*
 import ly.com.tahaben.notification_filter_domain.preferences.Preferences
+import ly.com.tahaben.notification_filter_domain.priority.OtpPriorityRule
+import ly.com.tahaben.notification_filter_domain.priority.OtpRuleConfig
+import ly.com.tahaben.notification_filter_domain.priority.PriorityRule
+import ly.com.tahaben.notification_filter_domain.priority.PriorityRuleInput
+import ly.com.tahaben.notification_filter_domain.priority.PriorityRules
 import ly.com.tahaben.notification_filter_domain.use_cases.NotificationFilterUseCases
 import ly.com.tahaben.notification_filter_domain.util.KnownPackageSourceRegistry
 import timber.log.Timber
@@ -67,6 +72,11 @@ class NotificationService : NotificationListenerService() {
     @Inject lateinit var experimentLog: ExperimentEventLog
 
     @Inject lateinit var notificationDao: NotificationDao
+
+    /** Rules that can raise a notification's priority after intake's own resolution. */
+    private val priorityRules: List<PriorityRule> by lazy {
+        listOf(OtpPriorityRule { OtpRuleConfig.from(preferences) })
+    }
 
     private val snoozeWork = Mutex()
     private val summaryCancellations = SnoozeSummaryCancellations(SystemClock::elapsedRealtime)
@@ -179,6 +189,21 @@ class NotificationService : NotificationListenerService() {
         fun getActionsForNotification(id: String): List<CapturedAction> = actionStore.get(id)?.replies.orEmpty()
         fun removeActionsForNotification(id: String) { actionStore.remove(id) }
         fun hasNativeSnoozes(): Boolean = connectedInstance?.snoozeHandler?.needsReconciliation() == true
+
+        /**
+         * Disconnects and reconnects the listener so Android re-reads what it may show it (a newly granted
+         * RECEIVE_SENSITIVE_NOTIFICATIONS app-op). `requestRebind` on its own does nothing while the listener is
+         * still bound, so a connected listener is unbound first. Both calls are no-ops when notification access is off.
+         */
+        fun requestRestart(context: Context) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return
+            try {
+                connectedInstance?.requestUnbind()
+                requestRebind(android.content.ComponentName(context, NotificationService::class.java))
+            } catch (ignored: RuntimeException) {
+                // Notification access is off or the system refused; the user toggling access is the fallback.
+            }
+        }
 
         suspend fun reconcileNativeSnoozes() {
             connectedInstance?.reconcileSnoozes()
@@ -307,6 +332,7 @@ class NotificationService : NotificationListenerService() {
         super.onListenerConnected()
         connectedInstance = this
         createProxyNotificationChannel()
+        VerificationCodeNotifier.ensureChannel(this)
         serviceScope.launch { soundControl.onListenerConnected() }
         serviceScope.launch {
             deliveryEngine.maintainDeliverySchedule(this@NotificationService)
@@ -357,6 +383,12 @@ class NotificationService : NotificationListenerService() {
             notification.extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString()?.take(16384),
             java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(sbn.postTime)),
             sbn.packageName, timestamp = sbn.postTime, channelId = notification.channelId)
+        // Android 15 and later hide a one-time code's text from listeners without RECEIVE_SENSITIVE_NOTIFICATIONS.
+        // Remember that it happened so Settings can say why codes are not raised.
+        if (item.text?.contains("Sensitive notification content hidden", ignoreCase = true) == true &&
+            preferences.isExperimentEnabled(Experiments.OTP_CODES) &&
+            !preferences.isExperimentEnabled(Experiments.OTP_REDACTION_SEEN)
+        ) preferences.setExperimentEnabled(Experiments.OTP_REDACTION_SEEN, true)
         val actions = notification.actions.orEmpty().take(8).mapNotNull { action ->
             val intent = action.actionIntent ?: return@mapNotNull null
             CapturedAction(action.title?.toString()?.take(128).orEmpty(), intent, action.remoteInputs?.take(8)?.toTypedArray())
@@ -405,6 +437,8 @@ class NotificationService : NotificationListenerService() {
         // A callback can arrive before the scan restores the binder-side cache.
         if (snoozeRouting.handleStoredPost(fields.item, fields.order, Instant.now())) return
         if (!notificationFilterUseCases.checkIfNotificationServiceIsEnabled()) return
+        // Android's own group summary for bundled notifications carries no title or text; it is not worth a row.
+        if (fields.exclusionFlags.isGroupSummary && fields.item.title.isNullOrBlank() && fields.item.text.isNullOrBlank()) return
         val pkg = fields.item.packageName
         val name = knownPackageSourceRegistry.get(pkg)?.appName ?: resolveApplicationName(pkg)
         notificationFilterUseCases.registerKnownNotificationSources(listOf(VisibleNotificationSource(pkg, name, fields.item.channelId, fields.androidCategory)))
@@ -416,17 +450,31 @@ class NotificationService : NotificationListenerService() {
         val channelOverride = fields.item.channelId?.let { preferences.getChannelPriorityOffset(pkg, it) != 0 } == true
         val locked = preferences.isAppPriorityLocked(pkg)
         val overridden = preferences.getAppPriorityOverride(pkg) != null
-        val (priority, reason) = when {
+        val (resolvedPriority, resolvedReason) = when {
             channelOverride || overridden -> base to "Set by user"
             locked -> base to "Locked by user"
             else -> applyDynamicAdjustments(base, pkg)
         }
+        val resolution = PriorityRules.resolve(
+            priorityRules,
+            PriorityRuleInput(pkg, fields.item.title, fields.item.text, resolvedPriority, resolvedReason,
+                userDecided = channelOverride || overridden || locked),
+        )
+        val priority = resolution.priority
+        val reason = resolution.reason
         val excepted = preferences.isPackageInNotificationExceptions(pkg)
         val passThrough = fields.exclusionFlags.isSystemExemptCategory || excepted || priority == NotificationPriority.CRITICAL
         val item = fields.item.copy(appName = name, priority = priority, category = category, priorityReason = reason)
         val captureActions = {
             actionStore.put(item.id, Actions(fields.contentIntent, fields.actions, fields.smallIcon))
             NotificationDiagnostics.counter("farhan.actions.retained", actionStore.size())
+        }
+        // The code is raised on its own, whatever happens to the source notification below.
+        resolution.verificationCode?.let { code ->
+            // A code in plain text proves Android is not hiding them from us: the "hiding codes" note is stale.
+            if (preferences.isExperimentEnabled(Experiments.OTP_REDACTION_SEEN)) preferences.setExperimentEnabled(Experiments.OTP_REDACTION_SEEN, false)
+            val posted = VerificationCodeNotifier.post(this, item.id, name, code)
+            if (posted is PostResult.Failed) NotificationDiagnostics.increment("farhan.code.post.failed")
         }
         val snoozeEnabled = preferences.isExperimentEnabled(Experiments.SNOOZE)
         val handled = routeSnoozeAdmission(snoozeEnabled, fields.exclusionFlags, admit = {

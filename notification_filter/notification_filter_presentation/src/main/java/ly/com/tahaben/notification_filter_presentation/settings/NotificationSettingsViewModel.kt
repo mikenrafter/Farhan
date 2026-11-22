@@ -223,6 +223,22 @@ class NotificationSettingsViewModel @Inject constructor(
                 preferences.setExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SOURCE_ICON, event.enabled)
                 _state.update { it.copy(sourceIconExperiment = event.enabled) }
             }
+            is NotificationSettingsEvent.SetOtpCodes -> {
+                preferences.setExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.OTP_CODES, event.enabled)
+                _state.update { it.copy(otpCodes = event.enabled) }
+            }
+            NotificationSettingsEvent.RefreshCodeDiagnostics -> {
+                val seen = preferences.isExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.OTP_REDACTION_SEEN)
+                if (seen != _state.value.otpRedactionSeen) _state.update { it.copy(otpRedactionSeen = seen) }
+            }
+            is NotificationSettingsEvent.SetOtpPriority -> {
+                preferences.setOtpPriority(event.priority)
+                _state.update { it.copy(otpPriority = event.priority) }
+            }
+            is NotificationSettingsEvent.SetOtpAllApps -> {
+                preferences.setOtpAllApps(event.allApps)
+                _state.update { it.copy(otpAllApps = event.allApps) }
+            }
             is NotificationSettingsEvent.SetSnoozeExperiment -> {
                 preferences.setExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SNOOZE, event.enabled)
                 _state.update { it.copy(snoozeExperiment = event.enabled) }
@@ -254,6 +270,10 @@ class NotificationSettingsViewModel @Inject constructor(
                 automationError = error,
                 sourceIconExperiment = preferences.isExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SOURCE_ICON),
                 snoozeExperiment = preferences.isExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.SNOOZE),
+                otpCodes = preferences.isExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.OTP_CODES),
+                otpRedactionSeen = preferences.isExperimentEnabled(ly.com.tahaben.notification_filter_domain.delivery.Experiments.OTP_REDACTION_SEEN),
+                otpPriority = preferences.getOtpPriority(),
+                otpAllApps = preferences.isOtpAllApps(),
                 snoozeEvents = experimentLog.recent(),
             )
         }

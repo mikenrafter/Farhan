@@ -40,3 +40,47 @@ fun Long.toNotificationDateTimeLabel(nowMillis: Long = System.currentTimeMillis(
     val timeLabel = DateFormat.getTimeInstance(DateFormat.SHORT, Locale.getDefault()).format(Date(this))
     return "$dateLabel • $timeLabel"
 }
+
+/**
+ * Builds Inbox date labels for one list refresh. The day boundaries and the time formatter are created once,
+ * so labelling a page of rows costs two lookups per row instead of a fresh Calendar and DateFormat each.
+ */
+class NotificationDateLabeler(
+    private val nowMillis: Long = System.currentTimeMillis(),
+    private val locale: Locale = Locale.getDefault(),
+) {
+    private val todayStart = Calendar.getInstance().apply {
+        timeInMillis = nowMillis
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
+    private val yesterdayStart = todayStart - 86_400_000L
+    private val weekStart = Calendar.getInstance().apply {
+        timeInMillis = todayStart
+        firstDayOfWeek = Calendar.SUNDAY
+        set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY)
+    }.timeInMillis
+    private val timeFormat = DateFormat.getTimeInstance(DateFormat.SHORT, locale)
+    private val weekdayFormat = SimpleDateFormat("EEEE", locale)
+    private val monthDayFormat = SimpleDateFormat("MMMM d", locale)
+
+    fun time(timestamp: Long): String = if (timestamp <= 0L) "" else timeFormat.format(Date(timestamp))
+
+    fun date(timestamp: Long): String = when {
+        timestamp <= 0L -> ""
+        timestamp >= todayStart -> "Today"
+        timestamp >= yesterdayStart -> "Yesterday"
+        timestamp >= weekStart -> weekdayFormat.format(Date(timestamp))
+        else -> monthDayFormat.format(Date(timestamp))
+    }
+
+    /** "Today • 10:39", the same text the row showed before. */
+    fun dateTime(timestamp: Long): String =
+        if (timestamp <= 0L) "" else "${date(timestamp)} • ${time(timestamp)}"
+
+    /** Today's messages need only the clock; older ones keep their day. */
+    fun compact(timestamp: Long): String =
+        if (timestamp >= todayStart) time(timestamp) else dateTime(timestamp)
+}

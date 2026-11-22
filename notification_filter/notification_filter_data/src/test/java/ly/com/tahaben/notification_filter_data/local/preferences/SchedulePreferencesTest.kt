@@ -80,7 +80,7 @@ class SchedulePreferencesTest {
 }
 
 /** In-memory Android storage port; JSON codec and DefaultPreferences are the real production classes. */
-private class MemoryPreferences : SharedPreferences {
+internal class MemoryPreferences : SharedPreferences {
     private val values = mutableMapOf<String, Any?>()
     override fun getAll(): MutableMap<String, *> = values.toMutableMap()
     override fun contains(key: String) = values.containsKey(key)

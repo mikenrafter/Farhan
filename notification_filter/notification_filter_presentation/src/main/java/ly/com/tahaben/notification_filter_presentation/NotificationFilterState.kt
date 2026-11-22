@@ -3,6 +3,7 @@ package ly.com.tahaben.notification_filter_presentation
 import ly.com.tahaben.notification_filter_domain.inbox.InboxClearScope
 import ly.com.tahaben.notification_filter_domain.model.NotificationItem
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
+import ly.com.tahaben.notification_filter_presentation.inbox.InboxSection
 
 data class InboxPageKey(
     val cleared: Boolean,
@@ -27,6 +28,12 @@ data class NotificationFilterState(
     val hasNextPage: Boolean = false,
     val notificationActions: Map<String, List<String>> = emptyMap(),
     val displayPriorities: Map<String, NotificationPriority> = emptyMap(),
+    /** Waiting, not-sent and sent sections of the shown page, with chats folded into threads. */
+    val sections: List<InboxSection> = emptyList(),
+    /** Row ids and thread keys that are opened up. */
+    val expandedThreads: Set<String> = emptySet(),
+    /** Ids of the rows the user has ticked, on the Inbox tab only. */
+    val selected: Set<String> = emptySet(),
 )
 
 internal val NotificationFilterState.clearScope: InboxClearScope

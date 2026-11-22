@@ -13,6 +13,12 @@ object Experiments {
     const val SOURCE_ICON = "source_icon"
 
     const val SNOOZE = "snooze"
+
+    /** Raises verification codes: priority upgrade, top of the Inbox, and their own notification with Copy. */
+    const val OTP_CODES = "otp_codes"
+
+    /** A diagnostic, not a switch: set when Android handed the listener "Sensitive notification content hidden". */
+    const val OTP_REDACTION_SEEN = "otp_redaction_seen"
 }
 
 enum class ExperimentEventKind { SNOOZED, RETURNED, RESNOOZED, REMOVED, FAILED, LOST }

@@ -16,6 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import ly.com.tahaben.core_ui.components.SettingToggleRow
+import ly.com.tahaben.core_ui.components.SettingsRowDivider
 import ly.com.tahaben.notification_filter_domain.model.NotificationPriority
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -31,8 +33,9 @@ import java.text.DateFormat
 import java.util.Date
 
 /**
- * Schedule automation (opt-in, off by default) and the two notification experiments. The credential is shown only
- * on request and copied with the clipboard's sensitive flag; it is never logged.
+ * Schedule automation (opt-in, off by default) and the notification experiments. The credential is shown only
+ * on request and copied with the clipboard's sensitive flag; it is never logged. Each setting has one short line;
+ * the long explanation sits behind its info icon. The verification-code switch lives in its own Settings box.
  */
 @Composable
 fun AutomationAndExperimentsSection(
@@ -44,51 +47,55 @@ fun AutomationAndExperimentsSection(
     var confirmRotate by remember { mutableStateOf(false) }
     var confirmRevoke by remember { mutableStateOf(false) }
 
-    Column(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Schedule automation", style = MaterialTheme.typography.titleMedium)
-        Text(
-            "Lets another app, such as Tasker, replace your notification schedule when you send a broadcast with your credential. Off by default. Anything you send follows the same rules as the editor, and the last change wins.",
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+    Column(Modifier.fillMaxWidth()) {
+        SettingToggleRow(
+            title = "Schedule automation",
+            summary = "Let another app set your schedule",
+            info = "Lets another app, such as Tasker, replace your notification schedule when you send a broadcast with your credential. Off by default. Anything you send follows the same rules as the editor, and the last change wins.\n\n" +
+                "Send action ly.com.tahaben.notification_filter.action.SET_SCHEDULE to package ${context.packageName}, with string extras credential and payload. The payload is JSON: {\"version\":1,\"windows\":[{\"start\":0,\"end\":420,\"budget\":0},{\"start\":420,\"end\":1440,\"budget\":12}]}. Add \"mode\":\"dated\" and \"date\":\"2026-11-20\" for one date. Setup steps and every error are in notification_filter/AUTOMATION.md.",
+            checked = state.automationEnabled,
+            onCheckedChange = { onEvent(NotificationSettingsEvent.SetAutomationEnabled(it)) },
         )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Allow automation")
-            Switch(checked = state.automationEnabled, onCheckedChange = { onEvent(NotificationSettingsEvent.SetAutomationEnabled(it)) })
-        }
         if (state.hasAutomationCredential) {
-            Text(state.revealedCredential ?: "Credential hidden", style = MaterialTheme.typography.bodyMedium,
-                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+            Text(
+                state.revealedCredential ?: "Credential hidden", style = MaterialTheme.typography.bodyMedium,
+                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = {
                     onEvent(if (state.revealedCredential == null) NotificationSettingsEvent.ShowAutomationCredential
                         else NotificationSettingsEvent.HideAutomationCredential)
                 }) { Text(if (state.revealedCredential == null) "Show" else "Hide") }
                 OutlinedButton(onClick = { credentialForCopy()?.let { copySensitive(context, it) } }) { Text("Copy") }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { confirmRotate = true }) { Text("Rotate") }
                 OutlinedButton(onClick = { confirmRevoke = true }) { Text("Revoke") }
             }
         }
         state.automationError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-        Text(describeReceipt(state.lastAutomationReceipt), style = MaterialTheme.typography.bodySmall)
-        TextButton(onClick = { onEvent(NotificationSettingsEvent.RefreshAutomation) }) { Text("Refresh last result") }
-        Text(
-            "Send action ly.com.tahaben.notification_filter.action.SET_SCHEDULE to package ${context.packageName}, with string extras credential and payload. The payload is JSON: {\"version\":1,\"windows\":[{\"start\":0,\"end\":420,\"budget\":0},{\"start\":420,\"end\":1440,\"budget\":12}]}. Add \"mode\":\"dated\" and \"date\":\"2026-11-20\" for one date. Setup steps and every error are in notification_filter/AUTOMATION.md.",
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                describeReceipt(state.lastAutomationReceipt), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = { onEvent(NotificationSettingsEvent.RefreshAutomation) }) { Text("Refresh") }
+        }
 
-        HorizontalDivider(Modifier.padding(vertical = 4.dp))
-        Text("Experiments", style = MaterialTheme.typography.titleMedium)
-        ExperimentRow(
-            "Show the original app's icon",
-            "Delivered notifications still come from Farhan, with Farhan's name and actions. When the original app gave a usable small icon, Farhan shows it; otherwise it shows its own. Off by default.",
-            state.sourceIconExperiment,
-        ) { onEvent(NotificationSettingsEvent.SetSourceIconExperiment(it)) }
-        ExperimentRow(
-            "Snooze (pilot)",
-            "Android hides eligible notifications until the next delivery time for their priority. Your budget decides what happens when they return, and a denied return can beep once. The daily retry limit resets when Farhan restarts. Farhan cannot release or cancel a notification Android is holding, even if you turn snooze off or change the schedule. Android can lose a snoozed notification at reboot. If the app does not post it again, Farhan can deliver its saved copy. Calls, alarms, ongoing notifications, exceptions and critical notifications are never snoozed.",
-            state.snoozeExperiment,
-        ) { onEvent(NotificationSettingsEvent.SetSnoozeExperiment(it)) }
+        SettingsRowDivider()
+        SettingToggleRow(
+            title = "Show the original app's icon",
+            summary = "Delivered notifications use the source app's icon",
+            info = "Delivered notifications still come from Farhan, with Farhan's name and actions. When the original app gave a usable small icon, Farhan shows it; otherwise it shows its own. Off by default.",
+            checked = state.sourceIconExperiment,
+            onCheckedChange = { onEvent(NotificationSettingsEvent.SetSourceIconExperiment(it)) },
+        )
+        SettingsRowDivider()
+        SettingToggleRow(
+            title = "Snooze (pilot)",
+            summary = "Android holds notifications until delivery time",
+            info = "Android hides eligible notifications until the next delivery time for their priority. Your budget decides what happens when they return, and a denied return can beep once. The daily retry limit resets when Farhan restarts. Farhan cannot release or cancel a notification Android is holding, even if you turn snooze off or change the schedule. Android can lose a snoozed notification at reboot. If the app does not post it again, Farhan can deliver its saved copy. Calls, alarms, ongoing notifications, exceptions and critical notifications are never snoozed.",
+            checked = state.snoozeExperiment,
+            onCheckedChange = { onEvent(NotificationSettingsEvent.SetSnoozeExperiment(it)) },
+        )
         if (state.snoozeExperiment || state.snoozeEvents.isNotEmpty()) {
             val dateTime = remember { DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT) }
             state.snoozeNext.forEach { (priority, next) ->
@@ -144,9 +151,9 @@ internal fun ExperimentRow(title: String, description: String, checked: Boolean,
 }
 
 /** Copies with the sensitive flag so the keyboard and clipboard preview do not show it. */
-private fun copySensitive(context: android.content.Context, credential: String) {
+internal fun copySensitive(context: android.content.Context, credential: String, label: String = "Farhan automation credential") {
     val manager = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-    val clip = android.content.ClipData.newPlainText("Farhan automation credential", credential)
+    val clip = android.content.ClipData.newPlainText(label, credential)
     clip.description.extras = android.os.PersistableBundle().apply { putBoolean("android.content.extra.IS_SENSITIVE", true) }
     manager.setPrimaryClip(clip)
 }

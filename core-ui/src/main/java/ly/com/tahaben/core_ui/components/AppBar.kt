@@ -22,7 +22,8 @@ fun CommonAppBar(
     modifier: Modifier = Modifier,
     title: String,
     actions: @Composable RowScope.() -> Unit = {},
-    onNavigateUp: () -> Unit
+    /** Null leaves out the back arrow, for a screen that is a tab and has nowhere to go back to. */
+    onNavigateUp: (() -> Unit)?
 ) {
     TopAppBar(
         modifier = modifier,
@@ -32,12 +33,14 @@ fun CommonAppBar(
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
         navigationIcon = {
-            IconButton(onClick = onNavigateUp) {
-                Icon(
-                    modifier = Modifier.mirror(),
-                    imageVector = Icons.Filled.ArrowBack,
-                    contentDescription = stringResource(id = R.string.back)
-                )
+            if (onNavigateUp != null) {
+                IconButton(onClick = onNavigateUp) {
+                    Icon(
+                        modifier = Modifier.mirror(),
+                        imageVector = Icons.Filled.ArrowBack,
+                        contentDescription = stringResource(id = R.string.back)
+                    )
+                }
             }
         }
     )

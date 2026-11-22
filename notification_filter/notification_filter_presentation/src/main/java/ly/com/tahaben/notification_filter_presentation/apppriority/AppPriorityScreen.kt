@@ -1,6 +1,16 @@
 package ly.com.tahaben.notification_filter_presentation.apppriority
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.horizontalScroll
+import android.os.Build
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import ly.com.tahaben.core_ui.components.InfoButton
+import ly.com.tahaben.core_ui.components.SettingToggleRow
+import ly.com.tahaben.core_ui.components.SettingsBox
+import ly.com.tahaben.core_ui.components.SettingsRowDivider
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
@@ -89,14 +100,15 @@ private val PRIORITY_COLORS = mapOf(
     NotificationPriority.LOW to Color(0xFF9E9E9E),
 )
 
+/** The searchable app list. Tapping an app calls [onOpenApp]; its settings page is [AppPriorityDetail]. */
 @Composable
-fun AppPriorityScreen(viewModel: AppPriorityViewModel = hiltViewModel()) {
-    AppPriorityList(viewModel.state, viewModel::onEvent)
+fun AppPriorityScreen(onOpenApp: (packageName: String) -> Unit, viewModel: AppPriorityViewModel = hiltViewModel()) {
+    AppPriorityList(viewModel.state, onOpenApp)
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-internal fun AppPriorityList(state: AppPriorityState, onEvent: (AppPriorityEvent) -> Unit) {
+internal fun AppPriorityList(state: AppPriorityState, onOpenApp: (String) -> Unit) {
     val listState = remember { LazyListState() }
     var query by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf<AppFilter>(AppFilter.All) }
@@ -160,24 +172,13 @@ internal fun AppPriorityList(state: AppPriorityState, onEvent: (AppPriorityEvent
                             items(
                                 items = section.apps,
                                 key = { it.packageName },
-                                contentType = {
-                                    if (it.packageName in state.expandedPackages) "expanded" else "collapsed"
-                                },
+                                contentType = { "app" },
                             ) { app ->
-                                AppPriorityCard(
+                                AppPriorityRow(
                                     appInfo = app,
                                     letter = section.letter,
                                     icons = icons,
-                                    isExpanded = app.packageName in state.expandedPackages,
-                                    onToggleExpanded = { onEvent(AppPriorityEvent.OnToggleExpanded(app.packageName)) },
-                                    onSetPriority = { onEvent(AppPriorityEvent.OnSetAppPriority(app.packageName, it)) },
-                                    onSetLocked = { onEvent(AppPriorityEvent.OnSetAppLocked(app.packageName, it)) },
-                                    onSetQueuePreference = {
-                                        onEvent(AppPriorityEvent.OnSetQueuePreference(app.packageName, it))
-                                    },
-                                    onSetChannelPriority = { channelId, priority ->
-                                        onEvent(AppPriorityEvent.OnSetChannelPriority(app.packageName, channelId, priority))
-                                    },
+                                    onClick = { onOpenApp(app.packageName) },
                                     modifier = Modifier.testTag("app-row:${app.packageName}"),
                                 )
                             }
@@ -210,7 +211,7 @@ private fun AppSectionHeader(letter: String?) {
             text = letter ?: "A",
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
-            color = if (letter == null) Color.Transparent else MaterialTheme.colorScheme.primary,
+            color = if (letter == null) Color.Transparent else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = if (letter == null) Modifier.clearAndSetSemantics {} else Modifier.semantics { heading() },
         )
         if (letter == null) SkeletonMark(12.dp, 6.dp)
@@ -293,35 +294,34 @@ private fun SkeletonMark(width: Dp, height: Dp) {
 @Composable
 private fun PriorityBadge(priority: NotificationPriority, color: Color) {
     Surface(
-        shape = RoundedCornerShape(4.dp),
-        color = color.copy(alpha = if (color == Color.Transparent) 0f else 0.15f),
+        shape = RoundedCornerShape(10.dp),
+        color = if (color == Color.Transparent) Color.Transparent else MaterialTheme.colorScheme.surfaceVariant,
     ) {
-        Text(
-            text = priority.name.lowercase().replaceFirstChar { it.uppercase() },
-            style = MaterialTheme.typography.labelSmall,
-            color = color,
-            maxLines = 1,
-            softWrap = false,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Box(Modifier.size(6.dp).background(color, CircleShape))
+            Text(
+                text = priority.name.lowercase().replaceFirstChar { it.uppercase() },
+                style = MaterialTheme.typography.labelSmall,
+                color = if (color == Color.Transparent) Color.Transparent else MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                softWrap = false,
+            )
+        }
     }
 }
 
 @Composable
-private fun AppPriorityCard(
+private fun AppPriorityRow(
     appInfo: AppPriorityInfo,
     letter: String,
     icons: AppIconLoader<ImageBitmap>,
-    isExpanded: Boolean,
-    onToggleExpanded: () -> Unit,
-    onSetPriority: (NotificationPriority?) -> Unit,
-    onSetLocked: (Boolean) -> Unit,
-    onSetQueuePreference: (AppQueuePreference) -> Unit,
-    onSetChannelPriority: (channelId: String, priority: NotificationPriority?) -> Unit,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val spacing = LocalSpacing.current
-    val priorityColor = PRIORITY_COLORS[appInfo.currentPriority] ?: Color(0xFF9E9E9E)
     val enabled = appInfo.notificationsEnabled
     val disabledDescription = stringResource(R.string.app_list_notifications_disabled)
     Card(
@@ -330,8 +330,8 @@ private fun AppPriorityCard(
         },
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        onClick = onToggleExpanded,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+        onClick = onClick,
     ) {
         AppRowHeader(
             title = appInfo.appName,
@@ -342,106 +342,152 @@ private fun AppPriorityCard(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    PriorityBadge(appInfo.currentPriority, priorityColor)
+                    PriorityBadge(appInfo.currentPriority, PRIORITY_COLORS[appInfo.currentPriority] ?: Color(0xFF9E9E9E))
+                    if (appInfo.isLocked) {
+                        Icon(
+                            imageVector = Icons.Filled.Lock,
+                            contentDescription = "Locked",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(2.dp).size(16.dp),
+                        )
+                    }
                     Icon(
-                        imageVector = if (appInfo.isLocked) Icons.Filled.Lock else Icons.Filled.LockOpen,
-                        contentDescription = if (appInfo.isLocked) "Locked" else "Unlocked",
-                        tint = if (appInfo.isLocked) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(2.dp),
-                    )
-                    Icon(
-                        imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             },
         )
+    }
+}
 
-        if (isExpanded) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = spacing.spaceMedium, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                if (enabled) {
-                    AppCategorySummary(appInfo)
-                    Text(
-                        text = appInfo.priorityReason,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+/**
+ * One app's settings page. The notification rows live here; [extraSections] lets the host add the sections that
+ * belong to other features (the focus tools' per-app exceptions) without this module knowing them.
+ */
+@Composable
+fun AppPriorityDetail(
+    packageName: String,
+    modifier: Modifier = Modifier,
+    viewModel: AppPriorityViewModel = hiltViewModel(),
+    extraSections: @Composable ColumnScope.() -> Unit = {},
+) {
+    val appInfo = viewModel.appInfo(packageName)
+    val icons = rememberAppIconLoader()
+    val spacing = LocalSpacing.current
+    Column(
+        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState())
+            .padding(horizontal = spacing.spaceMedium, vertical = spacing.spaceSmall),
+        verticalArrangement = Arrangement.spacedBy(spacing.spaceSmall),
+    ) {
+        if (appInfo == null) {
+            Text(
+                text = stringResource(R.string.app_list_loading),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            return@Column
+        }
+        val enabled = appInfo.notificationsEnabled
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+        ) {
+            AppRowHeader(
+                title = appInfo.appName,
+                category = appInfo.resolvedCategory.displayName(),
+                icon = { PackageAppIcon(appInfo.packageName, appInfo.appName.take(1).uppercase(), icons) },
+                actions = { PriorityBadge(appInfo.currentPriority, PRIORITY_COLORS[appInfo.currentPriority] ?: Color(0xFF9E9E9E)) },
+            )
+        }
+        if (enabled) {
+            AppCategorySummary(appInfo)
+        } else {
+            Text(
+                text = stringResource(R.string.app_list_notifications_disabled),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        var allowed by remember(packageName, appInfo) { mutableStateOf(viewModel.isAlwaysAllowed(packageName)) }
+        var soundElected by remember(packageName) { mutableStateOf(viewModel.isSoundElected(packageName)) }
+        SettingsBox("Notifications") {
+            Text(
+                text = "Priority" + if (appInfo.userOverride == null) " · default is ${appInfo.defaultPriority.label()}" else "",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+            )
+            PriorityChipRow(
+                selected = appInfo.userOverride,
+                onSelect = { viewModel.onEvent(AppPriorityEvent.OnSetAppPriority(packageName, it)) },
+                showDefault = true,
+            )
+            InfoButton("Priority", "${appInfo.priorityReason}\n\nTap the chosen priority again, or Default, to go back to the app's default. Channels below can sit above or below the app's priority.")
+            SettingsRowDivider()
+            SettingToggleRow(
+                title = "Lock priority",
+                summary = "Keep the flood and chatter rules from changing it",
+                checked = appInfo.isLocked,
+                onCheckedChange = { viewModel.onEvent(AppPriorityEvent.OnSetAppLocked(packageName, it)) },
+            )
+            SettingsRowDivider()
+            SettingToggleRow(
+                title = "Always allow through",
+                summary = "Skip the filter and arrive at once",
+                info = "Marks this app Critical, the same as Always allow in the Inbox. Turning it off returns the app to its normal priority.",
+                checked = allowed,
+                onCheckedChange = { allowed = it; viewModel.setAlwaysAllowed(packageName, it) },
+            )
+            SettingsRowDivider()
+            SettingToggleRow(
+                title = "Sound",
+                summary = if (Build.VERSION.SDK_INT >= 35) "Let this app make sound when sound control is on" else "Needs Android 15 or later",
+                info = "Sound control mutes other apps. Turn this on to let this app's notifications keep their sound. Set up sound control in Settings, Notifications.",
+                checked = soundElected,
+                onCheckedChange = if (Build.VERSION.SDK_INT >= 35) {
+                    { soundElected = it; viewModel.setSoundElected(packageName, it) }
+                } else null,
+            )
+            SettingsRowDivider()
+            val otpAll = remember(packageName) { viewModel.otpAllApps() }
+            var otpCovered by remember(packageName) { mutableStateOf(viewModel.isOtpCovered(packageName)) }
+            SettingToggleRow(
+                title = "Verification codes",
+                summary = if (otpAll) "Every app is covered. Change this in Settings, Notifications." else "Raise codes from this app",
+                checked = otpCovered,
+                onCheckedChange = if (otpAll) null else { { otpCovered = it; viewModel.setOtpCovered(packageName, it) } },
+            )
+        }
+
+        SettingsBox("Order") {
+            QueuePreferenceControls(
+                appInfo.queuePreference,
+                onChange = { viewModel.onEvent(AppPriorityEvent.OnSetQueuePreference(packageName, it)) },
+            )
+        }
+
+        if (appInfo.channels.isNotEmpty()) {
+            SettingsBox("Channels") {
+                appInfo.channels.forEach { channelInfo ->
+                    ChannelRow(
+                        channelInfo = channelInfo,
+                        appPriority = appInfo.currentPriority,
+                        onSetPriority = { priority ->
+                            viewModel.onEvent(AppPriorityEvent.OnSetChannelPriority(packageName, channelInfo.channelId, priority))
+                        },
                     )
-                } else {
-                    Text(
-                        text = disabledDescription,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                HorizontalDivider()
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = "Default priority: ${appInfo.defaultPriority.name.lowercase().replaceFirstChar { it.uppercase() }}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-
-                Text(
-                    text = "Override priority:",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                PriorityChipRow(
-                    selected = appInfo.userOverride,
-                    onSelect = onSetPriority,
-                    showDefault = true,
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Lock this priority",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Switch(
-                        checked = appInfo.isLocked,
-                        onCheckedChange = onSetLocked
-                    )
-                }
-
-                QueuePreferenceControls(appInfo.queuePreference, onSetQueuePreference)
-
-                if (appInfo.channels.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    HorizontalDivider()
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Channels",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    appInfo.channels.forEach { channelInfo ->
-                        ChannelRow(
-                            channelInfo = channelInfo,
-                            appPriority = appInfo.currentPriority,
-                            onSetPriority = { priority ->
-                                onSetChannelPriority(channelInfo.channelId, priority)
-                            }
-                        )
-                    }
                 }
             }
         }
+        extraSections()
     }
 }
+
+private fun NotificationPriority.label() = name.lowercase().replaceFirstChar { it.uppercase() }
 
 @Composable
 private fun AppCategorySummary(appInfo: AppPriorityInfo) {
@@ -466,7 +512,7 @@ private fun AppCategorySummary(appInfo: AppPriorityInfo) {
             Text(
                 text = "Default group: $resolvedLabel",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -509,7 +555,13 @@ private fun PriorityChipRow(
     showDefault: Boolean = true,
     compact: Boolean = false,
 ) {
+    val chipColors = FilterChipDefaults.filterChipColors(
+        selectedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+        selectedLabelColor = MaterialTheme.colorScheme.onSurface,
+        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
     Row(
+        modifier = Modifier.horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -521,17 +573,14 @@ private fun PriorityChipRow(
                 onClick = {
                     onSelect(if (isSelected) null else priority)
                 },
+                leadingIcon = { Box(Modifier.size(6.dp).background(color, CircleShape)) },
                 label = {
                     Text(
                         text = priority.name.lowercase().replaceFirstChar { it.uppercase() },
                         fontSize = if (compact) 10.sp else 12.sp,
                     )
                 },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = color.copy(alpha = 0.2f),
-                    selectedLabelColor = color,
-                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
+                colors = chipColors,
             )
         }
         if (showDefault) {
@@ -544,11 +593,7 @@ private fun PriorityChipRow(
                         fontSize = if (compact) 10.sp else 12.sp,
                     )
                 },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    selectedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
+                colors = chipColors,
             )
         }
     }
@@ -557,24 +602,23 @@ private fun PriorityChipRow(
 /** Newest/oldest first and a rank, for apps that share a priority. The explanation says priority still wins. */
 @Composable
 private fun QueuePreferenceControls(preference: AppQueuePreference, onChange: (AppQueuePreference) -> Unit) {
-    Spacer(modifier = Modifier.height(4.dp))
-    HorizontalDivider()
-    Spacer(modifier = Modifier.height(4.dp))
     Text(
         text = "Queue order",
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MaterialTheme.typography.bodyLarge,
+        modifier = Modifier.padding(top = 8.dp),
     )
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
         FilterChip(
             selected = preference.order == QueueOrder.NEWEST_FIRST,
             onClick = { onChange(preference.copy(order = QueueOrder.NEWEST_FIRST)) },
             label = { Text("Newest first", fontSize = 12.sp) },
+            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.surfaceVariant),
         )
         FilterChip(
             selected = preference.order == QueueOrder.OLDEST_FIRST,
             onClick = { onChange(preference.copy(order = QueueOrder.OLDEST_FIRST)) },
             label = { Text("Oldest first", fontSize = 12.sp) },
+            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.surfaceVariant),
         )
     }
     var rankText by remember(preference.rank) { mutableStateOf(preference.rank.toString()) }
@@ -592,11 +636,18 @@ private fun QueuePreferenceControls(preference: AppQueuePreference, onChange: (A
         )
         OutlinedButton(onClick = { onChange(preference.copy(rank = preference.rank + 1)) }, enabled = preference.rank < MAX_RANK) { Text("+") }
     }
-    Text(
-        text = "Notification priority always comes first. Rank and order only decide between apps and notifications of the same priority: a higher rank goes first, and the order chooses newest or oldest within an app.",
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = "Priority still comes first",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        InfoButton(
+            "Queue order",
+            "Notification priority always comes first. Rank and order only decide between apps and notifications of the same priority: a higher rank goes first, and the order chooses newest or oldest within an app.",
+        )
+    }
 }
 
 private const val MAX_RANK = 9999

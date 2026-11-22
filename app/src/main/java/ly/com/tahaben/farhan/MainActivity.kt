@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
@@ -35,7 +36,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ly.com.tahaben.core.R
@@ -46,14 +46,14 @@ import ly.com.tahaben.core.util.UiEvent
 import ly.com.tahaben.core_ui.theme.FarhanTheme
 import ly.com.tahaben.domain.preferences.Preferences
 import ly.com.tahaben.farhan.db.DatabaseCombineHelper
-import ly.com.tahaben.farhan.notifications.NotificationArea
 import ly.com.tahaben.farhan.settings.BackupRestoreScreen
+import ly.com.tahaben.farhan.shell.MainShell
+import ly.com.tahaben.farhan.shell.ShellTab
 import ly.com.tahaben.farhan.settings.SettingsBackupActivity
 import ly.com.tahaben.infinite_scroll_blocker_domain.use_cases.InfiniteScrollUseCases
 import ly.com.tahaben.infinite_scroll_blocker_presentation.InfiniteScrollingBlockerScreen
 import ly.com.tahaben.infinite_scroll_blocker_presentation.exceptions.InfiniteScrollExceptionsScreen
 import ly.com.tahaben.infinite_scroll_blocker_presentation.onboarding.InfiniteScrollOnBoardingScreen
-import ly.com.tahaben.launcher_domain.preferences.Preference
 import ly.com.tahaben.launcher_presentation.settings.LauncherSettingsScreen
 import ly.com.tahaben.launcher_presentation.time_limiter.TimeLimiterSettingsScreen
 import ly.com.tahaben.launcher_presentation.time_limiter.TimeLimiterWhitelistScreen
@@ -61,14 +61,10 @@ import ly.com.tahaben.launcher_presentation.wait.DelayedLaunchScreen
 import ly.com.tahaben.launcher_presentation.wait.DelayedLaunchViewModel
 import ly.com.tahaben.launcher_presentation.wait.DelayedLaunchWhiteListScreen
 import ly.com.tahaben.notification_filter_domain.use_cases.NotificationFilterUseCases
-import ly.com.tahaben.notification_filter_presentation.onboarding.NotificationFilterOnBoardingScreen
 import ly.com.tahaben.notification_filter_presentation.schedule.ScheduleEditorScreen
-import ly.com.tahaben.notification_filter_presentation.settings.NotificationFilterSettingsScreen
 import ly.com.tahaben.onboarding_presentaion.OnBoardingScreen
 import ly.com.tahaben.onboarding_presentaion.SelectAppearanceScreen
-import ly.com.tahaben.farhan.settings.SettingsScreen
 import ly.com.tahaben.onboarding_presentaion.about.AboutScreen
-import ly.com.tahaben.onboarding_presentaion.main.MainScreen
 import ly.com.tahaben.onboarding_presentaion.main.MainScreenEvent
 import ly.com.tahaben.onboarding_presentaion.main.MainScreenViewModel
 import ly.com.tahaben.screen_grayscale_domain.use_cases.GrayscaleUseCases
@@ -79,7 +75,6 @@ import ly.com.tahaben.usage_overview_presentation.UsageOverviewScreen
 import ly.com.tahaben.usage_overview_presentation.settings.UsageSettingsScreen
 import timber.log.Timber
 import javax.inject.Inject
-import kotlin.random.Random
 
 
 @AndroidEntryPoint
@@ -98,9 +93,6 @@ class MainActivity : ComponentActivity() {
     lateinit var onBoardingPref: Preferences
 
     @Inject
-    lateinit var launcherPref: Preference
-
-    @Inject
     lateinit var databaseCombineHelper: DatabaseCombineHelper
     val mainScreenViewModel by viewModels<MainScreenViewModel>()
 
@@ -117,7 +109,6 @@ class MainActivity : ComponentActivity() {
         runBlocking {
             shouldShowSelectThemeScreen = (onBoardingPref.loadThemeColors() == "Unknown")
         }
-        val tip = getTip()
         val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         setContent {
 
@@ -153,6 +144,44 @@ class MainActivity : ComponentActivity() {
                     snackbarHost = { SnackbarHost(snackbarHostState) }
                 ) {
                     val topInset = PaddingValues(top = it.calculateTopPadding())
+                    @Composable
+                    fun HomeShell(initialTab: ShellTab) {
+                        val mainScreenUiEvent =
+                            mainScreenViewModel.uiEvent.collectAsState(
+                                initial = UiEvent.HideSnackBar
+                            ).value
+                        MainShell(
+                            navController = navController,
+                            mainState = mainState,
+                            onMainEvent = { event ->
+                                when (event) {
+                                    MainScreenEvent.OnCombineDbAgreeClick -> {
+                                        mainScreenViewModel.onEvent(event)
+                                        coroutineScope.launch {
+                                            val result =
+                                                databaseCombineHelper.combineDatabases()
+                                            mainScreenViewModel.onEvent(MainScreenEvent.OnDismissCombineDbDialog)
+                                            if (result) {
+                                                snackbarHostState.showSnackbar(getString(R.string.db_migration_sucsessful))
+                                            } else {
+                                                snackbarHostState.showSnackbar(getString(R.string.db_migration_fail))
+                                                finish()
+                                            }
+                                        }
+                                    }
+
+                                    MainScreenEvent.OnExitApp -> finish()
+                                    else -> mainScreenViewModel.onEvent(event)
+                                }
+                            },
+                            mainUiEvent = mainScreenUiEvent,
+                            snackbarHostState = snackbarHostState,
+                            isDarkMode = isDarkMode,
+                            shouldShowRational = ::shouldShowRational,
+                            shouldShowNotificationOnboarding = { notificationFilterUseCases.loadShouldShowOnBoarding() },
+                            initialTab = initialTab,
+                        )
+                    }
                     NavHost(
                         modifier = Modifier.padding(topInset).consumeWindowInsets(topInset),
                         navController = navController,
@@ -189,52 +218,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(Routes.MAIN) {
-                            val mainScreenUiEvent =
-                                mainScreenViewModel.uiEvent.collectAsState(
-                                    initial = UiEvent.HideSnackBar
-                                ).value
-                            val delayedLaunchEnabled = runBlocking {
-                                launcherPref.isDelayedLaunchEnabled().first()
-                            }
-                            val notificationFilterEnabled = runBlocking { notificationFilterUseCases.checkIfNotificationServiceIsEnabled() }
-                            val infiniteScrollBlockEnabled = runBlocking { infiniteScrollUseCases.isServiceEnabled() }
-                            val grayscaleEnabled = runBlocking { grayscaleUseCases.isGrayscaleEnabled() }
-                            MainScreen(
-                                tip = tip,
-                                isGrayscaleEnabled = grayscaleEnabled &&
-                                        grayscaleUseCases.isAccessibilityPermissionGranted(),
-                                isInfiniteScrollBlockerEnabled =  infiniteScrollBlockEnabled &&
-                                        infiniteScrollUseCases.isAccessibilityPermissionGranted(),
-                                isNotificationFilterEnabled = notificationFilterEnabled &&
-                                        notificationFilterUseCases.checkIfNotificationAccessIsGranted(),
-                                isLauncherEnabled = launcherPref.isLauncherEnabled(),
-                                isDelayedLaunchEnabled = delayedLaunchEnabled,
-                                navController = navController,
-                                onEvent = { event ->
-                                    when (event) {
-                                        MainScreenEvent.OnCombineDbAgreeClick -> {
-                                            mainScreenViewModel.onEvent(event)
-                                            coroutineScope.launch {
-                                                val result =
-                                                    databaseCombineHelper.combineDatabases()
-                                                mainScreenViewModel.onEvent(MainScreenEvent.OnDismissCombineDbDialog)
-                                                if (result) {
-                                                    snackbarHostState.showSnackbar(getString(R.string.db_migration_sucsessful))
-                                                } else {
-                                                    snackbarHostState.showSnackbar(getString(R.string.db_migration_fail))
-                                                    finish()
-                                                }
-                                            }
-                                        }
-
-                                        MainScreenEvent.OnExitApp -> finish()
-                                        else -> mainScreenViewModel.onEvent(event)
-                                    }
-                                },
-                                state = mainState,
-                                snackbarHostState = snackbarHostState,
-                                uiEvent = mainScreenUiEvent
-                            )
+                            HomeShell(ShellTab.Inbox)
                         }
                         composable(
                             Routes.USAGE,
@@ -269,14 +253,6 @@ class MainActivity : ComponentActivity() {
                                 scaffoldState = snackbarHostState,
                                 startDate = startDate,
                                 endDate = endDate
-                            )
-                        }
-                        composable(Routes.SETTINGS) {
-                            SettingsScreen(
-                                state = mainState,
-                                onEvent = mainScreenViewModel::onEvent,
-                                onNavigateUp = navController::navigateUp,
-                                onOpen = { navController.navigate(it) },
                             )
                         }
                         composable(Routes.BACKUP_RESTORE) {
@@ -325,6 +301,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
+                        // The notification deep link opens the app on the Inbox tab.
                         composable(
                             Routes.NOTIFICATION_FILTER,
                             deepLinks = listOf(navDeepLink {
@@ -332,34 +309,20 @@ class MainActivity : ComponentActivity() {
                                 action = Intent.ACTION_VIEW
                             })
                         ) {
-                            if (notificationFilterUseCases.loadShouldShowOnBoarding()) {
-                                NotificationFilterOnBoardingScreen(
-                                    onNextClick = {
-                                        navController.navigate(Routes.NOTIFICATION_FILTER) {
-                                            popUpTo(Routes.MAIN)
-                                        }
+                            // The deep link arrives on top of the home route; show nothing and fall back to it, so there is
+                            // one Inbox shell and one back press leaves it.
+                            androidx.compose.runtime.LaunchedEffect(Unit) {
+                                if (navController.previousBackStackEntry?.destination?.route == Routes.MAIN) {
+                                    navController.popBackStack()
+                                } else {
+                                    navController.navigate(Routes.MAIN) {
+                                        popUpTo(Routes.NOTIFICATION_FILTER) { inclusive = true }
                                     }
-                                )
-                            } else {
-                                NotificationArea(
-                                    onNavigateUp = navController::navigateUp,
-                                    onBack = { if (!navController.popBackStack()) finish() },
-                                    onOpenSettings = { navController.navigate(Routes.NOTIFICATION_FILTER_SETTINGS) },
-                                    onOpenSchedule = { navController.navigate(Routes.NOTIFICATION_SCHEDULE_EDITOR) },
-                                    shouldShowRational = ::shouldShowRational,
-                                )
+                                }
                             }
                         }
                         composable(Routes.NOTIFICATION_SCHEDULE_EDITOR) {
                             ScheduleEditorScreen(onNavigateUp = { navController.navigateUp() })
-                        }
-                        composable(Routes.NOTIFICATION_FILTER_SETTINGS) {
-                            NotificationFilterSettingsScreen(
-                                onNavigateUp = { navController.navigateUp() },
-                                shouldShowRational = ::shouldShowRational,
-                                snackbarHostState = snackbarHostState,
-                                isDarkMode = isDarkMode
-                            )
                         }
                         composable(Routes.INFINITE_SCROLLING_EXCEPTIONS) {
                             InfiniteScrollExceptionsScreen(
@@ -417,11 +380,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private fun getTip(): String {
-        val array: Array<String> = this.resources.getStringArray(R.array.tips)
-        return array[Random.nextInt(array.size)]
     }
 
     private fun shouldShowRational(permission: String): Boolean {

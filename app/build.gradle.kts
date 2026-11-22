@@ -32,6 +32,15 @@ android {
         getByName("release") {
             isMinifyEnabled = false
         }
+        // Release code (not debuggable, so ART compiles it the way users get it) that Perfetto, simpleperf and
+        // `adb shell` profiling can attach to. Same application id and the same debug key as the debug build, so
+        // it installs over an existing debug install instead of beside it.
+        create("profileable") {
+            initWith(getByName("release"))
+            matchingFallbacks += listOf("release")
+            signingConfig = signingConfigs.getByName("debug")
+            isDebuggable = false
+        }
     }
     buildFeatures {
         compose = true
@@ -112,6 +121,12 @@ dependencies {
     implementation(project(Modules.launcherData))
     implementation(project(Modules.launcherDomain))
     implementation(project(Modules.launcherPresentation))
+    implementation(project(Modules.privilegedAccessDomain))
+    implementation(project(Modules.privilegedAccessData))
+    // The Self-ADB route is the only code that needs the INTERNET permission (a loopback socket). Shipping Shizuku only
+    // means dropping this line and binding a SelfAdbRoute whose readiness is Blocked(ANDROID_TOO_OLD).
+    implementation(project(Modules.privilegedAccessSelfAdb))
+    implementation(project(Modules.privilegedAccessPresentation))
 
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.work.manager)
