@@ -1,0 +1,72 @@
+{
+  "cli_version": "0.13.4",
+  "checkpoint_id": "6a2f6e8d7e64",
+  "strategy": "manual-commit",
+  "branch": "pilot/settings-portability",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "research/boat.md",
+    "research/fidelity-review.md",
+    "research/settings-recovery-feasibility.md",
+    "research/settings-rescue-green-report.md",
+    "research/upstream-nav-check/gesture-list-bottom-insets.txt",
+    "research/upstream-nav-check/gesture-list-bottom.png",
+    "research/upstream-nav-check/gesture-list-bottom.xml",
+    "research/upstream-nav-check/three-button-clear-all-dialog-insets.txt",
+    "research/upstream-nav-check/three-button-clear-all-dialog.png",
+    "research/upstream-nav-check/three-button-clear-all-dialog.xml",
+    "research/upstream-nav-check/three-button-list-bottom-insets.txt",
+    "research/upstream-nav-check/three-button-list-bottom.png",
+    "research/upstream-nav-check/three-button-list-bottom.xml",
+    "research/upstream-nav-check/three-button-list-top-insets.txt",
+    "research/upstream-nav-check/three-button-list-top.png",
+    "research/upstream-nav-check/three-button-list-top.xml",
+    "settings_rescue/src/main/AndroidManifest.xml",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/AdbCommand.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/AdbShell.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/RemoteShell.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/RescueAdbManager.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/bridge/AdbBridgeService.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/bridge/BridgeProtocol.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/bridge/BridgeSupervision.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/capture/CaptureEngine.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/storage/PrivateFiles.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/ui/Messages.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/ui/RescueActivity.kt",
+    "settings_rescue/src/main/res/values/strings.xml",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/AdbCommandTest.kt",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/BridgeProtocolTest.kt",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/CaptureEngineTest.kt",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/TestSupport.kt"
+  ],
+  "sessions": [
+    {
+      "metadata": "/6a/2f6e8d7e64/0/metadata.json",
+      "transcript": "/6a/2f6e8d7e64/0/full.jsonl",
+      "compact_transcript": "/6a/2f6e8d7e64/0/transcript.jsonl",
+      "content_hash": "/6a/2f6e8d7e64/0/content_hash.txt",
+      "prompt": "/6a/2f6e8d7e64/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 30,
+    "cache_creation_tokens": 75618,
+    "cache_read_tokens": 883107,
+    "output_tokens": 9522,
+    "api_call_count": 12
+  },
+  "redaction": {
+    "replacements": 1,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 0,
+      "key_context": 1,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  }
+}

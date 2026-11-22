@@ -1,0 +1,17 @@
+Act as the review sub-agent for this task.
+
+You are a UI fidelity reviewer (review only; edit NOTHING in the repo except writing your one report file; no git writes; never use vigil orchestrator mode; no GitHub writes). Task: compare the built Apps list screen against its signed-off mock-up and rank every visible difference by how much the owner would notice.
+
+Context: Farhan Android app. Worktree /home/mini/Documents/repos/Farhan.worktrees/apps-list (branch pilot/apps-list). Owner approved the mock-up with one requirement: each app row shows its REAL icon (not a letter tile). Owner also approved: alphabetical list with sticky letter headers, category chips with counts plus a "Has notifications" chip, a right-hand A-Z rail that lists only letters present in the filtered list and shows a letter bubble next to the held letter, search, skeleton placeholders (loading must not shift layout).
+
+Inputs (read them yourself):
+- Mock-up (signed off): /home/mini/Documents/repos/Farhan/research/apps-list-mockups.html (read its CSS and markup for sizes, order, copy, colours; note the mock-up uses letter tiles that stand in for icons).
+- Build screenshots: /home/mini/Documents/repos/Farhan.worktrees/apps-list/captures/apps-list/pairs/ (light-default, light-filtered, light-held, light-skeleton and the dark-* versions; each is a mock-up | build pair) and captures/apps-list/mockup and captures/apps-list/build for the raw images. View the PNGs with the Read tool.
+- Brief and inheritance table: /home/mini/Documents/repos/Farhan.worktrees/apps-list/research/apps-list-brief.md; implementer report: research/apps-list-report.md in the same worktree.
+- Original screen the build extends: AppPriorityScreen (find it with grep in the worktree) and the settings-hub screens it sits under (captures/settings-hub/ in /home/mini/Documents/repos/Farhan.worktrees/settings-hub).
+
+Known differences the orchestrator already saw (confirm, do not just repeat): the held-letter bubble sits at the rail midpoint instead of next to the held letter and overlaps a row's lock glyph; the fixture has 17 apps vs the mock-up's 84; the mock-up has no loading view; layout-shift score unmeasured.
+
+Do: (1) check every state pair for layout, order, controls, copy, colours, icon size (40 dp real icons), chip counts, sticky headers, rail letters, the default state on open; (2) check the build reuses the inherited controls (rows with expand for priority/lock/queue/channels, theme tokens) and does not theme around the app; (3) check skeleton slots match the settled layout (same row height, icon slot, no shift); (4) say whether each difference is a bug, an acceptable deviation, or a mock-up artifact; (5) rank them, top first, with the file or image evidence and a one-line fix for each of the top ones. Be specific; do not invent disagreement, and do not approve things you did not look at.
+
+Write your report to /home/mini/Documents/repos/Farhan.worktrees/apps-list/research/fidelity-review.md (that is the only file you may write). Finish with a one-line verdict: READY FOR OWNER or FIX FIRST (list the fixes).
