@@ -1,0 +1,98 @@
+{
+  "cli_version": "0.13.4",
+  "checkpoint_id": "30da781bd50d",
+  "session_id": "e7071693-df15-461f-aba5-739553ce3379",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-22T10:23:14.774469755Z",
+  "branch": "pilot/inbox-sent-unsent",
+  "checkpoints_count": 35,
+  "save_step_count": 35,
+  "files_touched": [
+    "notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/components/NotificationListItem.kt"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-5-5",
+  "turn_id": "0a08f893fd6e",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 742,
+    "cache_creation_tokens": 838987,
+    "cache_read_tokens": 75188460,
+    "output_tokens": 363970,
+    "api_call_count": 331,
+    "subagent_tokens": {
+      "input_tokens": 250,
+      "cache_creation_tokens": 408107,
+      "cache_read_tokens": 17532235,
+      "output_tokens": 131659,
+      "api_call_count": 124
+    },
+    "subagent_tokens_complete": true
+  },
+  "session_token_usage": {
+    "input_tokens": 742,
+    "cache_creation_tokens": 838987,
+    "cache_read_tokens": 75188460,
+    "output_tokens": 363970,
+    "api_call_count": 331,
+    "subagent_tokens": {
+      "input_tokens": 250,
+      "cache_creation_tokens": 408107,
+      "cache_read_tokens": 17532235,
+      "output_tokens": 131659,
+      "api_call_count": 124
+    },
+    "subagent_tokens_complete": true
+  },
+  "redaction": {
+    "replacements": 111,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 77,
+      "key_context": 34,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_013JrZmVTuP6yPb9oXyrNJjm",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "boat"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "0a08f893fd6e",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 436,
+        "end": 437,
+        "entry_ids": [
+          "296d9db7-dfe2-4190-a3b4-cd33d3f0d978"
+        ],
+        "tool_use_id": "toolu_013JrZmVTuP6yPb9oXyrNJjm"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_013JrZmVTuP6yPb9oXyrNJjm"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: boat",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 35
+  }
+}
