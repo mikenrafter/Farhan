@@ -1,0 +1,129 @@
+{
+  "cli_version": "0.13.4",
+  "checkpoint_id": "2ad4fb1c7877",
+  "session_id": "e7071693-df15-461f-aba5-739553ce3379",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-22T12:21:56.072969203Z",
+  "branch": "pilot/inbox-sent-unsent",
+  "checkpoints_count": 11,
+  "save_step_count": 12,
+  "files_touched": [
+    "app/build.gradle.kts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-5-5",
+  "turn_id": "222d4bf8b178",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 178,
+    "cache_creation_tokens": 117169,
+    "cache_read_tokens": 16777753,
+    "output_tokens": 52480,
+    "api_call_count": 76,
+    "subagent_tokens": {
+      "input_tokens": 420,
+      "cache_creation_tokens": 1257302,
+      "cache_read_tokens": 58973870,
+      "output_tokens": 252748,
+      "api_call_count": 205
+    },
+    "subagent_tokens_complete": true
+  },
+  "session_token_usage": {
+    "input_tokens": 920,
+    "cache_creation_tokens": 956156,
+    "cache_read_tokens": 91966213,
+    "output_tokens": 416450,
+    "api_call_count": 407,
+    "subagent_tokens": {
+      "input_tokens": 670,
+      "cache_creation_tokens": 1665409,
+      "cache_read_tokens": 76506105,
+      "output_tokens": 384407,
+      "api_call_count": 329
+    },
+    "subagent_tokens_complete": true
+  },
+  "redaction": {
+    "replacements": 154,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 10,
+      "credentialed_uri": 0,
+      "entropy": 106,
+      "key_context": 40,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_013JrZmVTuP6yPb9oXyrNJjm",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "boat"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "0a08f893fd6e",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 436,
+        "end": 437,
+        "entry_ids": [
+          "296d9db7-dfe2-4190-a3b4-cd33d3f0d978"
+        ],
+        "tool_use_id": "toolu_013JrZmVTuP6yPb9oXyrNJjm"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_013JrZmVTuP6yPb9oXyrNJjm"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: boat",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_01MGGtxAZT4AoFcbYTPWP2Hy",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "update-scout-module-locks"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "222d4bf8b178",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 4371,
+        "end": 4372,
+        "entry_ids": [
+          "59bf038e-1b89-4127-b86e-7398a3bb0ba7"
+        ],
+        "tool_use_id": "toolu_01MGGtxAZT4AoFcbYTPWP2Hy"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01MGGtxAZT4AoFcbYTPWP2Hy"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: update-scout-module-locks",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 46
+  }
+}

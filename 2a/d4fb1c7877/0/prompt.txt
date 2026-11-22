@@ -1,0 +1,1093 @@
+delineate sent notifications from unsent ones.
+try scrolling in the notification list. It's rather laggy still on all but the settings and homepage.
+Include the app icons and other notification state - namely well styled buttons, expanded state (e.g. group chats)...
+
+---
+
+the running app
+
+---
+
+<task-notification>
+<task-id>b3ft734n4</task-id>
+<tool-use-id>toolu_01SPyfDB8wK5MmJDg19SBQfc</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/b3ft734n4.output</output-file>
+<status>completed</status>
+<summary>Background command "/home/mini/Documents/repos/edge.research/bin/boat-run --sandbox bx_bngcafgz --shell 'nix develop -c' --name farhan-notification-pilot --large . -- ./gradlew --max-workers=2 :notification_filter:notification_filter_presentation:testDebugUnitTest --tests '*InboxEntryBuilderTest' :app:compileDebugKotlin &gt; /tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/scratchpad/boat1.log 2&gt;&amp;1; echo exit=$?; tail -60 /tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/scratchpad/boat1.log" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>beofuzzwq</task-id>
+<tool-use-id>toolu_01XvBZbuWzv7bnsNdgDBvaby</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/beofuzzwq.output</output-file>
+<status>completed</status>
+<summary>Background command "pkill -f "until grep -q '\^exit='" ; O=/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/b3ft734n4.output; until grep -q '^exit=' $O 2&gt;/dev/null; do sleep 10; done; tail -c 3500 $O" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b1mewe51c</task-id>
+<tool-use-id>toolu_01ExY7AEfrpKNuLeo8f2Q7pg</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/b1mewe51c.output</output-file>
+<status>completed</status>
+<summary>Background command "boat exec bx_bngcafgz --timeout 120 -- bash -lc 'cd ~/runs/farhan-notification-pilot &amp;&amp; rm -rf notification_filter/*/build/kotlin &amp;&amp; du -sh . 2&gt;/dev/null | tail -1' | python3 -c 'import json,sys; d=json.loads(sys.stdin.readline()); print(d["stdout"], d.get("stderr",""))'
+cd /home/mini/Documents/repos/Farhan &amp;&amp; /home/mini/Documents/repos/edge.research/bin/boat-run --sandbox bx_bngcafgz --shell 'nix develop -c' --name farhan-notification-pilot --large . -- ./gradlew --max-workers=2 :notification_filter:notification_filter_presentation:testDebugUnitTest --tests '*InboxEntryBuilderTest' :app:compileDebugKotlin &gt; /tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/scratchpad/boat2.log 2&gt;&amp;1; echo exit=$?; tail -c 3500 /tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/scratchpad/boat2.log" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bm3mhcttj</task-id>
+<tool-use-id>toolu_01Hr5wqahKB7PRTyjVyNYqL2</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/bm3mhcttj.output</output-file>
+<status>completed</status>
+<summary>Background command "sed -i '/^import androidx.compose.foundation.lazy.stickyHeader$/d' notification_filter/notification_filter_presentation/src/main/java/ly/com/tahaben/notification_filter_presentation/NotificationFilterScreen.kt &amp;&amp; /home/mini/Documents/repos/edge.research/bin/boat-run --sandbox bx_bngcafgz --shell 'nix develop -c' --name farhan-notification-pilot --large . -- ./gradlew --max-workers=2 :notification_filter:notification_filter_presentation:testDebugUnitTest --tests '*InboxEntryBuilderTest' :app:compileDebugKotlin &gt; /tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/scratchpad/boat3.log 2&gt;&amp;1; echo exit=$?; grep -E "^e: |FAILED|BUILD|tests completed|Test.*FAILED" /tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/scratchpad/boat3.log | head -30" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+the app icons aren't rendered on the notification list itself.
+how many boat launches remain? If we have some, then keep them running or work with another agent to work on one still up. Don't spend unnecessarily here. build a profilable build and tail drop me it
+
+---
+
+update the instructions to conserve launched sandboxes for slightly longer when below 20 launches. Balance that with burning hours though. Don't conserve large boxes due to cost
+
+---
+
+<task-notification>
+<task-id>bg977bwiz</task-id>
+<tool-use-id>toolu_016MKjTRBwnCSWV4CkLcHGB4</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/bg977bwiz.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /home/mini/Documents/repos/Farhan &amp;&amp; boat resume bx_bngcafgz --type large --ttl 3600 2&gt;&amp;1 | tail -c 300; /home/mini/Documents/repos/edge.research/bin/boat-run --sandbox bx_bngcafgz --shell 'nix develop -c' --name farhan-notification-pilot --large . -- ./gradlew --max-workers=2 :app:assembleProfileable &gt; /tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/scratchpad/boat4.log 2&gt;&amp;1; echo exit=$?; grep -E "^e: |FAILED|BUILD|What went wrong" -A3 /tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/scratchpad/boat4.log | head -30" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bg1jfxeyd</task-id>
+<tool-use-id>toolu_01M8Xe8wE4YGJtLvPqfaZUCa</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/bg1jfxeyd.output</output-file>
+<status>killed</status>
+<summary>Background command "L=/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/scratchpad/boat1.log; until grep -q '^exit=' $L 2&gt;/dev/null; do sleep 10; done; tail -c 3000 $L" was stopped after reaching its background time limit</summary>
+<note>If the work in progress still needs it, start it again with `run_in_background` and a longer `timeout`. If it already had the longest `timeout` allowed, do not restart it. Either way, report that it was stopped.</note>
+</task-notification>
+
+---
+
+.profileable? No, leave it on the same APK name. Build it on top of the other pilot work please. This APK is unsuitable and installs alongside rather than atop my existing install. That's wrong.
+
+---
+
+<task-notification>
+<task-id>bxkwjtpsw</task-id>
+<tool-use-id>toolu_014WKmwvuHrr59mnNejQD75j</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/bxkwjtpsw.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /home/mini/Documents/repos/Farhan.worktrees/inbox-sent-unsent &amp;&amp; /home/mini/Documents/repos/edge.research/bin/boat-run --sandbox bx_bngcafgz --shell 'nix develop -c' --name farhan-notification-pilot --large . -- ./gradlew --max-workers=2 :notification_filter:notification_filter_presentation:testDebugUnitTest :app:assembleProfileable &gt; /tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/scratchpad/boat5.log 2&gt;&amp;1; echo exit=$?; grep -E "^e: |FAILED|BUILD|What went wrong|tests completed" -A4 /tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/scratchpad/boat5.log | head -50" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+where is OTP handling? As for the AOSP messenger fork that GrapheneOS builds - when is something marked as sensitive and could I get a toggle for that behavior?
+
+---
+
+do option 2. Is there somewhere I can configure this handler so farhan sees the message text rather than "sensitive content"/similar?
+
+---
+
+i would also like to make it so that the notifications inside of the app are not cleared by tapping on them. They will just show activated. And if they fail to activate, it will instead just open the application. only clearing the notification via the shade or via the app should actually delete slash remove the notification from the list. and we should not be sending notifications marked as cleared inside of the schedule.
+
+---
+
+under what circumstances are notifications sent via the backup app route rather than the snooze route when the snooze pilot is active?
+
+---
+
+Also, the setting screens aren't organized the best. There is a lot of copy and the different settings for the notifications aren't grouped quite well enough. I don't like this repeating submenu style approach. I would rather tabbed groups within settings. I think maybe one or two levels of submenewence fun, but I think we've got three right now, so we should trim that down and perhaps go with a more tabbed approach. In fact, we should use a tab to approach for the entire application, starting with the notification inbox as the primary portion of the app that is leveraged. We should set it up so that if a feature is disabled, its tab is not included and you have to go into settings and enable the feature in order for it to appear as a tab.
+
+---
+
+some of these things might warrant a mock-up or two.
+
+---
+
+<task-notification>
+<task-id>br7j2624v</task-id>
+<tool-use-id>toolu_0158HvPBgS6ec2nKroe8qk4F</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/br7j2624v.output</output-file>
+<status>completed</status>
+<summary>Background command "Run tests and assemble profileable on Boat" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b3l9fi8sk</task-id>
+<tool-use-id>toolu_01PLrTvJ3XBGn4GGKU16FMEL</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/b3l9fi8sk.output</output-file>
+<status>completed</status>
+<summary>Background command "Rerun tests and assemble on Boat" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+The apps tab should be inside of settings.
+notifications should have a checkbox on their right, which, when selected, would allow the user to do things to the notifications, such as clearing them. The clear all button should be moved to that top tab header, of which there will only be two tabs now. Make sure the tabs span the full width minus the clear button.
+
+and for the notification setting sub-tab, let's make those sections rather than chips that turn into tabs. We're basically just training one nesting system for another. Let's have sections that are clearly delineated.
+
+Also, I think you have the OTP behavior backward. I don't want any masking to occur. I want the opposite of masking. I want notifications to be raised into the top of the list inside of the app that has OTPs and OTPs to be raised as their own notifications with a convenient copy button that does not close the notification inside of the shade. Possibly it could close the notification shade, but leave the notification itself open.
+
+This should be a configurable behavior based on certain conditions that we use the parsing engine from clear SMS to feed.
+
+---
+
+It might also make sense to consolidate some of the app-specific settings into the apps page, rather than just having that be for notification information.
+
+---
+
+i would also like to note that there is some weird styling that surrounds the notification icon inside of the list so let's make sure that that looks clean. I would also like for the notification list to be much more tame in color right now, and it's quite vibrant in using the accent and primary colors, whereas I would like for those things to not color the background so boldly.
+
+Let's make the summary page more broad than just the notification area I would like for this screen to become its own top-level tab. We don't need to make a fully fleshed out design, but I would like to throw around a few mockups for a later iteration pass.
+
+these mock-ups are looking much better let's make these adjustments and then I think we should be on to something that you can actually go and implement let's make the mock-ups fully interactive
+
+---
+
+i like to break down by hour. i would also like to include the notification summary details, the dashboard as we've called it.
+
+at a later point so q this as a feature feature we can leverage a self adb connection to enable the grayscale feature it would be similar to what the extraction feature does you can also integrate with shizuku allowing the user to choose either
+
+make sure that notifications that are able to be expanded are able to be expanded and the first tap expands them. You'd have to select one of the sub details after to actually click on the notification. Let's also make it so that the check boxes have some padding surrounding them. Basically, that entire column of area on the right edge of each notification should be selectable. This will be completely replacing the swipe gesture.
+
+replacing with swipe gesture, I would like a fluid one-to-one swipe gesture that brings you between inbox and clear. It will not switch you between top level tabs only the sub level ones
+
+aside from that, things are looking much nicer, so let's go ahead and implement. What questions do you have for me?
+
+---
+
+eta?
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aec561615-293e-4211-94ce-d40a02a4c0ae%3Adelegate-task%3Aa244e1b1-4145-42bd-80a6-46514712ee02 (Verification-code backend) in child thread thread:delegated-task:command%3Amcp%3Aec561615-293e-4211-94ce-d40a02a4c0ae%3Adelegate-task%3Aa244e1b1-4145-42bd-80a6-46514712ee02 [completed]:
+The OTP backend is built and all the sandbox unit tests pass. It is uncommitted on branch `pilot/otp-backend`, and none of it has run on a device.
+
+**Test results** (sandbox `bx_bngcafgz`, `--continue`, exit 0, `BUILD SUCCESSFUL`):
+- `notification_filter_domain`: 230 tests, 0 failures. This includes the rewritten `OtpCodeExtractorTest` and the new `OtpPriorityRuleTest`.
+- `notification_filter_data`: 119 tests, 0 failures. This includes the new `VerificationCodeNotifierTest` and `OtpPreferencesTest`.
+- `notification_filter_presentation`: 30 tests, 0 failures.
+- `:settings_portability:test`: 61 tests, 0 failures. `:settings_portability:testDebugUnitTest` doesn't exist, so I ran `:test` instead.
+- `:app:assembleProfileable` built.
+
+**Files changed** (16, plus the base patch):
+- **Parser:** `OtpCodeExtractor.kt` is rewritten, still a pure function, and gains `copyForm()`. `OtpCodeExtractorTest.kt` has table-driven readable and false-positive cases.
+- **Rule seam:** new `priority/PriorityRule.kt` and `priority/OtpPriorityRule.kt`, with `OtpPriorityRuleTest.kt`.
+- **Preferences:**
+  - `Preferences.kt` gets `getOtpPriority`/`setOtpPriority`, `getOtpPackages`/`setOtpPackages` and `isOtpAllApps`/`setOtpAllApps`, all with default bodies.
+  - `DefaultPreferences.kt` implements them and falls back to CRITICAL on an unknown stored priority.
+  - `SettingsCatalog.kt` and `SettingsCatalogTest.kt` register `notification_otp_priority`, `notification_otp_packages` and `notification_otp_all_apps`. That is outside your slice, but you asked for the catalog entries.
+- **Code notification:** new `VerificationCodeNotifier.kt` and `OtpCopyReceiver.kt`, the receiver registered non-exported in the data `AndroidManifest.xml`. `NotificationService.kt` calls the rule after the priority `when` and posts the code notification.
+- **Tests:** the data layer has no Robolectric, so the notifier tests only cover the tag, the dedupe memory and the cleanup path. `SchedulePreferencesTest.kt`'s `MemoryPreferences` went from `private` to `internal` so `OtpPreferencesTest` could reuse it.
+
+**Parser decisions:**
+- I could not read the engine source at 6ededf7. The research document gives only prose and fixture summaries, so I wrote the rules from that description rather than copying. That also means no Apache-2.0 attribution is needed.
+- Accepted forms are digits-first, keyword-anchored, "use/enter … to verify", and a lone six-digit run when the text has verification context. Rejected: amounts, times, phone numbers, order numbers, promo codes, more than 8 digits, and ambiguous two-candidate texts. When a rejected number and a real code share a sentence, the real code wins.
+- I kept two Farhan extras beyond the engine: `123 456` and `G-123456`. `copyForm()` strips them to digits, and the Copy action copies that form.
+
+**Rule precedence:**
+- When the user has locked an app, overridden its priority, or set a channel override, the rule does nothing. It neither raises the priority nor posts a code notification.
+- I agree with that default. A lock means "automated adjustments cannot change this", and the per-app choice is more specific than the rule's all-apps default.
+- The cost is that a locked low-priority messaging app won't get its codes raised. The remedy sits in the settings: unlock the app or limit the rule to chosen apps. This is documented in the `OtpPriorityRule` KDoc and tested.
+- The rule only ever raises. If the target is below the current priority, the priority stays, but the code is still reported so the code notification still posts.
+
+**Intake behaviour:** with CRITICAL the original goes through as pass-through. That is the existing path: `SnoozePolicy` skips with `PASSTHROUGH`, `onArrival` returns `Delivered`, and `cancelNotification` is never called. The code notification is posted before snooze admission. If the target is HIGH or lower, the original is queued as usual and the code notification still appears. Code-notification posting is wrapped in nothing special, so a posting failure is counted but cannot break intake.
+
+**Code notification:**
+- Channel `farhan_verification_codes` ("Verification codes", high importance, created in `onListenerConnected` and again before each post).
+- Tag prefix `farhan-code:`. It deliberately does not start with `farhan:`, so every proxy cleanup and removal check leaves it alone. A test runs `clearScopedProxies` against both tags.
+- Content is the title "Verification code" with the code in the text. The public version says "Unlock to see the code".
+- It uses `setOnlyAlertOnce`, `setTimeoutAfter` 10 minutes, `setAutoCancel(false)` and an immutable `PendingIntent.getBroadcast` Copy action. The same code from the same source is not raised twice.
+- `OtpCopyReceiver` sets `IS_SENSITIVE`, shows a "Code copied" toast only below Android 13 (never the code), and does not cancel the notification or use `ACTION_CLOSE_SYSTEM_DIALOGS`.
+- Swiping it away is not mapped to any removal, so the Inbox row is untouched. Clearing the original leaves it alone too.
+
+**Shade behaviour on Copy (AOSP source only, tags `android-14.0.0_r1` and `android-15.0.0_r1`):**
+- `StatusBarRemoteInputCallback.handleRemoteViewClick` only dismisses the keyguard and calls `closeShadeIfOpen()` when the PendingIntent is an activity or the action requested authentication. A broadcast action without `setAuthenticationRequired` goes straight to `defaultHandler.handleClick()`. So the shade should stay open and the lock screen should not prompt.
+- `NotificationManagerService.onNotificationActionClick` in Android 15 only schedules a cancel for notifications flagged lifetime-extended by direct reply, which ours isn't.
+- That is AOSP; OEM SystemUI may differ.
+
+**Not verified on a device:**
+- Whether `setPrimaryClip` from the receiver is accepted in the background under real Android 14/15 clipboard policy.
+- The lock-screen public version, the channel heads-up behaviour, the 10-minute timeout, and the shade behaviour above.
+- The data-layer posting code has no JVM test.
+
+**Things to know:**
+- `Experiments.OTP_CODES` still carries the old "masks a code" KDoc. I left it because the Inbox agent may edit the same line. It needs a one-line fix on merge.
+- The Settings UI for the target priority and app scope belongs to the other agent. It can call the new `Preferences` methods directly.
+
+Patch: `/home/mini/Documents/repos/Farhan.worktrees/_handoff/otp-backend.patch`
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aec561615-293e-4211-94ce-d40a02a4c0ae%3Adelegate-task%3Aec6fec6c-1edf-40e3-bc6a-0a6c0b2f44cc (Tabbed shell, Settings, Summary) in child thread thread:delegated-task:command%3Amcp%3Aec561615-293e-4211-94ce-d40a02a4c0ae%3Adelegate-task%3Aec6fec6c-1edf-40e3-bc6a-0a6c0b2f44cc [completed]:
+The shell and Settings slice is built, and the patch is at `/home/mini/Documents/repos/Farhan.worktrees/_handoff/shell-settings.patch`. It is 42 files and covers only my changes on top of `inbox-base.patch`, so the base patch must be applied first.
+
+## Verification
+All of this ran on Boat `bx_bngcafgz`, with the `flock` serialisation.
+- **Gradle build:** `:app:assembleProfileable` builds and produces `app-profileable.apk`.
+- **Unit tests:** every module I touched, plus `settings_android`, `settings_rescue` and `notification_filter_data`, passes with 0 failures, errors or skips.
+
+| Module | Tests |
+| --- | --- |
+| app | 13 |
+| notification_filter_domain | 229 |
+| notification_filter_data | 112 |
+| notification_filter_presentation (Inbox view-model tests included) | 30 |
+| settings_portability (portability tests included) | 62 |
+| settings_rescue | 56 (debug) and 56 (release) |
+| usage_overview_presentation | 3 |
+| core, core-ui, onboarding_presentation | 1 each |
+
+- **New tests:**
+  - **`ShellTabsTest`:** 6 tests for the pure visible-tabs function and the unread badge.
+  - **`FeatureSwitchStoreTest`:** 4 tests for persistence and for a restore updating the bar.
+  - **`HourlyArrivalsTest`:** 5 tests.
+  - **`SettingsCatalogTest`:** 1 new test.
+- **Test I deleted:** `NotificationTabTest`'s route-selection tests went with their enum. Its badge test now lives in `ShellTabsTest`.
+
+## Not verified
+There was no emulator or device, so I made no screenshot pairs against the mock-up. Nothing was clicked through. These are unconfirmed on a device:
+- The `LauncherScreen` embedded inside the Launcher tab.
+- The look of every new screen.
+- Back-stack behaviour (an app's page over the Apps tab, the sound page, the notification deep link landing on Inbox).
+- The first-run notification-filter onboarding inside the Inbox tab.
+
+## What changed
+- **Shell:** the main route now shows a bottom bar of Inbox, Summary, Launcher, Focus and Settings.
+  - **Feature switches:** Usage, Launcher and Focus default to on and are kept in `shared_pref`. I added the three keys to the portable settings catalog, so a backup and restore carries them.
+  - **Deep link:** the notification deep link opens the app on the Inbox tab.
+- **Summary:** it shows today by hour, then the usage section (only while Usage is on), then the existing dashboard widgets.
+  - **Hourly breakdown:** notification arrivals per hour only. The usage module keeps no per-hour screen time, and the card says so.
+  - **Usage section:** a new `UsageOverviewSection` in `usage_overview_presentation`, with a Details link to the existing full usage screen.
+- **Settings tabs:** Features, Notifications, Apps, Focus and More.
+  - **Notifications:** one scrolling page of boxed sections. Delivery holds the filter switch, daily schedule, notify-me and testing mode. Verification codes holds the master toggle on `Experiments.OTP_CODES` and a disabled "Only from" row with a TODO. Sound is an entry to the existing sound control. Automation and labs is condensed.
+  - **Moved toggle:** the old "Mask verification codes" experiment row is gone from labs, so the code toggle appears once.
+  - **Copy:** long explanations now sit behind info icons.
+  - **Apps:** the existing searchable list opens a per-app page with priority, lock, queue order and channels. It also has "Always allow through" and "Sound" (the sound-control election), and a disabled "Verification codes" row with a TODO.
+  - **Focus tool rows:** scroll blocker, grayscale, time limit and mindful launch are wired to the existing lists.
+  - **More:** theme and appearance, backup and restore, and about.
+- **Dead routes removed:** the notification settings route and the two old tab routes.
+- **Calm colour:** neutral outlined boxes, ink-coloured switches, and only the active tab indicator and small status dots in colour. I applied this to the screens I touched, including the dashboard widget cards.
+
+## Edits in files you flagged
+- **Inbox screen:** one line in `NotificationFilterScreen.kt`. `onNavigateUp` is now `(() -> Unit)?`, so the Inbox tab passes null and the back arrow disappears. This depends on `CommonAppBar` in core-ui, whose `onNavigateUp` is now nullable. Existing callers still compile.
+- **`MainScreen.kt`:** I extracted `CombineDbDialog` so the shell can reuse it.
+
+## Deviations from the mock-up
+- **Turning a feature off:** it only hides the tab or section. The mock-up's "stops its service" would have changed the owner's saved settings, and your spec only asked for no tab.
+- **Per-app focus rows:** the four whitelists don't all mean "exception". The scroll blocker's list holds apps it skips. The grayscale, time limit and mindful launch lists hold apps the tool acts on. So the rows are named by effect, such as "Never block scrolling in this app" and "Turn the screen gray in this app", under a "Focus tools" caption rather than "exceptions".
+- **Focus tab:** four neutral rows with a status dot, each opening the existing screen. The old home cards were filled with the primary container colour, and Settings > Focus lists the same four rows.
+- **Main switch:** "Farhan is on" moved to Settings > Features.
+- **Gone from the home screen:** the random tip and the settings-gear showcase.
+- **Orphaned `MainScreen`:** it is no longer used by the app, but `UsageOverviewE2E` still hosts it, so I left it and `Routes.SETTINGS` alone. Deleting it means updating that androidTest.
+- **Launcher tab:** it hosts `LauncherScreen` unchanged, with a lifecycle-managed `HomeWatcher` as in `LauncherActivity`.
+
+---
+
+I see your assertion near the end. However, I must note that you did not provide that in a top-level summary until the very end where you alluded to it, even though you did happen to repeat the details. So, let's augment the unslop skill to make it so that you include details like that in your top-level summary is more often.
+
+Also, when I ask any agent to update m-stack or phoenix or a skill, I would like for you to do it in a global manner via a mixed scout do a commit of those changes and they fully install.
+
+---
+
+keep going
+
+---
+
+Farhan work
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aec561615-293e-4211-94ce-d40a02a4c0ae%3Adelegate-task%3A2a16ee64-68f2-46c5-9778-410aa0f4d854 (Review integrated Inbox, shell, code work) in child thread thread:delegated-task:command%3Amcp%3Aec561615-293e-4211-94ce-d40a02a4c0ae%3Adelegate-task%3A2a16ee64-68f2-46c5-9778-410aa0f4d854 [failed]:
+failed to load workspace requirements: invalid data
+
+Last assistant message before the run failed:
+
+I traced both Inbox clear paths to Room. They permanently delete rows, although the confirmation says those rows move to Cleared. I’ll check what that means for existing history and continue through the code notification and navigation paths.
+
+---
+
+That is way ahead of schedule. Are we doing all the things that we originally planned? if so, great, if not, list them and continue working on them.
+
+---
+
+1 if you have time
+2 it's all better. What was going wrong, btw?
+3 ok, that's fine for the time being.
+4 ok for now
+5 ok
+6 ok
+- mstack is handled
+- yes, clean
+deliberately later: sounds good
+
+---
+
+0,4,6 are my guess for what made the most impact
+
+---
+
+the debug build fix alone definitely wasn't enough, I can tell you that from an APK I ran.
+
+---
+
+no need. Thanks for the insight
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aec561615-293e-4211-94ce-d40a02a4c0ae%3Adelegate-task%3A476608e8-0382-4c72-bdaa-37684f1040b6 (Review integrated Inbox, shell, code work) in child thread thread:delegated-task:command%3Amcp%3Aec561615-293e-4211-94ce-d40a02a4c0ae%3Adelegate-task%3A476608e8-0382-4c72-bdaa-37684f1040b6 [completed]:
+I found 13 bugs a user would hit, plus a few lower-impact ones. The worst are in verification codes. To confirm the extractor cases I ported `OtpCodeExtractor` line for line to Java and ran it on a JVM (Java and Kotlin use the same regex engine). I used `nix shell nixpkgs#jdk21_headless`, because the dev shell has no aarch64 build. I edited nothing, didn't run Gradle or Boat, and committed nothing.
+
+### High
+
+1. **The extractor returns the wrong number when another number sits between the keyword and the code.** CONFIRMED (ran on the JVM). `OtpCodeExtractor.kt:80-89`: `afterKeyword` takes the first plausible 4–8 digit run within 60 characters after the keyword. `badBefore` only catches amounts with a currency marker. Results:
+   - "Your OTP to pay 2499 to Swiggy is 482913" → `2499`
+   - "OTP for your purchase of 2499 at Flipkart is 482913" → `2499`
+   - "OTP for transaction of 5000 at AMAZON is 482913" → `5000`
+   - "Your Amazon OTP for order of 1299 is 482913" → `1299` ("order" isn't directly before the number)
+   - "Your login code for 2026 tax filing is 482913" → `2026`
+   - "Your PIN for room 1204 is 4821" → `1204`
+
+   The code notification, the Inbox Codes row and Copy all show the wrong code. Indian bank and shopping texts like these are a main target.
+
+2. **Ordinary notifications are raised to CRITICAL and get a "Verification code" heads-up.** CONFIRMED (ran on the JVM).
+   - **Short-code sender:** `extract()` joins title and text (`:62`), and `bareSixDigits` (`:98-102`) scans the whole text. An SMS from a 6-digit short code, whose title is the sender number, with any verify or sign-in wording returns the sender number. Title "262966", text "New sign-in to your Acme account…" → `262966`. Title "729725", text "Your Acme account has been verified" → `729725`.
+   - **Dates and times after a keyword:** "Your password was changed on 21 Nov 2026." → `2026`; "Sign-in attempt … Code 2026" → `2026`; "Your PIN was reset at 1045" → `1045`.
+   - **Chat messages:** with "all apps" on by default, "Hey, the wifi password is 12345678" in a chat app → `12345678`.
+
+   Each of these also goes through `OtpPriorityRule` → CRITICAL pass-through, plus `VerificationCodeNotifier.post` (`NotificationService.kt:450`).
+
+3. **"Clear all" on the Inbox also erases the Cleared history.** CONFIRMED.
+   - With no priority filter, the scope is `InboxClearScope.All`, and `ClearInbox.invoke()` calls `deleteAllNotificationsFromDB()`, which runs `DELETE FROM notificationitementity` with no `isCleared` condition (`NotificationDao.kt:65`).
+   - The new dialog (`NotificationFilterScreen.kt:349`) says it removes them "from the Inbox" and that shade-cleared items "still appear in Cleared". A user who believes that loses their history.
+   - The delete-everything behaviour existed before, but before this change there was no dialog text claiming Cleared survives.
+
+### Medium
+
+4. **Copy in the Inbox puts the display form on the clipboard.** CONFIRMED. `NotificationFilterScreen.kt:118-120` and `NotificationListItem.kt:303` pass the raw code ("123 456", "482-913", "G-482913"). The notification's Copy action uses `OtpCodeExtractor.copyForm` (digits only). Pasting "G-482913" into a 6-digit field fails or gets cut off.
+
+5. **A re-sent code from the same conversation arrives silently.** PLAUSIBLE. The notification tag is `codeTag(sourceId)` with a fixed id of 2, and it sets `.setOnlyAlertOnce(true)` (`VerificationCodeNotifier.kt:66,91`). SMS apps reuse one notification key per conversation. A "resend code" within the 10-minute timeout replaces the earlier code notification with no sound or heads-up, exactly when the user is waiting for it. (PendingIntents don't collide: each has its own data URI, so that part is fine.)
+
+6. **Back from Settings exits the app.** CONFIRMED. The Inbox gear now switches the bottom tab instead of pushing a route (`MainShell.kt:104-107,125`), and `MainShell` has no `BackHandler`. Inbox → gear → Back closes Farhan. Before, it returned to the Inbox via `NOTIFICATION_FILTER_SETTINGS`. The same applies from any non-Inbox tab.
+
+7. **The deep link stacks a second shell.** CONFIRMED by tracing the code; Navigation's synthetic back stack is documented behaviour. `BroadcastReceiverNotification` launches with `NEW_TASK|CLEAR_TASK`, so Navigation builds the back stack `[MAIN, NOTIFICATION_FILTER]`, and both routes render `HomeShell(ShellTab.Inbox)` (`MainActivity.kt:220,311`). The results:
+   - Back lands on an identical second shell, so it takes two presses to leave.
+   - Each shell has its own ViewModels and tab state.
+   - `OnScreenLaunched` fires twice, re-checking the combine-database dialog.
+
+8. **The gear can open onto a stale app page.** CONFIRMED. `appPackage` and `soundOpen` are `rememberSaveable` inside the "Settings" saveable slot (`SettingsScreen.kt:123-124`). Open an app's page under Apps, switch to the Inbox, then tap the gear: `openSettings(Notifications)` changes `settingsTab`, but the old app page (or sound page) still covers it.
+
+9. **Apps the user has set a priority for never get the code notification, and the app page says otherwise.** CONFIRMED by trace; the KDoc says the skip is intentional.
+   - `OtpPriorityRule.evaluate` returns null when `userDecided` (`OtpPriorityRule.kt:47`). An app marked "Always allow" counts as user-decided through its CRITICAL override (`overridden`), and an SMS app is the likeliest one to be marked that way.
+   - With all apps on, the app page says "Every app is covered", and the per-app toggle can show on (`AppPriorityScreen.kt:456-462`). Codes from that app still never get a notification or Copy.
+
+### Low
+
+10. **Selection keeps ids of rows that are gone.** CONFIRMED. `state.selected` is only reset when the page key changes (`NotificationFilterViewModel.kt:98-103`). If a selected row is cleared from the shade, or leaves the current filter:
+    - The button still reads "Clear N".
+    - `OnClearSelected` (`:191-195`) quietly clears fewer rows.
+    - When only ghost ids remain, "Clear all" can't be reached until one no-op tap.
+
+11. **The first swipe to Cleared shows a false empty state.** CONFIRMED. `clearedSnapshot` starts empty and `loading` is false for the page that isn't shown (`NotificationFilterScreen.kt:327-339`). Dragging to Cleared for the first time shows "No notifications" before the data loads.
+
+12. **The Inbox Codes section ignores the app scope and never ages out.** PLAUSIBLE. `prepare()` checks only the experiment flag (`NotificationFilterViewModel.kt:157`), not all-apps or the per-app list or user decisions. Every old code stays pinned above all sections until it is cleared.
+
+13. **The Launcher tab leaks the home-press receiver.** PLAUSIBLE; the pattern already existed in `LauncherActivity`.
+    - `LauncherScreen` calls `setOnHomePressedListener` on every recomposition, which happens on every swipe frame, so a new `InnerReceiver` replaces the one that was registered. `stopWatch` then unregisters the wrong one and the real one stays registered.
+    - Each time the tab is entered, a new `HomeWatcher` is created (`LauncherTab.kt:20`).
+    - After pause→resume with no ON_START, the watcher stays off.
+
+### Other low-impact issues
+
+- **Inbox observation keeps running on other tabs.** The tab's `OnLifecycleEvent` observer is removed without ON_STOP. The DB query and per-row action lookups keep running on Summary, Launcher, Focus and Settings.
+- **`HourlyTimelineViewModel` reloads both whole tables on every change.** "Today" also stays on yesterday after midnight until the next change.
+- **The Inbox's Copy shows a "Code copied" toast** (`NotificationFilterScreen.kt:120`) on top of the system's own confirmation on Android 13+. The receiver avoids this; the Inbox doesn't.
+
+### Checked and fine
+
+- **Pager sync:** it only goes from pager to ViewModel, with no loop. Rapid swipes and tab taps while a swipe settles stay consistent, and process death restores the page.
+- **List keys:** they are unique (primary-key ids, `thread:` keys, `header:` keys) and code rows are taken out before grouping. Expand keys match entry keys.
+- **Tap handling:** the select column and the inner tap areas take the tap before the card does.
+- **PendingIntents:** request codes don't collide.
+- **Wiring:** the receiver isn't exported, own-package notifications are skipped, and `CODE_TAG` doesn't overlap `PROXY_TAG`. No route that was removed is still navigated to; only the unused `MainScreen` references `Routes.SETTINGS`. The feature-switch store follows restores.
+
+### Not assessed
+
+- **Device behaviour:** gestures, the pager, the `onlyAlertOnce` replacement, clipboard prompts, and Android's per-app notification caps.
+- **Group-summary duplicates:** an app that posts a summary and a child with the same text could raise two code notifications. That depends on the app.
+- **Exceptions:** one inside `VerificationCodeNotifier.post` is caught by the intake loop, but it would abort storing and cancelling that one notification. I didn't find a realistic way to throw one.
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Aec561615-293e-4211-94ce-d40a02a4c0ae%3Adelegate-task%3Ad2716bdc-68ab-4d5b-b6bd-e0baccd07fc3 (Emulator check: screenshots and scroll jank) in child thread thread:delegated-task:command%3Amcp%3Aec561615-293e-4211-94ce-d40a02a4c0ae%3Adelegate-task%3Ad2716bdc-68ab-4d5b-b6bd-e0baccd07fc3 [completed]:
+I checked the tabbed shell, Inbox and verification codes on the emulator and wrote the report. Verification codes do nothing on Android 15 as installed, and Clear All deletes everything.
+
+The report is at `/home/mini/Documents/repos/Farhan/research/inbox-device-report.md`. It has the screenshot table (screenshots are in `research/screens/v4/`), the code observations, behaviour checks, jank table, 15 defects with repros, and the exact commands. Changed and new scripts are in `research/emulator-v4/`, raw jank output in `research/emulator-v4/perf/`. I changed no source files and made no commits. The emulator is killed and I left no processes running of my own.
+
+**Passed**
+- The five-tab bottom bar, and the Launcher tab disappearing when switched off.
+- The Inbox sections (Waiting to send, Not sent, Sent).
+- Threads folding and expanding.
+- A row with a `Reply` button expands on the first tap without opening the source app.
+- A plain row opens its source app, gets an Opened pill and stays in the list.
+- `Clear 2` removes only the two ticked rows.
+- The Inbox/Cleared swipe follows the finger and never changes the bottom-bar tab. No row can be swiped away.
+- Real app icons have no frame or ring.
+- Once Farhan could read the codes, the rest worked:
+  - The Codes section and Copy button.
+  - Farhan's own `Verification code` notification with a Copy action.
+  - The code reaches the clipboard and the notification stays in the shade.
+  - The original's priority becomes Critical.
+  - Order number, phone numbers, a date and plain text are not raised.
+
+**Failed — the three worst problems**
+1. **Verification codes do nothing on Android 15 as installed.** The listener received "Sensitive notification content hidden", so there was no Codes section and no Farhan code notification. It worked only after `adb shell appops set ly.com.tahaben.farhan_alpha RECEIVE_SENSITIVE_NOTIFICATIONS allow` and re-binding the listener. Nothing in the app warns about this.
+2. **Clear All deletes every row, including the Cleared history.** The dialog in this APK says "These notifications move to Cleared." After confirming, the table was empty. The worktree source already has a corrected dialog sentence, but the delete-all behaviour is unchanged (`ClearInbox.kt` into `NotificationDao.kt:65`).
+3. **The Settings tab strip does not fit five tabs.** The first view shows four, and More is off the right edge. After scrolling to More, Features is clipped to "atures".
+
+Other defects in the report include a tall Inbox header, per-page section counts, a debug link visible in the release build, and the dashboard's loud colours.
+
+**Could not check**
+- Anything on a user-build phone; the emulator is a userdebug image.
+- The Launcher and Focus bottom tabs.
+- Source-app buttons other than the probe's `Reply`.
+- Lock-screen behaviour and the 10-minute expiry of the code notification.
+- The 'Only from' chosen-apps scope and the 'Raise to' priority picker.
+- The APK was built at 23:06 MT and `NotificationFilterScreen.kt` was edited at 23:33, so nothing here says anything about later edits to the worktree.
+
+**Jank** (median of 5 runs, 12 fast swipes each). The emulator is software-rendered: GLES is SwiftShader, `ro.kernel.qemu.gles` is empty, `hw.gpu.enabled = no`, 2 vCPU, 1536 MB. The sandbox was under memory pressure with swap in use. These numbers are noisy and say nothing about a phone.
+
+| Screen | Frames | Janky | % janky | p50 / p90 / p95 / p99 (ms) | Missed vsync | Slow UI thread |
+|---|---|---|---|---|---|---|
+| Inbox (300 rows; the screen shows a page of 100) | 258 | 27 | 10.47 | 28 / 44 / 53 / 93 | 3 | 11 |
+| Settings > Apps (65 apps) | 236 | 20 | 8.37 | 28 / 40 / 46 / 65 | 4 | 5 |
+| Summary | 366 | 29 | 8.15 | 17 / 32 / 42 / 69 | 3 | 7 |
+
+One Inbox run was an outlier at 61% janky (p50 48 ms), so the spread across the five Inbox runs is 6 to 61%.
+
+---
+
+If we need that system permission in order to use this feature, then go ahead and implement the adb connector and chazooku path. We already have code that works largely in this regard. Just add some small copy, telling the user to use split screen in order to get the code since it disappears if they switch apps. q, that for directly after this apk
+
+---
+
+make it serve grayscale from first implementation
+
+---
+
+Other other sort of wellness features that adb might be needed for or anything else that other apps like this do in order to make people's relationship to technology healthy? Recently Hank Green came out with a YouTube competitor called Clockwise TV. It's a pretty cool idea. It's basically just curated kids YouTube that is educational only and is built in mind with a stop time. So you set a certain duration and then the app will only recommend you things that fit within that window budget. And when it's done, it simply closes itself. i don't know if it's going to succeed but i think the idea is pretty neat it would be cool if other apps had this sort of feature now youtube is not the easiest system to integrate with in the third party manner. However, I use this app called GreyJay that I think could be augmented to include this feature. I'm also wondering if there's a way that we could detect things and augment what recommendations get shown to people for other sorts of apps, namely social media, apps. The infinite scroll is one of the worst things to happen to people's mental health. So removing the infinite scroll in favor of a time-bound scroll where a quantity or dopamine reaction-based scroll with information that comes from the heart rate of the user could be a good way to make a person's relationship to these technologies more healthy and sustainable. companies currently want them to be.
+
+Maybe we could do something with revanced or maybe there exists enough controls within interapp communications to be able to do this. Are we able to access intense and activities via adb that otherwise are marked private if so that could give us some nice fidelity here to make this app better?
+
+I am also open to other ideas surrounding wellness with technology.
+
+---
+
+Save all of this in a research brief. nothing here is strong enough to actually act on a grey j plug-in is probably what I will end up implementing though that doesn't only belong in farhan, you're correct. And yes, I'm aware that heart rate does not correlate with dopamine levels. Dopamine levels, we measured through other measures, but they're measures that we don't have access to outside of social media company algorithms. I also don't happen to be a user of social media. I was just wondering if there were other wellness things that I could add to this system in order to make it more useful for other people. though I suppose YouTube does technically count, so there are exceptions.
+
+any other thoughts before we stop this brainstorming session and just focus on getting the queue items dealt with?
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Afe47e575-aefc-4d1d-8295-7533fc077d00%3Adelegate-task%3A3bbb17e2-adaf-41fb-941d-663a17b3a932 (Emulator re-check of the fixed APK) in child thread thread:delegated-task:command%3Amcp%3Afe47e575-aefc-4d1d-8295-7533fc077d00%3Adelegate-task%3A3bbb17e2-adaf-41fb-941d-663a17b3a932 [completed]:
+All ten items pass, but I found two real defects, the first of which breaks the Android 15 explanation. The report is at `/home/mini/Documents/repos/Farhan/research/inbox-device-report-v2.md`. The APK was `tabs-codes-v2.apk` (sha `6973e4df…`) on a fresh install, with the same seeding as before. The emulator is killed, and I used no Gradle and changed no source.
+
+**Defects, worst first**
+1. **The red "Android is hiding codes" note doesn't appear while the app is running.** The app does record that Android hid a code, but Settings keeps its old state. Switching settings tabs or re-entering Settings didn't refresh it; only a cold restart did. After the restart the text and the `appops set … RECEIVE_SENSITIVE_NOTIFICATIONS allow` command are correct. The Settings view-model reads the flag only on load; that came from reading the sandbox source (`NotificationSettingsViewModel.refreshAutomation`).
+2. **Codes missing from the Inbox after toggling notification access.** Once, right after I granted the app-op and toggled access, two code rows were in the database and the code notifications were posted. The Inbox showed no Codes section until I restarted the app. Codes posted afterwards appeared live. I couldn't reproduce it on demand.
+3. **A blank `Shell` row** shows in the Inbox: Android's own group-summary notification (`ranker_group`) is stored as an empty row.
+4. **The "Hold Up!" dialog still shows on every visit to Settings > Notifications.** This is unchanged from the first report.
+
+**The ten items**
+1. **Settings tabs:** PASS. All five are 216 px wide and none are clipped. The strip didn't move after tapping More, Apps, Focus and Notifications; I did not tap Features a second time.
+2. **Inbox header:** PASS.
+   - No title bar and no gear; the header is the two tabs plus Clear All, and the priority chips are still there.
+   - With 300 rows, the Newer/Page 1/Older row shows and headers read "35 on this page". With about 58 rows it's gone and headers have no suffix.
+   - **Header height:** the first row starts at y=641 px with the paging row (was about 810) and y=515 px on a single page.
+3. **Cleared tab:** PASS. The action reads `Empty`.
+4. **Clear All:** PASS. The dialog text is exact. After confirming, the database had 0 live rows and 13 cleared rows (the 12 seeded plus one I cleared from the shade). The Cleared tab still lists them.
+5. **Verification codes:** PASS apart from defects 1 and 2.
+   - With Raise codes on and no app-op, the row stored was "Sensitive notification content hidden", and the red note showed only after a restart.
+   - After granting the app-op and rebinding the listener, the Codes section is at the top and the Copy button is dark and filled.
+   - `G-482913` pastes as `482913`, and Farhan's own notification has a Copy action. The "OTP to pay 2499" text gives `482913`, and the numeric-title and password texts are not raised.
+6. **Back and navigation:** PASS.
+   - Back from Settings lands on the Inbox.
+   - There is no stale app page after switching away and back.
+   - The deep-link command in your brief doesn't resolve ("unable to resolve Intent"): the manifest has no `app://` intent filter. I used the intent the app builds itself (explicit component, `-f 0x10008000`), and one Back then leaves the app.
+7. **Debug link:** PASS. `Clear budget spend (debug)` is gone.
+8. **Priority bar:** PASS. It is grey with only Critical tinted. Still loud: the red health gauge (35), the coloured category pills, the orange "Standing Alarms" title and Clear All, and the amber bars and links.
+9. **Selection vs. shade:** PASS. After ticking a row and dismissing its notification in the shade, the header went from `Clear 1` back to `Clear All`. The row left the Inbox and shows in Cleared.
+10. **Inbox jank:** median 8.61% janky, p50 24 ms, p95 46 ms, p99 113 ms. The first run was 10.47%, p50 28, p95 53, p99 93. This is software-rendered and noisy (3.7 to 17.5% across runs, load average up to 6.5), so I wouldn't call it a measured gain.
+
+**Could not check:** a retail phone (the app-op may not be grantable there), the exact 100/101 row boundary for the paging row, lock-screen behaviour of the code notification, and the "Only from" scope and "Raise to" picker.
+
+Screenshots are in `research/screens/v5/` and the scripts in `research/emulator-v4/`; `look5.sh` and `run-perf-v5.sh` are new.
+
+---
+
+go
+
+---
+
+[T3 Code: the agent in T3 thread "4af7da5f-3a18-4cee-b0d7-5cbd8b117b00" sent this message, not the user.]
+
+Resume: read /home/mini/Documents/repos/Farhan/research/notification-ui-state.md, check whether the "Privileged-access connector core" delegate has finished (its report and /home/mini/Documents/repos/Farhan.worktrees/_handoff/privileged-access.patch), and continue from open work item 1 or 2.
+
+---
+
+The mockup looks fine. I would like to make it so that when you have allowed one, the other just becomes a simple toggle. When you revoke both, then the subsequent grant will need reauthentication with adb. Otherwise, let's retain that access code. This should only be needed one time, correct? Just to grant the permission.
+
+---
+
+looks good to me
+
+---
+
+Delegated task node:delegated-task:command%3Amcp%3Afe47e575-aefc-4d1d-8295-7533fc077d00%3Adelegate-task%3A5a7f132c-a99f-48fd-947b-517b61d19d2f (Privileged-access connector core) in child thread thread:delegated-task:command%3Amcp%3Afe47e575-aefc-4d1d-8295-7533fc077d00%3Adelegate-task%3A5a7f132c-a99f-48fd-947b-517b61d19d2f [completed]:
+The non-UI core of the privileged-access connector is built and builds green on Boat, but nothing in it has been run on a real device, and one decision needs the owner's call. Merging this adds the `INTERNET` permission to Farhan, which contradicts SPEC.md line 5 and onboarding page 1 ("no internet permission"). Android requires `INTERNET` for any socket, loopback included. I kept all of the Self-ADB route (and so the permission) in its own module, `:privileged_access:privileged_access_selfadb`. Dropping that dependency removes the permission, libadb, Conscrypt and Bouncy Castle, but the Hilt graph then needs a `SelfAdbRoute` binding that reports `ANDROID_TOO_OLD`; I did not write that fallback. The APK also grows by Conscrypt's native libraries, which I did not measure.
+
+## Not verified on a device
+- **Self-ADB on a retail Android 15 or 16 phone.** The emulator's adbd does not require authentication, so a secure adbd accepting Farhan's key is untested. The new route was not run on the Boat emulator: the helper's emulator scripts exist only in the main checkout's uncommitted tree and there is no UI to drive the new route.
+- **mDNS port discovery** (`AdbDiscovery`, NsdManager) has never run anywhere. It follows how Shizuku finds the port.
+- **Shizuku route.** Shizuku is not installed on any device I could use, and the user-service handoff has never run.
+- **`pm revoke ... WRITE_SECURE_SETTINGS` may kill Farhan's process.** I could not check. The "both revoked, drop the key" cleanup survives a kill: a marker is committed before the revoke and finished at the next status check.
+- **App-op read-back.** The code reads the op with the string `android:receive_sensitive_notifications` through `AppOpsManager.unsafeCheckOpRawNoThrow`. If the name is wrong on a build, the status reads "not allowed" and a grant reports `verified=false`, trusting the exit code.
+- **Listener rebind.** `requestRebind` alone does nothing while the listener is bound, so the restart helper calls `requestUnbind()` then `requestRebind()`. Untested on a device.
+
+## What is built
+- **Modules.**
+  - `:privileged_access:privileged_access_domain` is pure Kotlin with all the logic and ports.
+  - `_data` holds the Shizuku route, the phone-fact reader, preferences and the Hilt module.
+  - `_selfadb` holds the Self-ADB route.
+  - `_presentation` holds the ViewModel and has no Compose code.
+- **Commands as typed values.**
+  - Four commands: grant and revoke for sensitive notifications and for secure settings. No other text can reach a command line.
+  - Revoking the app-op uses `appops set ... default`, not `appops reset`, which would also wipe Farhan's usage-access op.
+  - `AppId` and `ShellCommand` accept only letters, digits, `.` and `_`.
+  - The Shizuku service re-checks the same allowlist (`appops` or `pm` only) on its side.
+- **Status.** A passive refresh produces a `StateFlow<PrivilegedStatus>` carrying the link (`None` or `Connected(route)`) and an access state per command. It runs no command and opens no connection.
+  - **Access states.**
+    - Sensitive notifications: `ALLOWED`, `NOT_ALLOWED`, or `NOT_APPLICABLE` below Android 15.
+    - Secure settings: `ALLOWED` or `NOT_ALLOWED`.
+    - `needsSetup(access)` is derived: not allowed and no route can run the command.
+  - **Observable facts.** AppOps mode and `PackageManager.checkPermission`. The `Settings.Secure` write test (writing the daltonizer switch back to its current value) runs only right after a grant, never from a status check. `appops get` was not added as a shell read-back.
+  - **Foreground re-check.** The app re-checks when it returns to the foreground, through activity lifecycle callbacks in `ForegroundRecheck`.
+- **Route preference.** `ASK` (default), `SELF_ADB` or `SHIZUKU`, with a pure chooser. The order is: the route named for this call, then a fixed preference, then the retained link, then ask. With a retained link a second access runs with no question and no pairing.
+- **Owner update (mock-up v5).**
+  - The pairing code is single use, never stored, and its `toString` prints stars.
+  - Farhan keeps the adb key in `noBackupFilesDir`, with a 10-year certificate.
+  - Revoke runs over the retained link.
+  - Revoking both accesses deletes the adb key.
+  - Typed failures: `LinkLost(NOT_PAIRED | KEY_REJECTED | WIRELESS_DEBUGGING_OFF)` and `ShizukuNotRunning`, plus route-blocked, command-failed-with-output, not-effective, busy and invalid-app-id.
+  - **Access states are not cleared on a lost link.** I deviated from "clear the link and both access states": the states come from the phone, so a grant that took effect still shows `ALLOWED` while `link` is `None` and `canRevoke` is false. Clearing them would be a false statement. I can make them literal if you want that.
+  - **Wireless debugging off versus key rejected.** Wireless debugging off clears the link but keeps the key. A rejected key deletes it, after one retry with a fresh port in case the port changed between discovery and connect.
+- **Rebind and the red note.**
+  - After a successful app-op grant, `NotificationService.requestRestart()` runs.
+  - `OTP_REDACTION_SEEN` is cleared on a successful grant and when a code arrives in plain text (in `NotificationService`).
+  - The Settings red note and its manual command are untouched.
+- **Grayscale.** `GrayscaleViewModel.grantSecureSettings(route?)` calls the connector and puts the result in `GrayscaleState.secureSettingsGrant`. The root button and the existing guidance stay.
+- **Grayscale reset before revoke.** Revoking secure settings first turns Grayscale off (`GrayscaleUtil.setGrayscaleState(false)`) while the permission is still held, otherwise the screen could stay gray with nothing able to undo it.
+- **Settings backup (`SettingsCatalog`).**
+  - Included: `privileged_access_route` (STRING).
+  - Excluded as INTERNAL: `privileged_access_link_drop_pending`.
+  - Also excluded as INTERNAL: `notification_experiment_otp_redaction_seen`. It is existing and out of scope, but exporting it would show a false red note on another phone.
+
+## Decisions to know about
+1. **The self-ADB code in `settings_rescue` could not be called.** It is an application module with `internal` classes, built to stay isolated from main-app modules. Its fixed wire client (`AdbWire`, `ConscryptTls`) is also uncommitted in the main checkout and absent from this base (there is no `AdbWire` or `ConscryptTls` at `cbc5fd5`). I copied the two wire files, with their 9-test fake-adbd test, into the new module, and wrote a new persistent key store. They are marked "adapted from settings_rescue". The clean fix is one shared `:adb_client` library for both apps once the rescue work lands.
+2. **Shizuku API 13.1.5, the latest release.** I confirmed it on Maven Central's maven-metadata (latest and release both 13.1.5, last updated 2023-09-21) and downloaded the AAR. In that AAR `Shizuku.newProcess` is private (access flags 0xa), so commands run through a user service (AIDL `IExecService`, `ExecUserService`). The jar exposes `bindUserService`, `requestPermission`, `checkSelfPermission`, `shouldShowRequestPermissionRationale` and `isPreV11`, all of which I use.
+3. **`minSdk` clash.** Shizuku's API library declares `minSdk` 24 and the app is 23, so I added `tools:overrideLibrary` in the app manifest. Below Android 7 the route reports "too old" and the Shizuku provider is disabled through a `values/bools.xml` resource.
+4. **Shizuku's grant cannot be dropped from inside the app.** Only Shizuku's manager can change it. After both accesses are revoked, the retained Shizuku permission stays, and the UI has to say so.
+5. **libadb pairing has no read timeout.** It runs on its own thread and is abandoned after 25 seconds. A stuck thread lingers until its socket fails. The rescue helper kills a whole process instead; this does not.
+6. **New dependencies.** libadb-android 3.1.1 (jitpack, LGPL spake2 underneath), conscrypt-android 2.5.3 and bcpkix 1.81, plus Shizuku `api` and `provider` 13.1.5. The notices are in `privileged_access_selfadb/NOTICE.md`; the app's own licence listing is not updated.
+7. **Settings red note.** It still does not appear while the app runs, which is emulator defect N1 (`otpRedactionSeen` is read once in `refreshAutomation()`). I did not touch that UI code.
+
+## Tests
+Run on Boat `bx_bngcafgz`, 0 failures in every module:
+
+| Module | Tests |
+|---|---|
+| `privileged_access_domain` | 57 |
+| `privileged_access_data` | 5 |
+| `privileged_access_selfadb` | 19 |
+| `privileged_access_presentation` | 7 |
+| `settings_portability` | 62 |
+| `settings_rescue` | 56 |
+| `notification_filter_data` | 119 |
+| `screen_grayscale_presentation` | 1 |
+| `app` | 13 |
+
+`:app:assembleProfileable` also passed (37 MB APK), and the merged manifest has `INTERNET` and the Shizuku provider.
+
+- **Scenarios you asked for.** Grant A then B without pairing, revoke A keeps the link, revoke both drops the link, key rejected drops the link and returns `LinkLost(KEY_REJECTED)`.
+- **Also covered.** Exact argument lists, a refresh that runs no shell, route choice and failure mapping, an interrupted revoke, the busy guard, the sentinel parser for the Self-ADB `exec:` stream, and the key file.
+- **Not unit-tested.** `AndroidPhoneFacts`, `AdbDiscovery`, `AndroidSelfAdbRoute`, the Shizuku route and `GrayscaleViewModel.grantSecureSettings` — they need a device or Android classes.
+
+## UI hooks for the next task
+- `PrivilegedAccessViewModel` (Hilt) exposes `state: StateFlow<PrivilegedAccessState>` with `status`, `routePreference`, `working`, `lastResult`, `lastPairing` and `lastShizukuPermission`.
+- It has these calls:
+  - `status()` and `onForeground()`.
+  - `grantSensitiveNotifications(route?)`, `grantSecureSettings(route?)`, `revokeSensitiveNotifications(route?)` and `revokeSecureSettings(route?)`.
+  - `pairSelfAdb(code: String, pairingPort: String = "")` — a blank port means discover it.
+  - `requestShizukuPermission()`, `setRoutePreference(p)`, `forgetSelfAdbKey()` and `dismissResult()`.
+- Handle the `AccessResult.ChooseRoute(options)` result by showing the route picker, then call again with `route`.
+- Pairing only works while the user has "Pair device with pairing code" open in Developer options, so the pairing screen has to be visible alongside it (the rescue helper had the same problem and used a freeform window).
+
+Patch: `/home/mini/Documents/repos/Farhan.worktrees/_handoff/privileged-access.patch` (unstaged diff over the staged tabs/codes base, 65 files). Nothing is committed, pushed or opened as a PR.
+
+---
+
+also to handle
+
+---
+
+App Version Name: 0.2.6-alpha
+App Version Code: 11
+Android Version: 17
+Device Model: Pixel 9a
+Stack Trace:
+ java.lang.SecurityException: ly.com.tahaben.farhan_alpha: One of RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED should be specified when a receiver isn't being registered exclusively for system broadcasts
+	at android.os.Parcel.createExceptionOrNull(Parcel.java:3402)
+	at android.os.Parcel.createException(Parcel.java:3386)
+	at android.os.Parcel.readException(Parcel.java:3362)
+	at android.os.Parcel.readException(Parcel.java:3304)
+	at android.app.IActivityManager$Stub$Proxy.registerReceiverWithFeature(IActivityManager.java:6349)
+	at android.app.ContextImpl.registerReceiverInternal(ContextImpl.java:2099)
+	at android.app.ContextImpl.registerReceiver(ContextImpl.java:2028)
+	at android.app.ContextImpl.registerReceiver(ContextImpl.java:2016)
+	at android.content.ContextWrapper.registerReceiver(ContextWrapper.java:799)
+	at ly.com.tahaben.core.util.HomeWatcher.startWatch(HomeWatcher.kt:22)
+	at ly.com.tahaben.farhan.shell.LauncherTabKt.LauncherTab$lambda$4$lambda$3$lambda$1(LauncherTab.kt:25)
+	at ly.com.tahaben.farhan.shell.LauncherTabKt.$r8$lambda$wCNzZ57lNjGWj-xuw61CenOmeq8(LauncherTab.kt:0)
+	at ly.com.tahaben.farhan.shell.LauncherTabKt$$ExternalSyntheticLambda2.onStateChanged(D8$$SyntheticClass:0)
+	at androidx.lifecycle.LifecycleRegistry$ObserverWithState.dispatchEvent(LifecycleRegistry.jvm.kt:320)
+	at androidx.lifecycle.LifecycleRegistry.addObserver(LifecycleRegistry.jvm.kt:198)
+	at ly.com.tahaben.farhan.shell.LauncherTabKt.LauncherTab$lambda$4$lambda$3(LauncherTab.kt:30)
+	at ly.com.tahaben.farhan.shell.LauncherTabKt.$r8$lambda$SjnFKzdzcnFdCrDdv8Xk7tEJdwA(LauncherTab.kt:0)
+	at ly.com.tahaben.farhan.shell.LauncherTabKt$$ExternalSyntheticLambda0.invoke(D8$$SyntheticClass:0)
+	at androidx.compose.runtime.DisposableEffectImpl.onRemembered(Effects.kt:83)
+	at androidx.compose.runtime.CompositionImpl$RememberEventDispatcher.dispatchRememberObservers(Composition.kt:1364)
+	at androidx.compose.runtime.CompositionImpl.applyChangesInLocked(Composition.kt:992)
+	at androidx.compose.runtime.CompositionImpl.applyChanges(Composition.kt:1013)
+	at androidx.compose.runtime.Recomposer$runRecomposeAndApplyChanges$2$1.invoke(Recomposer.kt:685)
+	at androidx.compose.runtime.Recomposer$runRecomposeAndApplyChanges$2$1.invoke(Recomposer.kt:585)
+	at androidx.compose.ui.platform.AndroidUiFrameClock$withFrameNanos$2$callback$1.doFrame(AndroidUiFrameClock.android.kt:41)
+	at androidx.compose.ui.platform.AndroidUiDispatcher.performFrameDispatch(AndroidUiDispatcher.android.kt:109)
+	at androidx.compose.ui.platform.AndroidUiDispatcher.access$performFrameDispatch(AndroidUiDispatcher.android.kt:41)
+	at androidx.compose.ui.platform.AndroidUiDispatcher$dispatchCallback$1.doFrame(AndroidUiDispatcher.android.kt:69)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:1655)
+	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:1666)
+	at android.view.Choreographer.doCallbacks(Choreographer.java:1252)
+	at android.view.Choreographer.doFrame(Choreographer.java:1205)
+	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1640)
+	at android.os.Handler.handleCallback(Handler.java:1095)
+	at android.os.Handler.dispatchMessageImpl(Handler.java:135)
+	at android.os.Handler.dispatchMessage(Handler.java:125)
+	at android.os.Looper.loopOnce(Looper.java:296)
+	at android.os.Looper.loop(Looper.java:397)
+	at android.app.ActivityThread.main(ActivityThread.java:9569)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:575)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:978)
+	Suppressed: kotlinx.coroutines.internal.DiagnosticCoroutineContextException: [androidx.compose.runtime.PausableMonotonicFrameClock@f829af0, androidx.compose.ui.platform.MotionDurationScaleImpl@b714869, StandaloneCoroutine{Cancelling}@d8202ee, AndroidUiDispatcher@f53f38f]
+
+---
+
+The whole launcher tab idea, is it even worth it? There are a million minimal focused launchers out there and not a single one of them even comes close to fulfilling my needs...
+
+---
+
+default off and remove from builds until further notice.
+
+---
+
+v6 for completeness. Given the nature of the change I don't need to see it. Thanks.
+
+---
+
+<task-notification>
+<task-id>a23e8d86f8fe15604</task-id>
+<tool-use-id>toolu_01X8sWCUWkbr6NemgejRmbCq</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/a23e8d86f8fe15604.output</output-file>
+<status>completed</status>
+<summary>Agent "Build privileged-access UI screens" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>The Special access UI is built, and the full Boat gate passes only on a copy of the tree that reverts someone else's `HomeWatcher.kt` edit. Nothing was run on a device or emulator, so no screenshot compares it to the v5 mock-up.
+
+**Unverified and risks**
+- **Build:** `core/.../util/HomeWatcher.kt` was modified in this worktree at 02:11 MDT (09:11 UTC) by something other than me. `:core:compileDebugKotlin` then fails on `ContextCompat.registerReceiver` and `RECEIVER_NOT_EXPORTED`, because `:core` resolves an older androidx.core. My first Boat run, before that edit, compiled. I did not touch the file. I ran the gate on a scratch copy with that file reverted to HEAD, so the tree needs a fix (probably a core-ktx dependency in `core/build.gradle.kts`) before it builds as-is.
+- **Shizuku:** the flow is unrun on a device. The core notes Shizuku was never installed on any test phone.
+- **Layout:** untested, including the split-screen launch flag (`FLAG_ACTIVITY_LAUNCH_ADJACENT` on the Developer options button) and the snackbars (I assume the existing `snackbarHostState` is hosted somewhere visible).
+- **Rotation:** the open flow page and its route survive rotation and split-screen resize. A run in flight and a shown result do not. The pairing code is held only in composition and cleared on submit.
+- **Result timing:** the controller reads each connector result once, then calls `dismissResult()`. A result arriving while Settings is not composed is shown when you return.
+
+**Deviations from v5**
+- **Notification access and Accessibility rows:** real checks exist (`ServiceUtil.isNotificationAccessPermissionGranted`, `GrayscaleUseCases.isAccessibilityPermissionGranted`), so both rows show. They show "Not allowed" when off, which the mock never does.
+- **Key rejected:** the mock says "Both accesses were switched off". That is false, because the phone keeps the grants, so the message is "This phone no longer trusts Farhan. Pair again."
+- **Note under the group:** a third text for Shizuku (it cannot drop its own grant), and a variant without "both" on Android before 15, where only one switch exists. On that case the toast is "Off. Pairing forgotten."
+- **Developer options button:** labelled "Open Developer options", since the intent opens that page.
+- **Flow page:** the footer differs for Shizuku. Shizuku status can also read "not installed" or "too old". The title and Allowed boxes use a bold title.
+- **Flow button:** "Pair and allow" stays disabled until the code is 6 digits and the port is blank or in range.
+- **Done button:** uses an ink fill, not the theme accent.
+- **Switched on with no link:** an access that is already allowed but has no link shows a switch that cannot revoke. Switching it off opens the flow with "not connected" shown, and the user pairs, then switches it off.
+- **Red note:** hidden when sensitive notifications are allowed or not applicable (before Android 15). It no longer depends on the "hidden" flag alone.
+
+**What I built**
+- **Pure logic, `privileged_access_presentation`:** `SpecialAccessModel.kt` maps state to row control, notes, failure kinds and toggle outcomes. `AccessFlow.kt` is the flow state machine plus input helpers.
+- **UI, `app/.../settings/`:**
+  - `SpecialAccessGroup.kt` is the group and `CalmButton`.
+  - `SpecialAccessFlow.kt` is the flow page.
+  - `SpecialAccessController.kt` holds the hoisted flow state and turns results into snackbars or flow opens.
+  - `SpecialAccessChecks.kt` and `SpecialAccessText.kt` are the system-access reads and string mapping.
+- **`SettingsScreen.kt`:**
+  - Owns the controller and opens the flow page on the More tab.
+  - Back closes the flow and returns to More.
+  - Runs a 3 s status refresh on the Notifications and More tabs, which is the fix for the note's refresh gap.
+- **`SettingsComponents.kt` (core-ui):** added `SettingValueRow` and `StatusPill`.
+- **Red note:** `NotificationFilterSettingsScreen.kt` gets an Allow button and the adb line as a fallback. With a link it grants directly, otherwise it opens the flow. `showCodeAccessNote` is in the settings state file.
+- **Grayscale guidance:** two English strings now point at Settings, More, Special access.
+- **Strings:** about 95 new English strings in `core/.../values/strings.xml`.
+
+**Tests, run on Boat (`bx_bngcafgz`) from the scratch copy**
+
+| Module | Tests | Failures |
+|---|---|---|
+| `:privileged_access:privileged_access_presentation:testDebugUnitTest` | 39 (about 27 new) | 0 |
+| `:notification_filter:notification_filter_presentation:testDebugUnitTest` | 36 (3 new) | 0 |
+| `:app:testDebugUnitTest` | 13 | 0 |
+| `:settings_portability:test` | 62 | 0 |
+
+- **Skips:** none in any module.
+- **`:settings_portability`:** it is a plain JVM module, so `testDebugUnitTest` does not exist there. I used `test`.
+- **`:app:assembleProfileable`:** succeeded, 37,264,214 bytes.
+
+**Internet copy**
+- **Changed:** SPEC.md lines 5 and 181, `no_internet_permission` and `no_internet_permission_desc` in English (new title "Nothing leaves your phone"), and the English store listing `metadata/en-US/full_description.txt`.
+- **Stale, not translated:**
+  - `core/src/main/res/values-ar|ta|pl|es/strings.xml`: `no_internet_permission`, `no_internet_permission_desc`.
+  - `metadata/ar/full_description.txt`: still says "no internet permissions".
+  - `values-ar|es|ta/strings.xml`: `no_device_root_detected_msg` and `grant_secure_permission_manually_msg` lack the Special access pointer.
+- **Unchecked:** the privacy policy, if it says the same.
+
+**Also touched by others**
+`SoundControlSettingsScreen.kt` and `HomeWatcher.kt` show as modified here and are not mine.
+
+result: Special access UI (group, flow page, red-note Allow, English INTERNET copy) is built with 150 unit tests passing and `:app:assembleProfileable` succeeding on Boat, but the build only passes with the unrelated `HomeWatcher.kt` edit reverted, and nothing was run on a device.</result>
+<usage><subagent_tokens>257607</subagent_tokens><tool_uses>62</tool_uses><duration_ms>1012733</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b6ze22s0l</task-id>
+<tool-use-id>toolu_01YGaNA8JYgfP74G9hhASRsm</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/b6ze22s0l.output</output-file>
+<status>completed</status>
+<summary>Background command "Extend sandbox and start full build/test in background" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>baqk3de41</task-id>
+<tool-use-id>toolu_01GEdY51Mx2BiZ3P5yjKbe5V</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/baqk3de41.output</output-file>
+<status>killed</status>
+<summary>Background command "Wait for Boat build to finish, then show log tail" was stopped after reaching its background time limit</summary>
+<note>If the work in progress still needs it, start it again with `run_in_background` and a longer `timeout`. If it already had the longest `timeout` allowed, do not restart it. Either way, report that it was stopped.</note>
+</task-notification>
+
+---
+
+commit
+
+---
+
+The adb connection does not work. [File: Farhan-alpha log cd2604883342.txt; ref=abc72872-4b1f-4326-860c-f4aa10ad8b1c] 
+
+examine the log and the code as it differs from the other two ADB self-connection apps that I have, namely reverb and the extractor for this app.
+
+when that's fixed, send me another APK
+
+<t3_context version="1">
+<context kind="file" id="abc72872-4b1f-4326-860c-f4aa10ad8b1c">
+name: Farhan-alpha log cd2604883342.txt
+mimeType: text/plain
+sizeBytes: 89924
+attachmentId: 4af7da5f-3a18-4cee-b0d7-5cbd8b117b00-ac5e2b95-8645-45b1-a3e0-b36d52635970-txt
+</context>
+</t3_context>
+
+[Attached file "Farhan-alpha log cd2604883342.txt" is saved at: /home/mini/.t3/userdata/attachments/4af7da5f-3a18-4cee-b0d7-5cbd8b117b00-ac5e2b95-8645-45b1-a3e0-b36d52635970-txt.txt]
+
+---
+
+change my global Git identity to mikenrafter with the github no reply. nothing else. force push to fix this repo.
+
+---
+
+I have tried both ports from the main and wireless screen. What can we do to improve visibility here?
+
+---
+
+[Image: 1000062919.png; ref=d93a68af-a006-46e4-afa8-d4aa9ec42c4a]
+
+versioncode 11 is the latest, right?
+
+<t3_context version="1">
+<context kind="image" id="d93a68af-a006-46e4-afa8-d4aa9ec42c4a">
+name: 1000062919.png
+mimeType: image/png
+sizeBytes: 239569
+attachmentId: 4af7da5f-3a18-4cee-b0d7-5cbd8b117b00-b5358e97-f5b7-4c40-bde8-b70cfa33504d
+</context>
+</t3_context>
+
+[Attached image "1000062919.png" is saved at: /home/mini/.t3/userdata/attachments/4af7da5f-3a18-4cee-b0d7-5cbd8b117b00-b5358e97-f5b7-4c40-bde8-b70cfa33504d.png]
+
+---
+
+ok, let's make that actually increment this then.
+Version metadata is part of legibility. We need a checklist for it. Update the appropriate skill in mstack and install the update.
+
+---
+
+<task-notification>
+<task-id>byah636r9</task-id>
+<tool-use-id>toolu_01VFGnRs1r8Mt9DWQaRZcfo1</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/byah636r9.output</output-file>
+<status>completed</status>
+<summary>Background command "Build and switch agent-integration with local mstack override" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+push, update and install
+
+---
+
+<task-notification>
+<task-id>a9a378cb511afa884</task-id>
+<tool-use-id>toolu_01TBssdWnZeBK9QCBb9vpeuT</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/a9a378cb511afa884.output</output-file>
+<status>completed</status>
+<summary>Agent "Fix self-ADB pairing failure" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>The Pixel pairing failure is still unexplained. This build adds a full connection log, a "Connection check", and a labelled multi-variant pairing attempt. The Android 15 emulator shows pairing and the check work. On the real phone only the owner's logs will say why it fails.
+
+**What the v5 report most likely was**
+- **Misattribution:** the v5 "connecting to the port (SocketException)" was probably the retry's failure, not the first attempt's. When the typed port failed, we retried on the mDNS-discovered port and reported only that second failure. The first attempt may have been the one adbd saw and failed, which would match its "Pairing unsuccessful" dialog.
+- **Step boundaries:** in v5, connect-socket held only `Socket()` plus options plus `connect`. It never covered TLS, but the first read after the handshake was filed under the SPAKE2 step.
+- **Fixes:** the steps are now exact: connect-socket (TCP connect only, options set before connecting), tls-handshake (wrap plus handshake), first-read (new step), export-keying-material, spake2, peer-info. First-read exists because TLS 1.3 shows a refused client certificate only as a reset or alert on the first read. The emulator confirmed this: with no client certificate, the failure appears at first-read as `TLSV1_ALERT_CERTIFICATE_REQUIRED`.
+- **Reported failure:** if both the typed-port attempt and the discovery retry break before the code is used, the typed port's failure is now the one reported.
+
+**The connection log**
+- **Contents:** a ring buffer of the last 200 lines, in memory only. Each line has UTC and local time, operation, step, outcome, and the exception class, message and full cause chain. TLS details (protocol, cipher, socket class, daemon certificate subject/signature/key) are logged after a handshake. The existing `Log.w`/`Log.i` lines under `FarhanSelfAdb` are kept.
+- **Scrubbing:** the pairing code is masked while a pairing is in progress. Any exception message containing it is replaced with `&lt;message withheld&gt;`. Base64-like runs of 60 or more characters are withheld. The code, private key, adb public key bytes and command output are never passed in.
+
+**Connection check**
+- It sits on the flow page for the wireless route, both beside the form and under a failure. It uses no code, changes nothing, and stops before any SPAKE2 message. It lists:
+  - Android and SDK, `targetSdk`, `adb_enabled`/`adb_wifi_enabled`, and `ACCESS_LOCAL_NETWORK` (declared/granted).
+  - Wi-Fi IPv4 and interfaces.
+  - Every mDNS pairing and connect service found in 8 s: name, host, port, and whether the port is listening on loopback and on the Wi-Fi IP.
+  - A TCP connect to each of the typed port and the discovered ports, on 127.0.0.1 and on the Wi-Fi IP.
+  - A TLS probe per way of connecting (see the variants below), each through connect, handshake, first read and key export.
+  - A plain adb banner probe on connect ports.
+  - A note when the typed port is the connect port.
+- **Wi-Fi limit:** ConnectivityManager state (transport, validated) cannot be read. The app deliberately strips `ACCESS_NETWORK_STATE` (`tools:node="remove"` in `app/src/main/AndroidManifest.xml`), so the check reads the interface list for the Wi-Fi IP and says connectivity is unreadable. I did not override that policy.
+- **Result placement:** the result card sits below the buttons, because it is long.
+- **Buttons:** "Connection check", "Copy log" (clipboard marked sensitive, like the code copy) and "Share log" (`ACTION_SEND` `text/plain`), under the line "Send this to me if pairing fails." All strings are in `core/src/main/res/values/strings.xml`.
+
+**Pairing variants**
+- **Order:** one press runs up to five variants, each logged and labelled:
+  1. Bundled Conscrypt, adb certificate, 127.0.0.1 (the real attempt).
+  2. The same but via the Wi-Fi IP.
+  3. No client certificate.
+  4. Platform TLS provider.
+  5. The previous certificate shape (CN=farhan, SHA-512).
+- **When later variants run:** a later variant runs only if the one before broke at connect, handshake or first read, which is before anything made from the code is sent. After spake2 or peer-info there is no retry.
+- **Limits:** the platform provider cannot export keying material, so variant 4 can only compare the handshake. If a later variant gets through the handshake, pairing continues with it.
+
+**Verified**
+- **Unit tests:** `privileged_access_domain` 61, `privileged_access_presentation` 46, `privileged_access_selfadb` 55 (log scrubbing and formatting, ring buffer, check assembly with fakes, first-read, variants, no retry after the code). All pass, plus `:app:testDebugUnitTest` and `:app:assembleProfileable` on Boat. Counts are summed from the test-result XML.
+- **Emulator (Android 15, API 35):** the emulator run used the build before the last small change, `f87e69a6…`. On it the check ran in 8.3 s and did not use up the dialog's code: pairing with that same code, port 38881, succeeded afterwards. A wrong typed port (4) logged all five variants, each failing with `ConnectException: ... ECONNREFUSED`. Copy log put the full log on the clipboard (pasted and read back). The final APK `268a2eb3…` adds only the report-the-first-failure change and one test, and was not re-run on the emulator.
+- **Sample of the check (ports only):**
+  - `mDNS _adb-tls-pairing "adb-EMULATOR…" host=10.0.2.16 port=38881; 127.0.0.1 listening, 10.0.2.16 listening`
+  - `TCP 127.0.0.1:38881 (pairing service): connected in 2 ms`
+  - `TLS 127.0.0.1:38881 [bundled Conscrypt, TLS 1.3, adb certificate]: handshake and key export ok in 10 ms; protocol=TLSv1.3 cipher=TLS_AES_128_GCM_SHA256 ... peer=CN=Adb,O=Android,C=US sig=SHA256withRSA; first read: ok; exportKeyingMaterial: ok (64 bytes)`
+  - `TLS 127.0.0.1:38881 [... no client certificate]: FAILED at first-read ... TLSV1_ALERT_CERTIFICATE_REQUIRED`
+  - `TLS 127.0.0.1:38881 [platform TLS provider ...]: FAILED at export-keying-material: IllegalArgumentException: Not a conscrypt socket`
+  - `adb banner 127.0.0.1:44967: STLS (wireless-debugging connect port)`
+
+**Version**
+- `versionCode` is now 12. It is set in `gradle/libs.versions.toml` (`app-versionCode = "12"`), which `app/build.gradle.kts` reads. `versionName` is unchanged (`0.2.6-alpha`), and the application id is unchanged.
+- The profileable variant keeps `ly.com.tahaben.farhan_alpha` with the debug key, so it installs over the existing app. `dumpsys` on the emulator showed `versionCode=12`.
+
+**Is the "Pairing failed at: ..." line shown on every failure path?**
+- **Shown** when a step threw:
+  - pairing step failures, and discovery failures;
+  - connect failures, including `KEY_REJECTED`. I just added the step to `LinkLost`, because v5 dropped it there.
+- **Not shown** (no step exists or the path shows a toast):
+  - the daemon refusing the code (`Rejected`);
+  - no pairing service found, and busy or an out-of-range port (`Failed`);
+  - `NOT_PAIRED`, `WIRELESS_DEBUGGING_OFF` and `NotWirelessDebugging` from the passive checks, which have no exception;
+  - failures that arrive through a switch toggle, which show only a toast.
+- The step line shows the exception class only, never the message; the message is in the log.
+
+**Not verified**
+- Anything on the Pixel, including the Wi-Fi IP variant and how Android 17's adbd responds to each variant.
+
+**Open question for the owner**
+- Is it acceptable to add `ACCESS_NETWORK_STATE` for the validated/transport line? It is stripped now.
+
+**What the owner should send:** after trying once, press "Connection check", then "Copy log" or "Share log". The step, exception message and cause chain for each variant and host will show which way works.
+
+**APK**
+- Path: `/home/user/runs/inbox-slice/app/build/outputs/apk/profileable/app-profileable.apk` in sandbox `bx_bngcafgz`
+- sha256: `268a2eb30fe2d71df8e70179914a09f6d2f1cbc6d57442b5d73b9a29cfa83809`
+
+**Files**
+- New in `privileged_access_selfadb`: `ConnectionLog.kt`, `ConnectionCheck.kt`, `AndroidCheckProbes.kt`, `PairingVariants.kt`.
+- Changed in `privileged_access_selfadb`: `AdbPairingClient.kt`, `AndroidSelfAdbRoute.kt`, `SelfAdbLog.kt`, `ConscryptTls.kt`, `AdbIdentity.kt`.
+- In `privileged_access_domain`: `SelfAdbFailure.kt` (new), `Routes.kt`, `PrivilegedAccess.kt`, `AccessResult.kt`.
+- In `privileged_access_presentation`: `SpecialAccessModel.kt` and `PrivilegedAccessViewModel.kt`.
+- In `app/.../settings/`: `SpecialAccessFlow.kt`, `SpecialAccessController.kt`, `SettingsScreen.kt`, `ConnectionLogSharing.kt` (new).
+- Other: `core/src/main/res/values/strings.xml` and `gradle/libs.versions.toml`.
+- Nothing is committed.
+
+**Licence:** unchanged. The pairing client is our own Kotlin, and spake2-android is still the only LGPL piece.
+
+result: Self-ADB pairing now has an in-app connection log, a no-code Connection check, labelled pairing variants (loopback vs Wi-Fi IP, no client certificate, platform provider, old certificate) and exact step boundaries including first-read. It passes unit tests and pairs on the Android 15 emulator. The Pixel failure's cause is still unconfirmed and needs the owner's log from APK 268a2eb3… (versionCode 12).</result>
+<usage><subagent_tokens>453521</subagent_tokens><tool_uses>54</tool_uses><duration_ms>1623743</duration_ms></usage>
+</task-notification>
+
+---
+
+2026-11-22T12:09:19.210Z (local 05:09:19.210 -07:00) | pair | - | info | start: Android SDK 37, typed port 36737
+2026-11-22T12:09:19.217Z (local 05:09:19.217 -07:00) | pair | key-setup | start
+2026-11-22T12:09:19.382Z (local 05:09:19.382 -07:00) | pair | - | info | Wi-Fi: phone Wi-Fi IPv4 none; interfaces: no up interface with an IPv4 address; connectivity state not readable (this app has no ACCESS_NETWORK_STATE)
+2026-11-22T12:09:19.426Z (local 05:09:19.426 -07:00) | pair | - | info | variant 1 of 4: bundled Conscrypt, TLS 1.3, adb certificate; target 127.0.0.1:36737
+2026-11-22T12:09:19.427Z (local 05:09:19.427 -07:00) | pair | connect-socket | start
+2026-11-22T12:09:19.430Z (local 05:09:19.430 -07:00) | pair | connect-socket | FAIL | java.net.SocketException: socket failed: EPERM (Operation not permitted)
+2026-11-22T12:09:19.430Z (local 05:09:19.430 -07:00) | pair | - | info | variant 1 broke before the code was used; trying the next one
+2026-11-22T12:09:19.430Z (local 05:09:19.430 -07:00) | pair | - | info | variant 2 of 4: bundled Conscrypt, TLS 1.3, no client certificate; target 127.0.0.1:36737
+2026-11-22T12:09:19.430Z (local 05:09:19.430 -07:00) | pair | connect-socket | start
+2026-11-22T12:09:19.431Z (local 05:09:19.431 -07:00) | pair | connect-socket | FAIL | java.net.SocketException: socket failed: EPERM (Operation not permitted)
+2026-11-22T12:09:19.431Z (local 05:09:19.431 -07:00) | pair | - | info | variant 2 broke before the code was used; trying the next one
+2026-11-22T12:09:19.431Z (local 05:09:19.431 -07:00) | pair | - | info | variant 3 of 4: platform TLS provider, TLS 1.3, adb certificate; target 127.0.0.1:36737
+2026-11-22T12:09:19.431Z (local 05:09:19.431 -07:00) | pair | connect-socket | start
+2026-11-22T12:09:19.431Z (local 05:09:19.431 -07:00) | pair | connect-socket | FAIL | java.net.SocketException: socket failed: EPERM (Operation not permitted)
+2026-11-22T12:09:19.432Z (local 05:09:19.432 -07:00) | pair | - | info | variant 3 broke before the code was used; trying the next one
+2026-11-22T12:09:19.432Z (local 05:09:19.432 -07:00) | pair | - | info | variant 4 of 4: bundled Conscrypt, TLS 1.3, previous certificate (CN=farhan, SHA-512); target 127.0.0.1:36737
+2026-11-22T12:09:19.432Z (local 05:09:19.432 -07:00) | pair | connect-socket | start
+2026-11-22T12:09:19.432Z (local 05:09:19.432 -07:00) | pair | connect-socket | FAIL | java.net.SocketException: socket failed: EPERM (Operation not permitted)
+2026-11-22T12:09:19.432Z (local 05:09:19.432 -07:00) | pair | - | info | variant 4 (bundled Conscrypt, TLS 1.3, previous certificate (CN=farhan, SHA-512)) ended: broke at connect-socket (SocketException); variant 1 had broken at connect-socket
+2026-11-22T12:09:19.433Z (local 05:09:19.433 -07:00) | pair | - | info | result: broke at connect-socket (SocketException)
+2026-11-22T12:09:19.433Z (local 05:09:19.433 -07:00) | pair | discovery | start
+2026-11-22T12:09:19.442Z (local 05:09:19.442 -07:00) | pair | discovery | FAIL | NsdStartDiscoveryFailed
+2026-11-22T12:09:22.620Z (local 05:09:22.620 -07:00) | check | start | info | Connection check. It uses no pairing code and changes nothing on the phone.
+2026-11-22T12:09:22.634Z (local 05:09:22.634 -07:00) | check | phone | info | Android 17 (SDK 37), Farhan targetSdk 35, Google Pixel 9a
+2026-11-22T12:09:22.636Z (local 05:09:22.636 -07:00) | check | phone | info | adb_enabled=0, adb_wifi_enabled=1, development_settings_enabled=1
+2026-11-22T12:09:22.636Z (local 05:09:22.636 -07:00) | check | phone | info | ACCESS_LOCAL_NETWORK: declared=yes, granted=yes
+2026-11-22T12:09:22.639Z (local 05:09:22.639 -07:00) | check | wifi | info | Wi-Fi: phone Wi-Fi IPv4 none; interfaces: no up interface with an IPv4 address; connectivity state not readable (this app has no ACCESS_NETWORK_STATE)
+2026-11-22T12:09:22.643Z (local 05:09:22.643 -07:00) | check | mdns | info | mDNS discovery could not start for _adb-tls-pairing._tcp (NSD error 0)
+2026-11-22T12:09:22.643Z (local 05:09:22.643 -07:00) | check | mdns | info | mDNS discovery could not start for _adb-tls-connect._tcp (NSD error 0)
+2026-11-22T12:09:30.713Z (local 05:09:30.713 -07:00) | check | mdns | info | mDNS: no _adb-tls-pairing._tcp or _adb-tls-connect._tcp service found in 8 s.
+2026-11-22T12:09:30.719Z (local 05:09:30.719 -07:00) | check | tcp | info | TCP 127.0.0.1:36737 (typed): failed after 2 ms: java.net.SocketException: socket failed: EPERM (Operation not permitted)
+2026-11-22T12:09:30.721Z (local 05:09:30.721 -07:00) | check | end | info | Check finished in 8.101 s. No pairing code was used and nothing on the phone changed.
+
+---
+
+yeah, it was internet permission. Mistake on my part. You told me it needs internet, and I should have realized it too. Thanks for the added visibility and patience anyway. I fixed the permission and it seems to be working. Once you feel satisfied with the work here, go cold and I'll ring you up if it stops working.
+
+---
+
+commit, push, build and taildrop once finished with changes. Thanks and goodnight
+
+---
+
+<task-notification>
+<task-id>a9a378cb511afa884</task-id>
+<tool-use-id>toolu_014tDc4f8f64BXaoY2m8Gvos</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/e7071693-df15-461f-aba5-739553ce3379/tasks/a9a378cb511afa884.output</output-file>
+<status>completed</status>
+<summary>Agent "Fix self-ADB pairing failure" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Network access being refused is now detected before any pairing or connect step, and the flow page says so before asking for a code. I could not reproduce the EPERM refusal on the emulator, so the real-phone behaviour is untested.
+
+**Build identity** (read back from the built file with `scripts/apk-version.sh`)
+- Package: `ly.com.tahaben.farhan_alpha`
+- versionCode: 13 (from `scripts/bump-build.sh`)
+- versionName: `0.2.6-alpha+gcfeb20d-dirty` (built with `-PbuildTag=+gcfeb20d-dirty`)
+- Size: 37,307,592 bytes
+- sha256: `240112d9457caf0e49c890ab37b66df07db887d0193de132f5c9ca4a30ded1f0`
+- Path: `/home/user/runs/inbox-slice/app/build/outputs/apk/profileable/app-profileable.apk` in sandbox `bx_bngcafgz`
+
+**The Boat disk is full** (0 bytes free on `/home`, 141G of 147G). The APK is intact, but `nix develop` fails with a SQLite disk I/O error. I ran the aapt2 version check directly from the Android SDK instead. Free some space before the next build, and before downloading if that needs scratch room.
+
+**Tests**
+- All pass: the `privileged_access_*` suites, `:app:testDebugUnitTest` and `:app:assembleProfileable`.
+- Counts, summed from the test-result files: domain 67, presentation 49, selfadb 65.
+
+**Detection**
+- A preflight runs at the start of `pair()`, of `run()`, and of the Connection check. It uses two signals: `checkSelfPermission(INTERNET)`, and a self-test that opens a loopback server socket of its own and connects to it. It does not touch adbd.
+- It reports `Denied` only when the permission is refused or the self-test fails with EPERM. Any other self-test failure, such as a timeout, is logged but is not a denial.
+- Its result is logged as `Network permission: denied|granted (checkSelfPermission(INTERNET)=…; loopback self-test …)`.
+- A `SocketException` whose own text or cause chain contains `EPERM` or `Operation not permitted` is recognised as a refusal.
+- `StepFailure` now has `detail` and `networkDenied`. The message is kept only when it is a refusal.
+- Mid-flight EPERM maps to a new `PairingResult.NetworkDenied` and `RouteBlocker.NETWORK_DENIED`, and stops the variants at once.
+- On `NsdStartDiscoveryFailed` the preflight is asked again. If the network is off, that is reported as the cause. A lone NSD failure is not treated as a denial, because it can have other causes.
+- `NETWORK_DENIED` does not forget the stored key.
+
+**UI**
+- When the pairing page opens (and on Try again, or when you pick wireless debugging), Farhan asks whether network access is allowed. If it is denied, the code form is replaced by the message, an "Open Farhan's app settings" button, and the Connection log section. No code is asked for.
+- The same message and button show under a failure. A switch toggle that finds the network off opens the flow page with this message instead of a toast.
+- The button opens `ACTION_APPLICATION_DETAILS_SETTINGS` for our package.
+- The step line shows the real EPERM text only for a refusal, for example "Pairing failed at: connecting to the port (SocketException: socket failed: EPERM (Operation not permitted))".
+- The message text is in `core/src/main/res/values/strings.xml`:
+  - Message: "Farhan's network access is off. Farhan uses it only to talk to this phone. Turn it on in App info, Permissions, Network (GrapheneOS), or in your phone's app network settings, then try again."
+  - Button: "Open Farhan's app settings".
+
+**Connection check**
+- The first line is now the network line. If denied, it includes the same hint, then the phone facts follow. After that the network probes are skipped, with a line saying so, because they could only fail.
+- A Wi-Fi line with no IPv4 now says "none" can be wrong when Farhan's network access is denied.
+
+**Emulator**
+- A real EPERM is not reproducible there. `pm revoke` can't touch INTERNET.
+- Instead I used `cmd connectivity set-package-networking-enabled false`. That dropped Farhan's packets, so connects timed out rather than returning EPERM.
+- The check printed `Network permission: granted (checkSelfPermission(INTERNET)=GRANTED; loopback self-test failed: java.net.SocketTimeoutException: …)` as its first line and did not call it a denial, as intended. mDNS and TCP then timed out.
+- With networking re-enabled it printed `Network permission: granted (…; loopback self-test ok)`.
+- The EPERM mapping is covered by unit tests only: message variants, permission denied, a loopback failure that is not EPERM, the variant short-circuit, state mapping, the toggle opening the flow, and the check's first line and skip.
+
+**Not verified on the Pixel**
+- That GrapheneOS reports `checkSelfPermission(INTERNET)` as denied when the toggle is off.
+- That the loopback self-test gets EPERM there.
+- That `NetworkInterface` enumeration works with the toggle off.
+- The owner's build-12 log already shows EPERM on both the connect and the loopback TCP, so at least one of the two signals should fire.
+
+**Files**
+- Domain: `SelfAdbFailure.kt`, `Routes.kt`, `PrivilegedAccess.kt`.
+- Presentation: `SpecialAccessModel.kt`, `PrivilegedAccessViewModel.kt`.
+- Selfadb: new `NetworkPreflight.kt`; changes to `AdbPairingClient.kt`, `AndroidSelfAdbRoute.kt`, `ConnectionCheck.kt`, `AndroidCheckProbes.kt`, `AdbDiscovery.kt`.
+- App: `SpecialAccessText.kt`, `SpecialAccessFlow.kt`, `SpecialAccessController.kt`, `SettingsScreen.kt`.
+- `scripts/bump-build.sh` raised `gradle/libs.versions.toml` to versionCode 13.
+- Nothing is committed.
+
+result: Farhan now checks, before asking for a pairing code, whether the OS refuses it network access. It shows a clear "network access is off" message with a button to its app settings, and stops trying variants once EPERM is seen. Unit tests and the build pass, and the emulator showed the preflight line in the check, but a real EPERM refusal could not be reproduced. The APK is package `ly.com.tahaben.farhan_alpha`, versionCode 13, versionName `0.2.6-alpha+gcfeb20d-dirty`, sha256 `240112d9…ded1f0` (the Boat sandbox disk is full and needs clearing before the next build).</result>
+<usage><subagent_tokens>505043</subagent_tokens><tool_uses>25</tool_uses><duration_ms>626352</duration_ms></usage>
+</task-notification>

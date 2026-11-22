@@ -1,0 +1,37 @@
+{
+  "tool_use_id": "toolu_017pW65WKqGRE5pupwoT2n4H",
+  "agent_id": "a9a378cb511afa884",
+  "subagent_type": "claude",
+  "task_description": "Fix self-ADB pairing failure",
+  "files": [
+    "research/boat.md",
+    "research/settings-recovery-feasibility.md",
+    "research/settings-rescue-green-report.md",
+    "settings_rescue/src/main/AndroidManifest.xml",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/AdbCommand.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/AdbShell.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/RemoteShell.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/RescueAdbManager.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/bridge/AdbBridgeService.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/bridge/BridgeProtocol.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/bridge/BridgeSupervision.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/capture/CaptureEngine.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/storage/PrivateFiles.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/ui/Messages.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/ui/RescueActivity.kt",
+    "settings_rescue/src/main/res/values/strings.xml",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/AdbCommandTest.kt",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/BridgeProtocolTest.kt",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/CaptureEngineTest.kt",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/TestSupport.kt"
+  ],
+  "token_usage": {
+    "input_tokens": 420,
+    "cache_creation_tokens": 1257302,
+    "cache_read_tokens": 58973870,
+    "output_tokens": 252748,
+    "api_call_count": 205
+  },
+  "started_at": "2026-11-22T04:18:02.797805053-07:00",
+  "completed_at": "2026-11-22T04:18:02.79869682-07:00"
+}
