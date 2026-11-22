@@ -1,0 +1,27 @@
+Act as the review sub-agent for this task.
+
+You are a code reviewer for the Farhan Android app (Kotlin, Compose). Review only; do not edit files in any worktree, do not commit, do not push. Read /home/mini/Documents/repos/Farhan/research/agent-rules-2026-11-20.md for how to build and test on the Boat sandbox (run names must be yours: use `review-clear` and `review-usage`; take the build lock; copy a worktree to a scratch dir if you need to run something that writes).
+
+Two branches, base 717faf6, each one commit:
+A. fix/clear-per-category (commit 10dd0d1, worktree /home/mini/Documents/repos/Farhan.worktrees/clear-category; brief research/clear-category-brief.md and report research/clear-category-report.md there). Owner bug: "the clear button, in a particular category, only clears what is in that category, not everything overall." Inbox chips are Critical/High/Medium/Low/All/Cleared. The author is Sol.
+B. fix/usage-permission-package (commit 653b60b, worktree /home/mini/Documents/repos/Farhan.worktrees/usage-permission; brief and report there). Cause: the usage-access check used the Kotlin namespace `ly.com.tahaben.farhan` as the package; the installed application id is `ly.com.tahaben.farhan_alpha`. The author is Sonnet. It also fixes `pm grant` in GrayscaleUtilImpl and a stale instrumented test.
+Use `git -C <worktree> diff 717faf6..HEAD` as the one diff command for each.
+
+## Priorities
+Most important (A): a scoped clear removes exactly what the selected chip lists, on every page, at one standing cutoff, and never touches other rows, other pending deliveries or other retained actions. Invariants: the set deleted equals the set whose deliveries are invalidated; all of it runs under the coordinator's gate; All and Cleared behave as the brief says; a stale callback for a cleared id is rejected. Concerns: concurrency (a row arriving between select and delete), SQLite variable limits, regressions in NotificationFilterViewModel (the diff rewrites a lot of it: check the paging, filter, cleared-view and delete-one paths still work), the label mapping, string copy quality, tests that would pass without the fix (apply two or three wrong implementations mentally or for real in a scratch copy and name the test that should go red).
+Most important (B): no other code uses a hardcoded or namespace package name where the installed id is needed; the change is complete and nothing regresses (ViewModel constructor change for Hilt, the E2E test, the widget worker).
+Lower priority: naming nits, comment polish. Preserve any serious defect regardless of priority.
+Evidence available: A's author reports 179 targeted JVM tests pass and device behaviour is not verified; B's author has an emulator before/after proof in research/usage-permission/ (look at the screenshots).
+
+## Output
+Write your reply as a list of findings, most severe first, each: [severity must/should/nit] file:line, the claim, the failing scenario, the smallest fix. End with `VERDICT: CHANGES` or `VERDICT: OK` per branch and a one-line score per concern (correctness, concurrency, tests, legibility) out of 10. Then wait: the orchestrator will send you one pushback or question; answer it before you finish.
+
+---
+
+Orchestrator: thanks, good review. Three places I want to push back before I accept it. Answer briefly, from code, edit nothing.
+
+1. Finding 5 (skip `invalidateDeleted` and proxy cancels for Cleared). You say cleared rows have no proxies. Prove it from the code: can a row become `cleared` while its proxy is still posted or a delivery event is still in flight (mark-as-cleared from the inbox, a failed open, a source cancel)? If any path leaves an event or proxy alive for a cleared id, skipping invalidation reopens the stale-callback hole you praised in "what works". Also, are `NotificationManager.cancel` calls for a nonexistent id really binder calls we should avoid, or is the real cost the per-id loop inside the gate? Would batching the ids (one gate hold, no per-id suspension) be enough, and cheaper to get right than special-casing Cleared?
+2. Finding 6 (high-water mark). The old All clear had the same behaviour and nobody called it a bug. A user who presses "Clear Low" accepts that rows arriving in the next milliseconds go too, and a row that arrives after the press but before the gate frees is the same case as one arriving a moment later. Why is this worth new state and a new predicate term, rather than a documented limit? I lean to decline it. Convince me or agree.
+3. Finding 4 (empty-state flash): did the base (717faf6) already clear the lists on a chip tap, or is that new in this branch? Quote the base lines. If it pre-existed, it is out of scope for this fix and I will log it, not change it.
+
+I accept findings 1, 2, 3, 7, 8 and the B items as should-fix.
