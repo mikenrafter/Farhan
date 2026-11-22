@@ -1,0 +1,40 @@
+Act as the test sub-agent for this task.
+
+Verify and commit a bug fix in the Farhan Android app: the Usage page never unlocks because the usage-access permission check used a hardcoded wrong package name. Read these first, in order: (1) /home/mini/Documents/repos/Farhan/research/agent-rules-2026-11-20.md (rules for every delegated run: no push, Boat build/test commands, emulator start, report conventions); (2) /home/mini/Documents/repos/Farhan.worktrees/usage-permission/research/usage-permission-brief.md (the cause, what the diff does, your numbered job). Work only in /home/mini/Documents/repos/Farhan.worktrees/usage-permission (branch fix/usage-permission-package); the fix is already applied there, uncommitted. You may use vigil but never orchestrator mode. Flag any problem over 30 minutes. Write research/usage-permission-report.md early and keep it current. Commit in the worktree when verified.
+
+---
+
+Orchestrator: good find on GrayscaleUtilImpl. Decisions, so you do not wait: (1) fix GrayscaleUtilImpl.kt:31 in this same branch with context.packageName (same cause, one line, add it to the commit message); read the surrounding code first and say in the report whether a context is in scope there and whether the root `pm grant` path is reachable at all. (2) Update ExampleInstrumentedTest to assert the real application id (ly.com.tahaben.farhan_alpha, as SettingsRecoveryIntegrationTest does) in the same commit, listed as a changed existing test in the report. (3) Tidy the inline InstrumentationRegistry in UsageOverviewE2E to an import. (4) Leave app/release/output-metadata.json alone. Keep going with the emulator before/after proof; that is the evidence the owner needs.
+
+---
+
+Review round 1 of 653b60b is done (Opus: OK, four small fixes). Read /home/mini/Documents/repos/Farhan.worktrees/usage-permission/research/usage-permission-review-round1.md and do items 1-4 (retake the screenshot on the shared emulator after the page loads, fix the script default, drop Context from the ViewModel, assert BuildConfig.APPLICATION_ID). Rules as before (/home/mini/Documents/repos/Farhan/research/agent-rules-2026-11-20.md): own worktree, no push, no stash, Boat under the flock lock, new commit not an amend. Report the commit and test results.
+
+---
+
+Round 2 review of f877f11 is done (Opus: OK, three small items). Read the section 'Review round 2' at the end of /home/mini/Documents/repos/Farhan.worktrees/usage-permission/research/usage-permission-review-round1.md and do items 1-3 (KDoc/CLAIM placement and one source for the package name, report reconciliation, and the JVM test for filterFarhan with its positive control). New commit over f877f11, rules as before; report the commit and test results.
+
+---
+
+<task-notification>
+<task-id>bpuy66jg1</task-id>
+<tool-use-id>toolu_01AxbU2haydTdfs1jsU6oGm4</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/692b4a47-ef9a-466e-b204-707c2b08baa9/tasks/bpuy66jg1.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /home/mini/Documents/repos/Farhan.worktrees/usage-permission &amp;&amp; V=usage_overview/usage_overview_presentation/src/main/java/ly/com/tahaben/usage_overview_presentation/UsageOverviewViewModel.kt; R=/tmp/claude-1001/-home-mini-Documents-repos-Farhan/692b4a47-ef9a-466e-b204-707c2b08baa9/scratchpad/run.sh
+echo "== mutant A: hardcoded namespace"; sed -i 's|private val ownPackageName = usageOverviewUseCases.getOwnPackageName()|private val ownPackageName = "ly.com.tahaben.farhan"|'
+
+... [215 characters truncated] ...
+
+erFarhan \&amp;\&amp; it.packageName == ownPackageName)|(it.packageName == ownPackageName)|' $V; rtk git diff --stat $V; bash $R :usage_overview:usage_overview_presentation:testDebugUnitTest --tests '*UsageOverviewIgnoreFarhanTest*'; rtk git checkout -- $V; rtk git status --short $V" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bbnxsfdvz</task-id>
+<tool-use-id>toolu_018uWxF8QRQpwwgdiYrHxABA</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/692b4a47-ef9a-466e-b204-707c2b08baa9/tasks/bbnxsfdvz.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /home/mini/Documents/repos/Farhan.worktrees/usage-permission &amp;&amp; git diff usage_overview/usage_overview_presentation | grep '^[+-] ' | head -4; bash /tmp/claude-1001/-home-mini-Documents-repos-Farhan/692b4a47-ef9a-466e-b204-707c2b08baa9/scratchpad/run.sh :usage_overview:usage_overview_presentation:testDebugUnitTest --tests '*UsageOverviewIgnoreFarhanTest*'; rtk git checkout -- usage_overview/usage_overview_presentation/src/main; rtk git status --short" completed (exit code 0)</summary>
+</task-notification>

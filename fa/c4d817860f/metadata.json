@@ -1,0 +1,61 @@
+{
+  "cli_version": "0.13.4",
+  "checkpoint_id": "fac4d817860f",
+  "strategy": "manual-commit",
+  "branch": "pilot/settings-portability",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "research/boat.md",
+    "research/build-loop-state-2026-11-20.md",
+    "research/cls-and-perf-baseline.md",
+    "research/settings-recovery-feasibility.md",
+    "research/settings-rescue-green-report.md",
+    "settings_rescue/src/main/AndroidManifest.xml",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/AdbCommand.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/AdbShell.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/RemoteShell.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/RescueAdbManager.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/bridge/AdbBridgeService.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/bridge/BridgeProtocol.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/bridge/BridgeSupervision.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/capture/CaptureEngine.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/storage/PrivateFiles.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/ui/Messages.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/ui/RescueActivity.kt",
+    "settings_rescue/src/main/res/values/strings.xml",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/AdbCommandTest.kt",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/BridgeProtocolTest.kt",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/CaptureEngineTest.kt",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/TestSupport.kt"
+  ],
+  "sessions": [
+    {
+      "metadata": "/fa/c4d817860f/0/metadata.json",
+      "transcript": "/fa/c4d817860f/0/full.jsonl",
+      "compact_transcript": "/fa/c4d817860f/0/transcript.jsonl",
+      "content_hash": "/fa/c4d817860f/0/content_hash.txt",
+      "prompt": "/fa/c4d817860f/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2,
+    "cache_creation_tokens": 1270,
+    "cache_read_tokens": 154489,
+    "output_tokens": 1001,
+    "api_call_count": 1
+  },
+  "redaction": {
+    "replacements": 2,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 0,
+      "key_context": 2,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  }
+}
