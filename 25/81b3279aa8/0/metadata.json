@@ -1,0 +1,136 @@
+{
+  "cli_version": "0.13.4",
+  "checkpoint_id": "2581b3279aa8",
+  "session_id": "4cfee741-49ea-4544-a4ef-5b2a8ee7c644",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-22T01:59:47.843462485Z",
+  "branch": "pilot/settings-portability",
+  "checkpoints_count": 2,
+  "save_step_count": 2,
+  "files_touched": [
+    "research/boat.md",
+    "research/build-loop-state-2026-11-20.md",
+    "research/review/snooze-round1-exchange.md",
+    "research/review/snooze-round1-reply.txt",
+    "research/settings-recovery-feasibility.md",
+    "research/settings-rescue-green-report.md",
+    "research/upstream-nav-check.md",
+    "settings_rescue/src/main/AndroidManifest.xml",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/AdbCommand.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/AdbShell.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/RemoteShell.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/RescueAdbManager.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/bridge/AdbBridgeService.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/bridge/BridgeProtocol.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/bridge/BridgeSupervision.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/capture/CaptureEngine.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/storage/PrivateFiles.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/ui/Messages.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/ui/RescueActivity.kt",
+    "settings_rescue/src/main/res/values/strings.xml",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/AdbCommandTest.kt",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/BridgeProtocolTest.kt",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/CaptureEngineTest.kt",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/TestSupport.kt"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "fc5167f817c4",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 94,
+    "cache_creation_tokens": 231795,
+    "cache_read_tokens": 7643513,
+    "output_tokens": 85941,
+    "api_call_count": 46
+  },
+  "session_token_usage": {
+    "input_tokens": 94,
+    "cache_creation_tokens": 231795,
+    "cache_read_tokens": 7643513,
+    "output_tokens": 85941,
+    "api_call_count": 46
+  },
+  "redaction": {
+    "replacements": 2,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 0,
+      "key_context": 2,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_014JbzgqwFU2nFTSMY4nvhM6",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "test-quality"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "fc5167f817c4",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 33,
+        "end": 34,
+        "entry_ids": [
+          "d0d40ef6-cf77-4c78-a292-c319c369671c"
+        ],
+        "tool_use_id": "toolu_014JbzgqwFU2nFTSMY4nvhM6"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_014JbzgqwFU2nFTSMY4nvhM6"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: test-quality",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_01DVuNGKzb6G1n9BbWBovMqU",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "technical-excellence"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "fc5167f817c4",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 40,
+        "end": 41,
+        "entry_ids": [
+          "e82283e5-3716-4be2-b57e-70068982353c"
+        ],
+        "tool_use_id": "toolu_01DVuNGKzb6G1n9BbWBovMqU"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01DVuNGKzb6G1n9BbWBovMqU"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: technical-excellence",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 2
+  }
+}
