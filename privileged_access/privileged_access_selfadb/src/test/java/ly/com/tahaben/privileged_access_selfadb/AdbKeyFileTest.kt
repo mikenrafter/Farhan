@@ -27,15 +27,38 @@ class AdbKeyFileTest {
         assertThat(loaded.certificateDer).isEqualTo(identity.certificateDer)
         assertThat(loaded.createdAtMillis).isEqualTo(1_700_000_000_000)
         assertThat(loaded.privateKey().algorithm).isEqualTo("RSA")
-        assertThat(loaded.certificate().subjectX500Principal.name).isEqualTo("CN=farhan")
+        assertThat(loaded.certificate().subjectX500Principal.name).isEqualTo("CN=00")
     }
 
-    // why: a key retained for years has to outlive a short certificate date.
+    // why: the TLS client certificate is the one thing that differs from the apps that pair on an Android 17 Pixel.
+    // catches: a certificate with another subject, hash or dates than adb's own.
     @Test
-    fun `the certificate is valid for years`() {
-        val now = 1_700_000_000_000
-        val certificate = IdentityFactory.generate(now).certificate()
-        assertThat(certificate.notAfter.time - now).isGreaterThan(3L * 365 * 24 * 3600 * 1000)
+    fun `the certificate has the shape adb's own client certificate has`() {
+        val certificate = IdentityFactory.generate(1_700_000_000_000).certificate()
+        assertThat(certificate.subjectX500Principal.name).isEqualTo("CN=00")
+        assertThat(certificate.issuerX500Principal.name).isEqualTo("CN=00")
+        assertThat(certificate.serialNumber).isEqualTo(java.math.BigInteger.ONE)
+        assertThat(certificate.sigAlgName).isEqualTo("SHA256withRSA")
+        assertThat(certificate.notBefore.time).isEqualTo(0L)
+        assertThat(certificate.notAfter.time).isEqualTo(2_461_449_600_000L)
+        certificate.verify(certificate.publicKey)
+    }
+
+    // why: a key stored by an earlier build carries a CN=farhan, SHA-512 certificate and must not need re-pairing.
+    // catches: presenting the stored certificate unchanged.
+    @Test
+    fun `a key stored with an older certificate presents the current shape`() {
+        val fresh = IdentityFactory.generate(1_700_000_000_000)
+        val old = org.bouncycastle.asn1.x500.X500Name("CN=farhan").let { name ->
+            val builder = org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder(
+                name, java.math.BigInteger.TEN, java.util.Date(1), java.util.Date(2), name, fresh.publicKey(),
+            )
+            val signer = org.bouncycastle.operator.jcajce.JcaContentSignerBuilder("SHA512withRSA").build(fresh.privateKey())
+            org.bouncycastle.cert.jcajce.JcaX509CertificateConverter().getCertificate(builder.build(signer)).encoded
+        }
+        val identity = AdbIdentity(fresh.privateKeyPkcs8, old, 1)
+        assertThat(identity.certificate().subjectX500Principal.name).isEqualTo("CN=00")
+        assertThat(identity.certificate().publicKey).isEqualTo(fresh.certificate().publicKey)
     }
 
     @Test

@@ -5,13 +5,13 @@ enum class LinkLostReason { NOT_PAIRED, KEY_REJECTED, WIRELESS_DEBUGGING_OFF }
 
 sealed interface AccessFailure {
     /** The retained link is gone or unusable: pair again, or switch wireless debugging back on. */
-    data class LinkLost(val reason: LinkLostReason) : AccessFailure
+    data class LinkLost(val reason: LinkLostReason, val at: StepFailure? = null) : AccessFailure
 
     /** Shizuku is installed but its service is not running: start it from the Shizuku app. */
     data object ShizukuNotRunning : AccessFailure
 
     /** Any other reason the route could not run the command. [blocker] says which. */
-    data class RouteBlocked(val route: Route, val blocker: RouteBlocker) : AccessFailure
+    data class RouteBlocked(val route: Route, val blocker: RouteBlocker, val at: StepFailure? = null) : AccessFailure
 
     /** The shell ran the command and it failed. [output] is cleaned text from the shell. */
     data class CommandFailed(val route: Route, val exitCode: Int, val output: String) : AccessFailure
@@ -46,12 +46,12 @@ object OutputText {
 
 object AccessMapper {
     /** A shell result that did not run the command. */
-    fun failureOf(route: Route, blocker: RouteBlocker): AccessFailure = when (blocker) {
-        RouteBlocker.NOT_PAIRED -> AccessFailure.LinkLost(LinkLostReason.NOT_PAIRED)
-        RouteBlocker.KEY_REJECTED -> AccessFailure.LinkLost(LinkLostReason.KEY_REJECTED)
-        RouteBlocker.WIRELESS_DEBUGGING_OFF -> AccessFailure.LinkLost(LinkLostReason.WIRELESS_DEBUGGING_OFF)
+    fun failureOf(route: Route, blocker: RouteBlocker, at: StepFailure? = null): AccessFailure = when (blocker) {
+        RouteBlocker.NOT_PAIRED -> AccessFailure.LinkLost(LinkLostReason.NOT_PAIRED, at)
+        RouteBlocker.KEY_REJECTED -> AccessFailure.LinkLost(LinkLostReason.KEY_REJECTED, at)
+        RouteBlocker.WIRELESS_DEBUGGING_OFF -> AccessFailure.LinkLost(LinkLostReason.WIRELESS_DEBUGGING_OFF, at)
         RouteBlocker.SHIZUKU_NOT_RUNNING -> AccessFailure.ShizukuNotRunning
-        else -> AccessFailure.RouteBlocked(route, blocker)
+        else -> AccessFailure.RouteBlocked(route, blocker, at)
     }
 
     /** A shell result that ran: a clean exit goes on to be checked against the phone, anything else is a failure. */

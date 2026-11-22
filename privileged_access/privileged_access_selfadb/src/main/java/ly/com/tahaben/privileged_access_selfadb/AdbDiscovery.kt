@@ -3,6 +3,7 @@ package ly.com.tahaben.privileged_access_selfadb
 import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
@@ -10,6 +11,10 @@ import java.net.InetAddress
 import java.net.ServerSocket
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import ly.com.tahaben.privileged_access_domain.NetworkDenial
+import ly.com.tahaben.privileged_access_domain.SelfAdbStep
+import ly.com.tahaben.privileged_access_domain.StepFailure
 import kotlin.coroutines.resume
 
 /**
@@ -21,13 +26,35 @@ import kotlin.coroutines.resume
 internal class AdbDiscovery(
     private val context: Context,
     private val portIsOurs: (Int) -> Boolean = ::portInUseHere,
+    private val log: StepLog = NoStepLog,
 ) {
-    suspend fun findPairingPort(timeoutMillis: Long = 10_000): Int? = find(PAIRING_TYPE, timeoutMillis)
+    /** What a search found. [Broke] is a search that could not run, as opposed to one that found nothing. */
+    sealed interface Found {
+        data class Port(val port: Int) : Found
+        data object Nothing : Found
+        data class Broke(val at: StepFailure) : Found
+    }
 
-    suspend fun findConnectPort(timeoutMillis: Long = 6_000): Int? = find(CONNECT_TYPE, timeoutMillis)
+    suspend fun findPairingPort(timeoutMillis: Long = 10_000): Found = find(PAIRING_TYPE, "pair", timeoutMillis)
+
+    suspend fun findConnectPort(timeoutMillis: Long = 6_000): Found = find(CONNECT_TYPE, "connect", timeoutMillis)
+
+    private suspend fun find(type: String, operation: String, timeoutMillis: Long): Found {
+        log.reached(operation, SelfAdbStep.DISCOVERY)
+        val broke = AtomicReference<StepFailure?>(null)
+        val port = try {
+            search(type, operation, timeoutMillis, broke)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Throwable) {
+            val at = StepFailure.of(SelfAdbStep.DISCOVERY, failure).also { log.failed(operation, it, failure) }
+            return Found.Broke(at)
+        }
+        return port?.let { Found.Port(it) } ?: broke.get()?.let { Found.Broke(it) } ?: Found.Nothing
+    }
 
     @Suppress("DEPRECATION")
-    private suspend fun find(type: String, timeoutMillis: Long): Int? = withTimeoutOrNull(timeoutMillis) {
+    private suspend fun search(type: String, operation: String, timeoutMillis: Long, broke: AtomicReference<StepFailure?>): Int? = withTimeoutOrNull(timeoutMillis) {
         val manager = context.getSystemService(Context.NSD_SERVICE) as NsdManager
         suspendCancellableCoroutine { continuation ->
             val pending = ConcurrentLinkedQueue<NsdServiceInfo>()
@@ -59,7 +86,11 @@ internal class AdbDiscovery(
             discovery = object : NsdManager.DiscoveryListener {
                 override fun onDiscoveryStarted(serviceType: String) = Unit
                 override fun onDiscoveryStopped(serviceType: String) = Unit
-                override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) = finish(null)
+                override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
+                    // The platform gives a code, not an exception; the name says which call refused.
+                    StepFailure(SelfAdbStep.DISCOVERY, NetworkDenial.NSD_START_FAILED).also { broke.set(it); log.failed(operation, it) }
+                    finish(null)
+                }
                 override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) = Unit
                 override fun onServiceLost(serviceInfo: NsdServiceInfo) = Unit
                 override fun onServiceFound(serviceInfo: NsdServiceInfo) {
@@ -74,6 +105,7 @@ internal class AdbDiscovery(
             try {
                 manager.discoverServices(type, NsdManager.PROTOCOL_DNS_SD, discovery)
             } catch (failure: RuntimeException) {
+                StepFailure.of(SelfAdbStep.DISCOVERY, failure).also { broke.set(it); log.failed(operation, it, failure) }
                 finish(null)
             }
         }

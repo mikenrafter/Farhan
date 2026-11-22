@@ -7,6 +7,7 @@ import ly.com.tahaben.privileged_access_domain.AccessResult
 import ly.com.tahaben.privileged_access_domain.AccessState
 import ly.com.tahaben.privileged_access_domain.LinkLostReason
 import ly.com.tahaben.privileged_access_domain.LinkState
+import ly.com.tahaben.privileged_access_domain.NetworkAccess
 import ly.com.tahaben.privileged_access_domain.PairingResult
 import ly.com.tahaben.privileged_access_domain.PrivilegedCommand
 import ly.com.tahaben.privileged_access_domain.PrivilegedStatus
@@ -14,6 +15,8 @@ import ly.com.tahaben.privileged_access_domain.Route
 import ly.com.tahaben.privileged_access_domain.RouteBlocker
 import ly.com.tahaben.privileged_access_domain.RoutePreference
 import ly.com.tahaben.privileged_access_domain.RouteReadiness
+import ly.com.tahaben.privileged_access_domain.SelfAdbStep
+import ly.com.tahaben.privileged_access_domain.StepFailure
 import org.junit.Test
 
 class SpecialAccessModelTest {
@@ -117,6 +120,61 @@ class SpecialAccessModelTest {
         val with = failureViewOf(AccessFailure.CommandFailed(Route.SELF_ADB, 1, "Security exception"))
         assertThat(with).isEqualTo(FailureView(FailureKind.COMMAND_FAILED, "Security exception"))
         assertThat(failureViewOf(AccessFailure.CommandFailed(Route.SELF_ADB, 1, "")).detail).isNull()
+    }
+
+    // why: the owner's phone broke somewhere before SPAKE2 and said nothing. catches: a step lost on the way to the page.
+    @Test
+    fun `a broken pairing step reaches the failure view with its step and class`() {
+        fun view(step: SelfAdbStep, cls: String = "SomeException") = failureViewOf(PairingResult.StepFailed(StepFailure(step, cls)))!!
+        val tls = view(SelfAdbStep.TLS_HANDSHAKE, "SSLHandshakeException")
+        assertThat(tls).isEqualTo(FailureView(FailureKind.PAIRING_FAILED, step = StepFailure(SelfAdbStep.TLS_HANDSHAKE, "SSLHandshakeException")))
+        // before the code is used the user did nothing wrong; from the port on it reads as a wrong code or a closed dialog
+        listOf(SelfAdbStep.DISCOVERY, SelfAdbStep.TLS_HANDSHAKE, SelfAdbStep.FIRST_READ, SelfAdbStep.EXPORT_KEYING_MATERIAL, SelfAdbStep.KEY_SETUP, SelfAdbStep.CONNECT)
+            .forEach { assertThat(view(it).kind).isEqualTo(FailureKind.PAIRING_FAILED) }
+        listOf(SelfAdbStep.CONNECT_SOCKET, SelfAdbStep.SPAKE2, SelfAdbStep.PEER_INFO)
+            .forEach { assertThat(view(it).kind).isEqualTo(FailureKind.PAIRING_REJECTED) }
+        SelfAdbStep.entries.forEach { assertThat(view(it).step?.step).isEqualTo(it) }
+    }
+
+    // why: a rejected key used to lose its step on the way to the page. catches: LinkLost dropping the failed step.
+    // why: the owner's phone refuses every socket. catches: that arriving as a generic "could not pair".
+    @Test
+    fun `a network denial maps to its own kind with the refusal as the step`() {
+        val at = StepFailure(SelfAdbStep.CONNECT_SOCKET, "SocketException", "socket failed: EPERM (Operation not permitted)", true)
+        assertThat(failureViewOf(PairingResult.NetworkDenied(at))).isEqualTo(FailureView(FailureKind.NETWORK_DENIED, step = at))
+        assertThat(failureViewOf(PairingResult.NetworkDenied(null))).isEqualTo(FailureView(FailureKind.NETWORK_DENIED))
+        assertThat(failureKindOf(RouteBlocker.NETWORK_DENIED)).isEqualTo(FailureKind.NETWORK_DENIED)
+        assertThat(FailureKind.NETWORK_DENIED.isPairing()).isFalse()
+    }
+
+    // why: the message has a button, so a switch must open the flow page, not show a short note.
+    @Test
+    fun `a switch that finds the network off opens the flow with the message`() {
+        val at = StepFailure(SelfAdbStep.CONNECT, "SocketException", "socket failed: EPERM (Operation not permitted)", true)
+        val result = AccessResult.Failed(AccessFailure.RouteBlocked(Route.SELF_ADB, RouteBlocker.NETWORK_DENIED, at))
+        assertThat(toggleOutcome(result, status(AccessState.NOT_ALLOWED, AccessState.NOT_ALLOWED)))
+            .isEqualTo(ToggleOutcome.OpenFlow(FailureView(FailureKind.NETWORK_DENIED, step = at), Route.SELF_ADB))
+        val other = AccessResult.Failed(AccessFailure.RouteBlocked(Route.SELF_ADB, RouteBlocker.CONNECTION_FAILED))
+        assertThat(toggleOutcome(other, status(AccessState.NOT_ALLOWED, AccessState.NOT_ALLOWED))).isInstanceOf(ToggleOutcome.Warn::class.java)
+    }
+
+    @Test
+    fun `a lost link keeps the step it broke at`() {
+        val at = StepFailure(SelfAdbStep.CONNECT, "SSLHandshakeException")
+        assertThat(failureViewOf(AccessFailure.LinkLost(LinkLostReason.KEY_REJECTED, at)))
+            .isEqualTo(FailureView(FailureKind.KEY_REJECTED, step = at))
+        assertThat(failureViewOf(AccessFailure.LinkLost(LinkLostReason.KEY_REJECTED)).step).isNull()
+    }
+
+    @Test
+    fun `a blocked connection keeps its step, and the line says pairing or connecting by kind`() {
+        val at = StepFailure(SelfAdbStep.CONNECT, "SocketTimeoutException")
+        val view = failureViewOf(AccessFailure.RouteBlocked(Route.SELF_ADB, RouteBlocker.CONNECTION_FAILED, at))
+        assertThat(view).isEqualTo(FailureView(FailureKind.CONNECTION_FAILED, step = at))
+        assertThat(view.kind.isPairing()).isFalse()
+        listOf(FailureKind.PAIRING_FAILED, FailureKind.PAIRING_REJECTED, FailureKind.PAIRING_SERVICE_NOT_FOUND)
+            .forEach { assertThat(it.isPairing()).isTrue() }
+        assertThat(failureViewOf(AccessFailure.RouteBlocked(Route.SELF_ADB, RouteBlocker.CONNECTION_FAILED)).step).isNull()
     }
 
     @Test

@@ -259,6 +259,55 @@ class PrivilegedAccessTest {
     }
 
     @Test
+    fun `a blocked self-ADB connection passes its failed step through to the result`() = runTest {
+        val at = StepFailure(SelfAdbStep.CONNECT, "SSLHandshakeException")
+        selfAdb.result = ShellResult.Blocked(RouteBlocker.CONNECTION_FAILED, at)
+        assertThat(access().grant(Access.SECURE_SETTINGS, Route.SELF_ADB))
+            .isEqualTo(AccessResult.Failed(AccessFailure.RouteBlocked(Route.SELF_ADB, RouteBlocker.CONNECTION_FAILED, at)))
+    }
+
+    // why: the check must reach the route with the typed port, and the log must come from the route.
+    @Test
+    fun `the connection check goes to the self-ADB route with the typed port, and the log is the route's`() = runTest {
+        val access = access()
+        selfAdb.checkLines = listOf("a", "b")
+        assertThat(access.checkSelfAdbConnection(4321)).containsExactly("a", "b").inOrder()
+        assertThat(selfAdb.checkPorts).containsExactly(4321)
+        assertThat(access.selfAdbLog()).isEqualTo("log text")
+    }
+
+    // why: a check running beside a pairing could open a second connection to the pairing port.
+    @Test
+    fun `the connection check does not run while another change is running`() = runTest {
+        val access = access()
+        selfAdb.hasKey = true
+        selfAdb.gate = kotlinx.coroutines.CompletableDeferred()
+        val running = async(Dispatchers.Default) { access.grant(Access.SECURE_SETTINGS, Route.SELF_ADB) }
+        selfAdb.entered.await()
+        assertThat(access.checkSelfAdbConnection(null).single()).contains("still running")
+        assertThat(selfAdb.checkPorts).isEmpty()
+        selfAdb.gate!!.complete(Unit)
+        running.await()
+    }
+
+    @Test
+    fun `a network denial from the route is returned as it came, and does not forget the key`() = runTest {
+        val at = StepFailure(SelfAdbStep.CONNECT, "SocketException", "socket failed: EPERM (Operation not permitted)", true)
+        selfAdb.hasKey = true
+        selfAdb.result = ShellResult.Blocked(RouteBlocker.NETWORK_DENIED, at)
+        assertThat(access().grant(Access.SECURE_SETTINGS, Route.SELF_ADB))
+            .isEqualTo(AccessResult.Failed(AccessFailure.RouteBlocked(Route.SELF_ADB, RouteBlocker.NETWORK_DENIED, at)))
+        assertThat(selfAdb.forgetCalls).isEqualTo(0)
+    }
+
+    @Test
+    fun `a broken pairing step is returned as it came`() = runTest {
+        val at = StepFailure(SelfAdbStep.TLS_HANDSHAKE, "SSLHandshakeException")
+        selfAdb.pairResult = PairingResult.StepFailed(at)
+        assertThat(access().pairSelfAdb(code, null)).isEqualTo(PairingResult.StepFailed(at))
+    }
+
+    @Test
     fun `granting over Shizuku keeps the link on Shizuku and a second grant needs no question`() = runTest {
         shizuku.readiness = RouteReadiness.Blocked(RouteBlocker.SHIZUKU_PERMISSION_NEEDED)
         val access = access()

@@ -6,6 +6,8 @@ import ly.com.tahaben.privileged_access_domain.AccessFailure
 import ly.com.tahaben.privileged_access_domain.AccessResult
 import ly.com.tahaben.privileged_access_domain.LinkLostReason
 import ly.com.tahaben.privileged_access_domain.PairingResult
+import ly.com.tahaben.privileged_access_domain.SelfAdbStep
+import ly.com.tahaben.privileged_access_domain.StepFailure
 import ly.com.tahaben.privileged_access_domain.PrivilegedCommand
 import ly.com.tahaben.privileged_access_domain.Route
 import ly.com.tahaben.privileged_access_domain.RouteBlocker
@@ -39,6 +41,14 @@ class AccessFlowTest {
         val flow = sensitive.start().pairingDone(PairingResult.Rejected)
         assertThat(flow.phase).isEqualTo(FlowPhase.IDLE)
         assertThat(flow.outcome).isEqualTo(FlowOutcome.Failed(FailureView(FailureKind.PAIRING_REJECTED)))
+    }
+
+    @Test
+    fun `a pairing that broke at a step stops with that step on the page`() {
+        val at = StepFailure(SelfAdbStep.TLS_HANDSHAKE, "SSLHandshakeException")
+        val flow = sensitive.start().pairingDone(PairingResult.StepFailed(at))
+        assertThat(flow.phase).isEqualTo(FlowPhase.IDLE)
+        assertThat(flow.outcome).isEqualTo(FlowOutcome.Failed(FailureView(FailureKind.PAIRING_FAILED, step = at)))
     }
 
     @Test

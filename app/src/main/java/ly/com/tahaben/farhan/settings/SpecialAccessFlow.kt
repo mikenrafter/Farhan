@@ -40,6 +40,8 @@ import ly.com.tahaben.privileged_access_domain.Access
 import ly.com.tahaben.privileged_access_domain.PrivilegedStatus
 import ly.com.tahaben.privileged_access_domain.Route
 import ly.com.tahaben.privileged_access_presentation.AccessFlow
+import ly.com.tahaben.privileged_access_presentation.ConnectionCheckState
+import ly.com.tahaben.privileged_access_presentation.FailureKind
 import ly.com.tahaben.privileged_access_presentation.FailureView
 import ly.com.tahaben.privileged_access_presentation.FlowOutcome
 import ly.com.tahaben.privileged_access_presentation.ShizukuStatus
@@ -58,6 +60,10 @@ internal class SpecialAccessFlowActions(
     val onShizuku: () -> Unit,
     val onRetry: () -> Unit,
     val onOpenDeveloperOptions: () -> Unit,
+    val onOpenAppSettings: () -> Unit,
+    val onCheck: (port: String) -> Unit,
+    val onCopyLog: () -> Unit,
+    val onShareLog: () -> Unit,
 )
 
 /**
@@ -65,7 +71,14 @@ internal class SpecialAccessFlowActions(
  * replaces the form with its result. Failures read in plain words with Try again.
  */
 @Composable
-internal fun SpecialAccessFlowPage(flow: AccessFlow, status: PrivilegedStatus, actions: SpecialAccessFlowActions) {
+internal fun SpecialAccessFlowPage(
+    flow: AccessFlow,
+    status: PrivilegedStatus,
+    check: ConnectionCheckState,
+    lastPort: String,
+    networkDenied: Boolean,
+    actions: SpecialAccessFlowActions,
+) {
     val sensitive = flow.access == Access.SENSITIVE_NOTIFICATIONS
     TextButton(onClick = actions.onBack) {
         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
@@ -84,8 +97,11 @@ internal fun SpecialAccessFlowPage(flow: AccessFlow, status: PrivilegedStatus, a
     }
     when (val outcome = flow.outcome) {
         is FlowOutcome.Allowed -> AllowedCard(flow.access, outcome, status, actions.onBack)
-        is FlowOutcome.Failed -> FailureCard(outcome.failure, actions.onRetry)
-        null -> FlowForm(flow, status, actions)
+        is FlowOutcome.Failed -> {
+            FailureCard(outcome.failure, actions.onRetry, actions.onOpenAppSettings)
+            if (flow.route == Route.SELF_ADB) DiagnosticsSection(check, lastPort, actions, busy = false)
+        }
+        null -> FlowForm(flow, status, check, networkDenied, actions)
     }
 }
 
@@ -137,7 +153,7 @@ private fun AllowedCard(access: Access, outcome: FlowOutcome.Allowed, status: Pr
 }
 
 @Composable
-private fun FailureCard(failure: FailureView, onRetry: () -> Unit) {
+private fun FailureCard(failure: FailureView, onRetry: () -> Unit, onOpenAppSettings: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(10.dp),
@@ -146,6 +162,9 @@ private fun FailureCard(failure: FailureView, onRetry: () -> Unit) {
     ) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(stringResource(failure.kind.messageRes()), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+            failure.stepLine()?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             failure.detail?.let {
                 Text(
                     it,
@@ -155,11 +174,28 @@ private fun FailureCard(failure: FailureView, onRetry: () -> Unit) {
             }
         }
     }
+    if (failure.kind == FailureKind.NETWORK_DENIED) CalmButton(stringResource(R.string.special_access_open_app_settings), onClick = onOpenAppSettings)
     CalmButton(stringResource(R.string.special_access_flow_try_again), onClick = onRetry)
 }
 
+/** Shown in place of the pairing form when the operating system refuses Farhan sockets. */
 @Composable
-private fun FlowForm(flow: AccessFlow, status: PrivilegedStatus, actions: SpecialAccessFlowActions) {
+private fun NetworkDeniedCard(onOpenAppSettings: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.background,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+    ) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+            Text(stringResource(R.string.special_access_fail_network_denied), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+        }
+    }
+    CalmButton(stringResource(R.string.special_access_open_app_settings), onClick = onOpenAppSettings)
+}
+
+@Composable
+private fun FlowForm(flow: AccessFlow, status: PrivilegedStatus, check: ConnectionCheckState, networkDenied: Boolean, actions: SpecialAccessFlowActions) {
     Text(
         stringResource(R.string.special_access_flow_route_heading),
         style = MaterialTheme.typography.labelMedium,
@@ -176,7 +212,7 @@ private fun FlowForm(flow: AccessFlow, status: PrivilegedStatus, actions: Specia
             selected = flow.route == Route.SHIZUKU, enabled = !flow.busy,
         ) { actions.onRoute(Route.SHIZUKU) }
     }
-    if (flow.route == Route.SELF_ADB) WirelessDebuggingSteps(flow, actions) else ShizukuStep(flow, status, actions)
+    if (flow.route == Route.SELF_ADB) WirelessDebuggingSteps(flow, check, networkDenied, actions) else ShizukuStep(flow, status, actions)
     Text(
         stringResource(
             if (flow.route == Route.SELF_ADB) R.string.special_access_flow_footer_wireless else R.string.special_access_flow_footer_shizuku,
@@ -217,7 +253,13 @@ private fun RouteOption(title: Int, summary: Int, selected: Boolean, enabled: Bo
 }
 
 @Composable
-private fun WirelessDebuggingSteps(flow: AccessFlow, actions: SpecialAccessFlowActions) {
+private fun WirelessDebuggingSteps(flow: AccessFlow, check: ConnectionCheckState, networkDenied: Boolean, actions: SpecialAccessFlowActions) {
+    if (networkDenied) {
+        // No code is asked for: pairing cannot work until the network setting is on.
+        NetworkDeniedCard(actions.onOpenAppSettings)
+        DiagnosticsSection(check, "", actions, busy = flow.busy)
+        return
+    }
     // The code is one-use and never kept: it lives in this composition only, and is cleared the moment it is submitted.
     var code by remember { mutableStateOf("") }
     var port by remember { mutableStateOf("") }
@@ -263,6 +305,45 @@ private fun WirelessDebuggingSteps(flow: AccessFlow, actions: SpecialAccessFlowA
         filled = true,
         enabled = !flow.busy && canPair(code, port),
     )
+    DiagnosticsSection(check, port, actions, busy = flow.busy)
+}
+
+/**
+ * The connection check and the log. Calm like the rest of the page: outlined buttons, no accent. The check needs no
+ * code and changes nothing, so it sits beside the pairing form and also under a failure.
+ */
+@Composable
+private fun DiagnosticsSection(check: ConnectionCheckState, port: String, actions: SpecialAccessFlowActions, busy: Boolean) {
+    SettingsBox(stringResource(R.string.special_access_diag_title)) {
+        Column(Modifier.padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                stringResource(R.string.special_access_diag_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(stringResource(R.string.special_access_diag_send), style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+    CalmButton(
+        text = stringResource(if (check.running) R.string.special_access_diag_checking else R.string.special_access_diag_check),
+        onClick = { actions.onCheck(port) },
+        enabled = !busy && !check.running,
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        CalmButton(stringResource(R.string.special_access_diag_copy), onClick = actions.onCopyLog)
+        CalmButton(stringResource(R.string.special_access_diag_share), onClick = actions.onShareLog)
+    }
+    // The result goes last: it is long, and the buttons stay in reach above it.
+    if (check.lines.isNotEmpty()) {
+        SettingsBox(stringResource(R.string.special_access_diag_last)) {
+            Text(
+                check.lines.joinToString("\n"),
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 4.dp),
+            )
+        }
+    }
 }
 
 @Composable

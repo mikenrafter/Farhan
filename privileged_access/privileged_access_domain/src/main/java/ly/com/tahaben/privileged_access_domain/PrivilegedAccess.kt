@@ -35,6 +35,15 @@ interface PrivilegedAccess {
 
     /** The user asked to forget the retained adb key. */
     suspend fun forgetSelfAdbKey()
+
+    /** The user asked for the connection check. Runs no command and uses no pairing code; see [SelfAdbRoute.checkConnection]. */
+    suspend fun checkSelfAdbConnection(typedPort: Int?): List<String> = emptyList()
+
+    /** The whole connection log, for Copy and Share. */
+    fun selfAdbLog(): String = ""
+
+    /** Asked when the pairing page opens, before the user is asked for a code. */
+    suspend fun checkNetworkAccess(): NetworkAccess = NetworkAccess.Allowed
 }
 
 class DefaultPrivilegedAccess(
@@ -79,6 +88,15 @@ class DefaultPrivilegedAccess(
         }
     }
 
+    override suspend fun checkSelfAdbConnection(typedPort: Int?): List<String> = withContext(io) {
+        if (!busy.tryLock()) return@withContext listOf("Another change is still running. Wait a moment, then try again.")
+        try { selfAdb.checkConnection(typedPort) } finally { busy.unlock() }
+    }
+
+    override fun selfAdbLog(): String = selfAdb.connectionLogText()
+
+    override suspend fun checkNetworkAccess(): NetworkAccess = withContext(io) { selfAdb.networkAccess() }
+
     override suspend fun requestShizukuPermission(): ShizukuPermissionResult =
         shizuku.requestPermission().also { withContext(io) { publish(settlePending = !busy.isLocked) } }
 
@@ -116,7 +134,7 @@ class DefaultPrivilegedAccess(
             val result = when (val ran = shell.run(command.shellCommand(appId))) {
                 is ShellResult.Blocked -> {
                     onBlocked(route, ran.blocker)
-                    AccessResult.Failed(AccessMapper.failureOf(route, ran.blocker))
+                    AccessResult.Failed(AccessMapper.failureOf(route, ran.blocker, ran.at))
                 }
                 is ShellResult.Ran -> {
                     lostRoutes.remove(route)

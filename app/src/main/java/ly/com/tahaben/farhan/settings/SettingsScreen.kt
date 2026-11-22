@@ -54,6 +54,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ly.com.tahaben.core.R
+import ly.com.tahaben.privileged_access_domain.NetworkAccess
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -224,9 +225,21 @@ internal fun SettingsScreen(
                                 onShizuku = access::allowWithShizuku,
                                 onRetry = access::retry,
                                 onOpenDeveloperOptions = { openDeveloperOptions(context, say) },
+                                onOpenAppSettings = { openAppSettings(context, say) },
+                                onCheck = access::checkConnection,
+                                onCopyLog = {
+                                    val log = access.connectionLog()
+                                    if (log.isBlank()) say(R.string.special_access_diag_empty)
+                                    else { ConnectionLogSharing.copy(context, log); say(R.string.special_access_diag_copied) }
+                                },
+                                onShareLog = {
+                                    val log = access.connectionLog()
+                                    if (log.isBlank()) say(R.string.special_access_diag_empty)
+                                    else ConnectionLogSharing.share(context, log, context.getString(R.string.special_access_diag_share_title))
+                                },
                             )
                         }
-                        SettingsTabColumn { SpecialAccessFlowPage(flow, accessState.status, actions) }
+                        SettingsTabColumn { SpecialAccessFlowPage(flow, accessState.status, accessState.connectionCheck, access.lastPort, accessState.networkAccess is NetworkAccess.Denied, actions) }
                     } else {
                         MoreTab(
                             state, onEvent, onOpen,
@@ -259,6 +272,18 @@ private const val ACCESS_REFRESH_MS = 3_000L
  * Opens Developer options. In split screen it opens beside Farhan, so the pairing code stays on screen; elsewhere the
  * flag does nothing.
  */
+private fun openAppSettings(context: android.content.Context, say: (Int) -> Unit) {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.fromParts("package", context.packageName, null))
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    try {
+        context.startActivity(intent)
+    } catch (_: ActivityNotFoundException) {
+        say(R.string.special_access_flow_open_developer_failed)
+    } catch (_: SecurityException) {
+        say(R.string.special_access_flow_open_developer_failed)
+    }
+}
+
 private fun openDeveloperOptions(context: android.content.Context, say: (Int) -> Unit) {
     val intent = Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT)

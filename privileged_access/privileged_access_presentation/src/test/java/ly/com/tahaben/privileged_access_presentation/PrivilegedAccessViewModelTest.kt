@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import ly.com.tahaben.privileged_access_domain.Access
 import ly.com.tahaben.privileged_access_domain.AccessResult
+import ly.com.tahaben.privileged_access_domain.NetworkAccess
 import ly.com.tahaben.privileged_access_domain.PairingCode
 import ly.com.tahaben.privileged_access_domain.PairingResult
 import ly.com.tahaben.privileged_access_domain.PrivilegedAccess
@@ -38,6 +39,11 @@ class PrivilegedAccessViewModelTest {
         override suspend fun requestShizukuPermission(): ShizukuPermissionResult { calls += "shizuku"; return ShizukuPermissionResult.Granted }
         override suspend fun setRoutePreference(preference: RoutePreference) { calls += "preference $preference" }
         override suspend fun forgetSelfAdbKey() { calls += "forget" }
+        var checkLines = listOf("one", "two")
+        override suspend fun checkSelfAdbConnection(typedPort: Int?): List<String> { calls += "check $typedPort"; return checkLines }
+        override fun selfAdbLog() = "the log"
+        var network: NetworkAccess = NetworkAccess.Allowed
+        override suspend fun checkNetworkAccess(): NetworkAccess { calls += "network"; return network }
     }
 
     private val access = FakeAccess()
@@ -112,5 +118,43 @@ class PrivilegedAccessViewModelTest {
         viewModel.requestShizukuPermission()
         assertThat(access.calls.drop(1)).containsExactly("preference SHIZUKU", "forget", "shizuku").inOrder()
         assertThat(viewModel.state.value.lastShizukuPermission).isEqualTo(ShizukuPermissionResult.Granted)
+    }
+
+    // why: the page shows the last result; the typed port must reach the check and a bad one must not.
+    @Test
+    fun `the connection check keeps its lines and passes the port`() = runTest {
+        val viewModel = PrivilegedAccessViewModel(access)
+        viewModel.checkConnection("4321")
+        assertThat(access.calls).contains("check 4321")
+        assertThat(viewModel.state.value.connectionCheck).isEqualTo(ConnectionCheckState(running = false, lines = listOf("one", "two")))
+        viewModel.checkConnection("")
+        viewModel.checkConnection("70000")
+        assertThat(access.calls.filter { it.startsWith("check") }).containsExactly("check 4321", "check null", "check null").inOrder()
+    }
+
+    @Test
+    fun `the log text comes from the connector`() {
+        assertThat(PrivilegedAccessViewModel(access).connectionLog()).isEqualTo("the log")
+    }
+
+    @Test
+    fun `a check that throws leaves one line saying so`() = runTest {
+        val broken = object : PrivilegedAccess by access {
+            override suspend fun checkSelfAdbConnection(typedPort: Int?): List<String> = throw IllegalStateException("x")
+        }
+        val viewModel = PrivilegedAccessViewModel(broken)
+        viewModel.checkConnection("")
+        assertThat(viewModel.state.value.connectionCheck.lines.single()).contains("IllegalStateException")
+        assertThat(viewModel.state.value.connectionCheck.running).isFalse()
+    }
+
+    // why: the pairing page asks this before it shows the code form. catches: the answer never reaching the state.
+    @Test
+    fun `the network answer reaches the state`() = runTest {
+        val viewModel = PrivilegedAccessViewModel(access)
+        assertThat(viewModel.state.value.networkAccess).isEqualTo(NetworkAccess.Allowed)
+        access.network = NetworkAccess.Denied(permissionDenied = true, at = null)
+        viewModel.checkNetworkAccess()
+        assertThat(viewModel.state.value.networkAccess).isEqualTo(NetworkAccess.Denied(permissionDenied = true, at = null))
     }
 }

@@ -49,6 +49,7 @@ internal class SpecialAccessController(
     fun open(access: Access) {
         viewModel.dismissResult()
         flow = AccessFlow(access, defaultFlowRoute(status, viewModel.state.value.routePreference))
+        viewModel.checkNetworkAccess()
         showFlowPage()
     }
 
@@ -68,14 +69,28 @@ internal class SpecialAccessController(
 
     fun selectRoute(route: Route) {
         flow = flow?.withRoute(route)
+        if (route == Route.SELF_ADB) viewModel.checkNetworkAccess()
     }
 
     fun retry() {
         viewModel.dismissResult()
         flow = flow?.retry()
+        viewModel.checkNetworkAccess()
     }
 
+    /** The port as last typed, kept (it is not secret) so the check under a failure can use it. */
+    var lastPort by mutableStateOf("")
+        private set
+
+    fun checkConnection(port: String) {
+        lastPort = port
+        viewModel.checkConnection(port)
+    }
+
+    fun connectionLog(): String = viewModel.connectionLog()
+
     fun pair(code: String, port: String) {
+        lastPort = port
         val started = flow?.start() ?: return
         if (started.phase != FlowPhase.PAIRING) return
         flow = started

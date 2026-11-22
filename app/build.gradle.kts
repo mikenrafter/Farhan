@@ -40,6 +40,9 @@ android {
             matchingFallbacks += listOf("release")
             signingConfig = signingConfigs.getByName("debug")
             isDebuggable = false
+            // Owner builds say which commit they came from: `-PbuildTag=+g1a2b3c4` or `+g1a2b3c4-dirty`
+            // (scripts/bump-build.sh prints it). The version code is the counter in gradle/libs.versions.toml.
+            versionNameSuffix = (project.findProperty("buildTag") as String?).orEmpty()
         }
     }
     buildFeatures {

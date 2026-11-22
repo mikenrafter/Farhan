@@ -8,6 +8,8 @@ import ly.com.tahaben.privileged_access_domain.AccessState
 import ly.com.tahaben.privileged_access_domain.LinkLostReason
 import ly.com.tahaben.privileged_access_domain.LinkState
 import ly.com.tahaben.privileged_access_domain.PairingResult
+import ly.com.tahaben.privileged_access_domain.SelfAdbStep
+import ly.com.tahaben.privileged_access_domain.StepFailure
 import ly.com.tahaben.privileged_access_domain.PrivilegedStatus
 import ly.com.tahaben.privileged_access_domain.Route
 import ly.com.tahaben.privileged_access_domain.RouteBlocker
@@ -80,11 +82,15 @@ enum class FailureKind {
     COMMAND_FAILED, NOT_EFFECTIVE, BUSY, INVALID_APP,
     PAIRING_REJECTED, PAIRING_SERVICE_NOT_FOUND, PAIRING_FAILED,
 
+    /** The operating system refuses Farhan any socket. Nothing was tried; the user turns the network setting on. */
+    NETWORK_DENIED,
+
     /** There is no retained link and no stored route, so nothing could run. */
     NOT_CONNECTED,
 }
 
-data class FailureView(val kind: FailureKind, val detail: String? = null)
+/** [step] is where a self-ADB attempt broke, shown as one extra line under the message. */
+data class FailureView(val kind: FailureKind, val detail: String? = null, val step: StepFailure? = null)
 
 fun failureKindOf(blocker: RouteBlocker): FailureKind = when (blocker) {
     RouteBlocker.ANDROID_TOO_OLD -> FailureKind.ANDROID_TOO_OLD
@@ -92,6 +98,7 @@ fun failureKindOf(blocker: RouteBlocker): FailureKind = when (blocker) {
     RouteBlocker.KEY_REJECTED -> FailureKind.KEY_REJECTED
     RouteBlocker.WIRELESS_DEBUGGING_OFF -> FailureKind.WIRELESS_DEBUGGING_OFF
     RouteBlocker.CONNECTION_FAILED -> FailureKind.CONNECTION_FAILED
+    RouteBlocker.NETWORK_DENIED -> FailureKind.NETWORK_DENIED
     RouteBlocker.SHIZUKU_NOT_INSTALLED -> FailureKind.SHIZUKU_NOT_INSTALLED
     RouteBlocker.SHIZUKU_NOT_RUNNING -> FailureKind.SHIZUKU_NOT_RUNNING
     RouteBlocker.SHIZUKU_TOO_OLD -> FailureKind.SHIZUKU_TOO_OLD
@@ -107,9 +114,10 @@ fun failureViewOf(failure: AccessFailure): FailureView = when (failure) {
             LinkLostReason.KEY_REJECTED -> FailureKind.KEY_REJECTED
             LinkLostReason.WIRELESS_DEBUGGING_OFF -> FailureKind.WIRELESS_DEBUGGING_OFF
         },
+        step = failure.at,
     )
     AccessFailure.ShizukuNotRunning -> FailureView(FailureKind.SHIZUKU_NOT_RUNNING)
-    is AccessFailure.RouteBlocked -> FailureView(failureKindOf(failure.blocker))
+    is AccessFailure.RouteBlocked -> FailureView(failureKindOf(failure.blocker), step = failure.at)
     is AccessFailure.CommandFailed -> FailureView(FailureKind.COMMAND_FAILED, failure.output.ifBlank { null })
     is AccessFailure.NotEffective -> FailureView(FailureKind.NOT_EFFECTIVE)
     AccessFailure.Busy -> FailureView(FailureKind.BUSY)
@@ -123,7 +131,19 @@ fun failureViewOf(pairing: PairingResult): FailureView? = when (pairing) {
     PairingResult.PairingServiceNotFound -> FailureView(FailureKind.PAIRING_SERVICE_NOT_FOUND)
     PairingResult.Rejected -> FailureView(FailureKind.PAIRING_REJECTED)
     PairingResult.Failed -> FailureView(FailureKind.PAIRING_FAILED)
+    is PairingResult.NetworkDenied -> FailureView(FailureKind.NETWORK_DENIED, step = pairing.at)
+    // Refused at the port or in the last two steps reads as a wrong code, a wrong port or a closed dialog; the steps
+    // before the code is used (TLS, key export) are the app's or the phone's, not the user's.
+    is PairingResult.StepFailed -> FailureView(
+        if (pairing.at.step in CODE_SIDE_STEPS) FailureKind.PAIRING_REJECTED else FailureKind.PAIRING_FAILED,
+        step = pairing.at,
+    )
 }
+
+private val CODE_SIDE_STEPS = setOf(SelfAdbStep.CONNECT_SOCKET, SelfAdbStep.SPAKE2, SelfAdbStep.PEER_INFO)
+
+/** True for the kinds whose step line says "Pairing"; every other kind is a connection. */
+fun FailureKind.isPairing(): Boolean = this == FailureKind.PAIRING_REJECTED || this == FailureKind.PAIRING_FAILED || this == FailureKind.PAIRING_SERVICE_NOT_FOUND
 
 /** What to say after a switch or the red note's Allow ran a command. */
 enum class ToggleMessage {
@@ -150,9 +170,15 @@ sealed interface ToggleOutcome {
 fun toggleOutcome(result: AccessResult, statusAfter: PrivilegedStatus): ToggleOutcome = when (result) {
     is AccessResult.Done -> ToggleOutcome.Say(doneMessage(result, statusAfter))
     is AccessResult.ChooseRoute -> ToggleOutcome.OpenFlow(FailureView(FailureKind.NOT_CONNECTED), route = null)
-    is AccessResult.Failed -> when (result.failure) {
-        is AccessFailure.LinkLost -> ToggleOutcome.OpenFlow(failureViewOf(result.failure), Route.SELF_ADB)
-        else -> ToggleOutcome.Warn(failureViewOf(result.failure))
+    is AccessResult.Failed -> {
+        val failure = result.failure
+        when {
+            failure is AccessFailure.LinkLost -> ToggleOutcome.OpenFlow(failureViewOf(failure), Route.SELF_ADB)
+            // The message needs its button, so it opens the flow page rather than a short note.
+            failure is AccessFailure.RouteBlocked && failure.blocker == RouteBlocker.NETWORK_DENIED ->
+                ToggleOutcome.OpenFlow(failureViewOf(failure), Route.SELF_ADB)
+            else -> ToggleOutcome.Warn(failureViewOf(failure))
+        }
     }
 }
 
@@ -167,3 +193,7 @@ private fun doneMessage(done: AccessResult.Done, statusAfter: PrivilegedStatus):
         else -> ToggleMessage.ONLY_ACCESS_OFF_FORGOTTEN
     }
 }
+
+
+/** The connection check on the flow page: whether it is running and the lines of the last run. */
+data class ConnectionCheckState(val running: Boolean = false, val lines: List<String> = emptyList())

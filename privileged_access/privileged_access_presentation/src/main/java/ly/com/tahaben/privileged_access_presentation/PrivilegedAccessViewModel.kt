@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ly.com.tahaben.privileged_access_domain.Access
 import ly.com.tahaben.privileged_access_domain.AccessResult
+import ly.com.tahaben.privileged_access_domain.NetworkAccess
 import ly.com.tahaben.privileged_access_domain.PairingCode
 import ly.com.tahaben.privileged_access_domain.PairingResult
 import ly.com.tahaben.privileged_access_domain.PrivilegedAccess
@@ -32,6 +33,10 @@ data class PrivilegedAccessState(
     val lastResult: AccessResult? = null,
     val lastPairing: PairingResult? = null,
     val lastShizukuPermission: ShizukuPermissionResult? = null,
+    /** The self-ADB connection check: running now, and the lines of the last run. */
+    val connectionCheck: ConnectionCheckState = ConnectionCheckState(),
+    /** Whether the operating system lets Farhan open sockets, as last asked. */
+    val networkAccess: NetworkAccess = NetworkAccess.Allowed,
 )
 
 /**
@@ -45,7 +50,7 @@ class PrivilegedAccessViewModel @Inject constructor(
     private val activity = MutableStateFlow(Activity())
 
     val state: StateFlow<PrivilegedAccessState> = combine(access.status, access.routePreference, activity) { status, preference, activity ->
-        PrivilegedAccessState(status, preference, activity.working, activity.result, activity.pairing, activity.shizuku)
+        PrivilegedAccessState(status, preference, activity.working, activity.result, activity.pairing, activity.shizuku, activity.check, activity.network)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, PrivilegedAccessState())
 
     init {
@@ -82,6 +87,35 @@ class PrivilegedAccessViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Runs the connection check: opens connections, closes them, uses no pairing code and changes nothing. [portText] is
+     * the raw port field; blank or invalid means no typed port.
+     */
+    fun checkConnection(portText: String = "") {
+        if (activity.value.check.running) return
+        val port = portText.trim().toIntOrNull()?.takeIf { it in 1..65535 }
+        viewModelScope.launch {
+            activity.update { it.copy(check = ConnectionCheckState(running = true, lines = emptyList())) }
+            val lines = try {
+                access.checkSelfAdbConnection(port)
+            } catch (failure: Exception) {
+                listOf("The check could not run: ${failure.javaClass.simpleName}")
+            }
+            activity.update { it.copy(check = ConnectionCheckState(running = false, lines = lines)) }
+        }
+    }
+
+    /** Asks whether Farhan may open sockets. The pairing page does this when it opens, before it asks for a code. */
+    fun checkNetworkAccess() {
+        viewModelScope.launch {
+            val result = try { access.checkNetworkAccess() } catch (failure: Exception) { NetworkAccess.Allowed }
+            activity.update { it.copy(network = result) }
+        }
+    }
+
+    /** The whole connection log, for Copy and Share. */
+    fun connectionLog(): String = access.selfAdbLog()
+
     fun requestShizukuPermission() = working {
         val result = access.requestShizukuPermission()
         activity.update { it.copy(shizuku = result) }
@@ -117,5 +151,7 @@ class PrivilegedAccessViewModel @Inject constructor(
         val result: AccessResult? = null,
         val pairing: PairingResult? = null,
         val shizuku: ShizukuPermissionResult? = null,
+        val check: ConnectionCheckState = ConnectionCheckState(),
+        val network: NetworkAccess = NetworkAccess.Allowed,
     )
 }

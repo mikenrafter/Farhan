@@ -72,6 +72,19 @@ class FakeSelfAdb(phone: FakePhone, journal: Journal) : FakeShell(Route.SELF_ADB
     }
 
     override fun forgetPairing() { forgetCalls++; hasKey = false }
+
+    var checkLines = listOf("check line")
+    var checkPorts = mutableListOf<Int?>()
+    var checkGate: CompletableDeferred<Unit>? = null
+    val checkEntered = CompletableDeferred<Unit>()
+    var logText = "log text"
+    override suspend fun checkConnection(typedPort: Int?): List<String> {
+        checkPorts += typedPort
+        checkEntered.complete(Unit)
+        checkGate?.await()
+        return checkLines
+    }
+    override fun connectionLogText() = logText
 }
 
 class FakeShizuku(phone: FakePhone, journal: Journal) : FakeShell(Route.SHIZUKU, phone, journal), ShizukuRoute {

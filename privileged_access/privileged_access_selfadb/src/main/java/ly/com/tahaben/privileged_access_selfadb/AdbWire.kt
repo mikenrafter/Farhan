@@ -22,7 +22,7 @@ import javax.net.ssl.SSLSocket
  * answers and closes in one burst, so the reader consumed the answer, called `read` again and blocked forever
  * (observed on an Android 15 emulator with a debugger attached: `mPendingClose=true, mIsClosed=false`, connection
  * established, TLS up). This client reads frames on the caller's thread, so there is no hand-off to lose, and a read
- * has a socket timeout. libadb is still used for pairing, which works.
+ * has a socket timeout. Pairing is [AdbPairingClient].
  *
  * The wire sequence is the one the platform `adb` and Reverb's `AdbStlsUpgrade` use, checked against a real adbd:
  * 1. plain socket, send `CNXN`; a wireless-debugging port answers `STLS` (any other answer is not that port);

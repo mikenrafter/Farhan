@@ -24,9 +24,16 @@ import javax.net.ssl.X509TrustManager
  * by the pairing code, not by PKI (the platform `adb` client does the same). A different key than the paired one
  * fails the handshake with a certificate-unknown alert, which [AdbWireSession.connect] reports as "pairing required".
  */
-internal class ConscryptTls(privateKey: PrivateKey, certificate: X509Certificate) : TlsUpgrade {
-    private val context: SSLContext = SSLContext.getInstance("TLSv1.3", Conscrypt.newProvider()).apply {
-        init(arrayOf<KeyManager>(SingleKeyManager(privateKey, certificate)), arrayOf<TrustManager>(AcceptDaemon), SecureRandom())
+internal class ConscryptTls(
+    privateKey: PrivateKey,
+    certificate: X509Certificate,
+    /** False builds the context from the platform's own provider, to compare it with the bundled one in a diagnostic. */
+    standalone: Boolean = true,
+    /** False sends no client certificate, to see whether the daemon wants one. */
+    presentCertificate: Boolean = true,
+) : TlsUpgrade {
+    private val context: SSLContext = (if (standalone) SSLContext.getInstance("TLSv1.3", Conscrypt.newProvider()) else SSLContext.getInstance("TLSv1.3")).apply {
+        init(if (presentCertificate) arrayOf<KeyManager>(SingleKeyManager(privateKey, certificate)) else null, arrayOf<TrustManager>(AcceptDaemon), SecureRandom())
     }
 
     override fun upgrade(plain: Socket, host: String, port: Int): SSLSocket =
