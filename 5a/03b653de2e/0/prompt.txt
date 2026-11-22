@@ -1,0 +1,62 @@
+Research and plan task (read-only on the repos; write only your report; no push, no stash, never vigil orchestrator mode; no Gradle on this host (7 GB RAM): if you need a build or test run, use Boat per /home/mini/Documents/repos/Farhan/research/agent-rules-2026-11-20.md with your own --name under the flock lock, in a throwaway worktree off 717faf6; Boat credit remains, keep using it until it refuses). Load skills technical-excellence, test-quality and writing-copy first. Owner request (2026-11-20): 'Since we have emulator tests, I would like to see if we could improve the testing harness such that our app can be tested without the actual emulator for many things. Some things are exploratory and need a real Android API, but for the rest limit the test overhead.' Write /home/mini/Documents/repos/Farhan/research/test-strategy-no-emulator.md.
+
+Do: (1) Inventory the Farhan repo at /home/mini/Documents/repos/Farhan (use `git show 717faf6:` paths or a worktree; the branches pilot/snooze, pilot/settings-hub, fix/clear-per-category exist under /home/mini/Documents/repos/Farhan.worktrees/): every test source set and what it needs: JVM unit tests (which modules, which libraries: Truth, coroutines-test, any Robolectric), androidTest (instrumented: list each class and what Android API or UI it truly needs: Hilt runner, Compose rule, Room, NotificationManager, uiautomator), the emulator scripts (settings_rescue/emulator/*.py, scripts/emulator-install.sh, research/sound-probe, research/snooze-android-probe), and how long things take on Boat (read research/TIMINGS.md and the boat run logs under /tmp/boat-run/ for the per-task times of testDebugUnitTest, androidTest compile, assembleDebug, and emulator boot/install). (2) For each emulator-dependent test or manual evidence run in the repo and in the active pilot plans (snooze green evidence F1-F7 and the Room MigrationTestHelper test in research/snooze-pilot-spec.md W6/W9; the settings-hub screenshot passes; the apps-list screenshot pairs; the CLS probe in research/cls-and-perf-baseline.md; sound-control in research/sound-control-pilot-spec.md), classify: (a) can run on the JVM with ports and fakes (pure Kotlin domain logic, ViewModels with fake repositories, delivery policy/coordinator with fake stores and clocks, the SnoozeHandler with a fake platform port), (b) can run on the JVM with Robolectric (Room migrations and DAO queries via an in-memory/real SQLite with room-testing, Compose UI tests via createComposeRule under Robolectric including screenshot comparison with Roborazzi or Paparazzi, NotificationManager/ShadowNotificationManager behaviour, Preferences/DataStore, WorkManager testing, ActivityScenario), (c) needs a real device or emulator (real NotificationManagerService behaviour: snooze return timing, DND/zen rule composition, ringer/alerts, Telecom, listener binding, group cascade, wireless debugging/ADB, performance/jank/memory, real fonts/IME/system bars). Be precise: for each Robolectric claim say which version and what is NOT faithfully simulated (e.g. ShadowNotificationManager does not implement snooze or zen). Check the repo's Gradle plugins/version catalog to say what must be added (dependencies, `unitTests.isIncludeAndroidResources`, Robolectric SDK jars offline on Boat, a Roborazzi/Paparazzi golden workflow) and whether it works offline in the Nix environment. (3) Propose the harness: a shared `testing-fakes` module (fake NotificationManager/NotificationListenerService port, fake clock, fake preference store, fake Room via in-memory with real DAOs), conventions (what must be a port in production code to be testable, from the code you read), CI split (fast JVM suite on every change; Robolectric suite; emulator suite only for tagged `@RequiresRealAndroid` exploratory tests), and a measured estimate of time saved (per run and per day, using the numbers from step 1). (4) Recommend a first slice that pays back immediately for the work already in flight: move the Room AutoMigration 7->8 test from instrumented to Robolectric if feasible (check room-testing MigrationTestHelper under Robolectric with the exported schemas in notification_filter or app), add a Compose screenshot test for the Apps list and the Inbox chips under Roborazzi/Paparazzi, and a fake-NotificationManager contract test layer for the SnoozeHandler platform port with a 'contract test shared with a real-device run' pattern so the fake cannot drift from real Android behaviour (the same contract suite runs against the fake on the JVM and against the emulator occasionally). Include risks (Robolectric fidelity gaps, flakiness, maintenance) and what not to do. Keep the report under 20 KB, evidence-labelled (READ file:line, MEASURED, INFERRED, UNVERIFIED). 30-minute flag per problem; report a blocker instead of guessing.
+
+---
+
+<task-notification>
+<task-id>bw6gn5vg1</task-id>
+<tool-use-id>toolu_019Baj3AcqEMF3uJMwBnPwQE</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/0be6f60e-c464-499a-8f1d-733750044322/tasks/bw6gn5vg1.output</output-file>
+<status>completed</status>
+<summary>Background command "S=/tmp/claude-1001/-home-mini-Documents-repos-Farhan/0be6f60e-c464-499a-8f1d-733750044322/scratchpad; until grep -q '^exit ' $S/run1.log; do sleep 5; done; tail -60 $S/run1.log | cut -c1-300" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b8lb4oexi</task-id>
+<tool-use-id>toolu_01Nty1X8oG71R9vuKKM7rxvj</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/0be6f60e-c464-499a-8f1d-733750044322/tasks/b8lb4oexi.output</output-file>
+<status>completed</status>
+<summary>Background command "until grep -q '^exit ' /tmp/claude-1001/-home-mini-Documents-repos-Farhan/0be6f60e-c464-499a-8f1d-733750044322/scratchpad/run1.log; do sleep 5; done; tail -70 /tmp/claude-1001/-home-mini-Documents-repos-Farhan/0be6f60e-c464-499a-8f1d-733750044322/scratchpad/run1.log | cut -c1-260" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b92274ds7</task-id>
+<tool-use-id>toolu_013BRkck4bVCvMMem5pKn6LF</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/0be6f60e-c464-499a-8f1d-733750044322/tasks/b92274ds7.output</output-file>
+<status>completed</status>
+<summary>Monitor "Boat run 1 (Robolectric migration + Roborazzi) finished" stream ended</summary>
+<event>DONE
+&gt; Task :app:hiltAggregateDepsDebugUnitTest
+&gt; Task :app:hiltJavaCompileDebugUnitTest NO-SOURCE
+&gt; Task :app:processDebugUnitTestJavaRes
+&gt; Task :app:transformDebugUnitTestClassesWithAsm
+&gt; Task :app:testDebugUnitTest
+FarhanMigrationRobolectricTest &gt; everyAutoMigrationFrom1To7ValidatesAgainstExportedSchemas FAILED
+java.io.FileNotFoundException at FarhanMigrationRobolectricTest.kt:20
+3 tests completed, 1 failed
+&gt; Task :app:testDebugUnitTest FAILED
+&gt; Task :app:finalizeTestRoborazziDebug
+[Incubating] Problems report is available at: file:///home/user/runs/test-strategy-20261120-1/build/reports/problems/problems-report.html
+FAILURE: Build failed with an exception.
+* What went wrong:
+Execution failed for task ':app:testDebugUnitTest'.
+&gt; There were failing tests. See the report at: file:///home/user/runs/test-strategy-20261120-1/app/build/reports/tests/testDebugUnitTest/index.html
+* Try:
+&gt; Run with --scan to get full insights.
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+For more on this, please refer to https://docs.gradle.org/8.12/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+BUILD FAILED in 2m 28s
+446 actionable tasks: 446 executed
+exit 1
+RESULT: FAIL (exit 1) timeout cap none (stock test_api)
+full log: /tmp/boat-run/test-strategy-20261120-1-20261120T134130Z-67c842.log
+TIMING total=171.93s
+exit 1
+06:44:06</event>
+</task-notification>

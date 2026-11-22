@@ -1,0 +1,165 @@
+{
+  "cli_version": "0.13.4",
+  "checkpoint_id": "5a03b653de2e",
+  "session_id": "0be6f60e-c464-499a-8f1d-733750044322",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-22T01:59:45.788075068Z",
+  "branch": "pilot/settings-portability",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "research/boat.md",
+    "research/settings-recovery-feasibility.md",
+    "research/settings-rescue-green-report.md",
+    "research/test-strategy-chips-golden.png",
+    "research/test-strategy-no-emulator.md",
+    "settings_rescue/src/main/AndroidManifest.xml",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/AdbCommand.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/AdbShell.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/RemoteShell.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/adb/RescueAdbManager.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/bridge/AdbBridgeService.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/bridge/BridgeProtocol.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/bridge/BridgeSupervision.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/capture/CaptureEngine.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/storage/PrivateFiles.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/ui/Messages.kt",
+    "settings_rescue/src/main/java/ly/com/tahaben/farhan_rescue/ui/RescueActivity.kt",
+    "settings_rescue/src/main/res/values/strings.xml",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/AdbCommandTest.kt",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/BridgeProtocolTest.kt",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/CaptureEngineTest.kt",
+    "settings_rescue/src/test/java/ly/com/tahaben/farhan_rescue/TestSupport.kt"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-sonnet-5-5",
+  "turn_id": "ef2e39ac7453",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 194,
+    "cache_creation_tokens": 233914,
+    "cache_read_tokens": 16960248,
+    "output_tokens": 86184,
+    "api_call_count": 96
+  },
+  "session_token_usage": {
+    "input_tokens": 194,
+    "cache_creation_tokens": 233914,
+    "cache_read_tokens": 16960248,
+    "output_tokens": 86184,
+    "api_call_count": 96
+  },
+  "redaction": {
+    "replacements": 11,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 10,
+      "key_context": 1,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01CdHHbJHjHDk66L1ErZSVfV",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "technical-excellence"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "ef2e39ac7453",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 32,
+        "end": 33,
+        "entry_ids": [
+          "e9eeb0c9-a2ef-4843-bfee-79da84418b7a"
+        ],
+        "tool_use_id": "toolu_01CdHHbJHjHDk66L1ErZSVfV"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01CdHHbJHjHDk66L1ErZSVfV"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: technical-excellence",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_01JVWEPQc4CAveHbHMakqoCN",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "test-quality"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "ef2e39ac7453",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 33,
+        "end": 34,
+        "entry_ids": [
+          "1c50f055-4977-4e69-a35f-7723ee34111e"
+        ],
+        "tool_use_id": "toolu_01JVWEPQc4CAveHbHMakqoCN"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01JVWEPQc4CAveHbHMakqoCN"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: test-quality",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "claude-skill-toolu_013wMyQ7Gh5nJ9kNwUPA9353",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "writing-copy"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "ef2e39ac7453",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 34,
+        "end": 35,
+        "entry_ids": [
+          "93338fa0-e8d7-4ad4-9202-3dcb98c88bd4"
+        ],
+        "tool_use_id": "toolu_013wMyQ7Gh5nJ9kNwUPA9353"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_013wMyQ7Gh5nJ9kNwUPA9353"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: writing-copy",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 1
+  }
+}
