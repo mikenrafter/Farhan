@@ -1,0 +1,29 @@
+Act as the implementation sub-agent for this task.
+
+Implementation task (Kotlin/Android, Farhan repo). No push, no stash, never use vigil orchestrator mode, no GitHub writes. Flag anything that takes over 30 minutes. Remember you are powerful: be bold, go full gas, but verify everything. This is pilot work: small, correct, tested.
+
+Worktree: /home/mini/Documents/repos/Farhan.worktrees/snooze (branch pilot/snooze, HEAD ac54cf6). Work only there, commit there per step with a message that says why.
+
+Read first: research/review/snooze-round2-reply.txt (finding S5), research/review/snooze-round2-exchange1.md and snooze-round2-exchange2.md (the agreed fix shape), research/snooze-pilot-spec.md (v3.2, edge 3 and E13), and the code: SnoozeHandler.kt, SnoozeServiceRouting.kt (handleStoredPost, CustodyCheck), NotificationService.kt (onNotificationPosted flag route, Work.Return), NotificationDeliveryCoordinator.kt (events, accepted, lastRemoval, removalApplied, markCleared), and the tests SnoozeServiceRoutingTest.kt and SnoozeHandlerTest.kt.
+
+Problem (S5): when the owner clears a snoozed row in the inbox and the same chat sends a follow-up while the key is snoozed, Android absorbs the follow-up into the hidden record with no callback and returns the UPDATED record at the deadline. Today Farhan cancels a cleared return blind, so the follow-up message is lost (never shown, stored or proxied).
+
+Agreed fix (reviewer and orchestrator):
+1. Compare TITLE and TEXT only, exact equality, using the fields as Farhan already captures and stores them (same truncation; no trim, no `when`, no actions). In `handleStoredPost` the item built from the sbn is already in hand: same title and text as the stored row = a cleared return, dispose as today (cancel the visible original, close custody guarded by isCleared and the saved deadline, record REMOVED). Different = a new arrival: close the custody columns (one guarded statement, as the existing close does) and return false BEFORE the order accept, so the post takes the NORMAL arrival path (stored, un-cleared, proxied or queued by its priority, charged like any arrival). An identical re-post is cancelled as the cleared return; accepted.
+2. Callers that have no fields (the stats-off `CustodyCheck` and the reconcile scan): close custody and leave the post visible instead of cancelling.
+3. Owned path: `Work.Return` carries no fields, so a cleared key must not take the flag route. In `onNotificationPosted`, take the flag route ONLY when the coordinator still vouches for custody: the event exists AND lastRemoval <= accepted (note `removalApplied` writes only `appliedRemoval`; `accepted` stays at the admission order, so after a row clear lastRemoval > accepted). Everything else goes through `handleStoredPost` with fields and order. Do NOT route by reading the database in the listener callback. Clear all wipes events, which the inverted predicate also covers.
+Scoped clear, Clear all and single-row delete delete rows and are not part of S5.
+
+Do it red first: write the tests, run them, commit red (`# why` and `# catches` on each), then fix, one commit per fix. Tests through the REAL coordinator (not a fake): (a) clear while snoozed, then a return with CHANGED text: no cancel, the new message's row is un-cleared and delivered or proxied and charged once; (b) same text: cancelled, row stays cleared, no charge (existing behaviour); (c) the restart variant (owned entry dropped, stored path) for both; (d) stats-off CustodyCheck and the scan with no fields: custody closed, post left visible, not cancelled; (e) a unit test of the owned-path predicate: event exists and lastRemoval <= accepted takes the flag route; after a clear (lastRemoval > accepted), after Clear all (no event) and when accepted order is behind, it does not. Mutation checks (do them, revert each, report): the title/text comparison inverted; the predicate flipped back to the old rule; the cancel restored for a fieldless caller. Each must turn a test red.
+
+Run Gradle on Boat: flock /tmp/farhan-boat.lock python3 -I /home/mini/Documents/repos/edge.research/bin/boat-run --sandbox bx_bngcafgz --shell 'nix develop -c' --name <unique> --large /home/mini/Documents/repos/Farhan.worktrees/snooze -- ./gradlew <tasks> --no-daemon -q  (Boat has credit; ignore any advice that says it does not). Tasks: :notification_filter:notification_filter_domain:testDebugUnitTest :notification_filter:notification_filter_data:testDebugUnitTest :notification_filter:notification_filter_presentation:testDebugUnitTest :settings_portability:test :app:assembleDebug (for the test XML read it with: boat exec bx_bngcafgz --timeout 60 -- bash -lc '...'). Report in research/snooze-s5-fix-report.md: red list with failing assertions, commits, test counts, mutation results, anything you disagreed with, and any edit to an existing test and why. Do not touch anything outside this fix.
+
+---
+
+<task-notification>
+<task-id>bngu34yjf</task-id>
+<tool-use-id>toolu_01WJjgcQahK1FLJb5J82hiVf</tool-use-id>
+<output-file>/tmp/claude-1001/-home-mini-Documents-repos-Farhan/a3155b89-93b4-4a3b-b8b6-a692e4f80f1f/tasks/bngu34yjf.output</output-file>
+<status>completed</status>
+<summary>Background command "/tmp/claude-1001/-home-mini-Documents-repos-Farhan/a3155b89-93b4-4a3b-b8b6-a692e4f80f1f/scratchpad/muts.sh &gt; /tmp/claude-1001/-home-mini-Documents-repos-Farhan/a3155b89-93b4-4a3b-b8b6-a692e4f80f1f/scratchpad/muts.log 2&gt;&amp;1" completed (exit code 0)</summary>
+</task-notification>
